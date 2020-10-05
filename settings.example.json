@@ -1,0 +1,25 @@
+{
+  "Tesla & TeslaFi account settings": {
+    "teslaEmail": "your tesla email",
+    "teslaPassword": "your tesla password",
+    "teslaFiToken": "obtained from teslafi/settings/account/TeslaFi API access"
+  },
+
+  "Calendar Settings": {
+    "calendarURL": "link to ICS file"
+  },
+
+  "Notification Settings": {
+    "slackChannel": "link to slack channel"
+  },
+
+
+  "Car settings":{
+    "wakeTimer": "60",
+    "triggerTimer": "30",
+    "commuteTime": "30",
+    "shutoffTimer": "20",
+    "garageEnabled": "true",
+    "garageBias": "5"
+  }
+}
