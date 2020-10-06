@@ -1,7 +1,5 @@
 #pragma once
-#include <iostream>
 #include "tesla_var.h"
-#include <vector>
 
 
 using std::string;

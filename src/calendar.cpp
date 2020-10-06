@@ -13,10 +13,10 @@ std::vector<calEvent> calEvent::myValidEvents;
 
 // Get long string of raw calendar data from URL
 string GetCalRawData() {
-	try 
+	try
 	{
-	string rawCalContent = curl_GET(settings::u_calendarURL);
-	return rawCalContent;
+		string rawCalContent = curl_GET(settings::u_calendarURL);
+		return rawCalContent;
 	}
 	catch (string e)
 	{
@@ -104,23 +104,23 @@ void initiateCal()
 	for (string s : calEventsVector)
 	{
 		// If the word "Leave" is found in the individual event strings, don't create custom calEvents
-		if (s.find("Leave") != string::npos)
+		if (s.find(settings::u_ignoredWord1) != string::npos)
 		{
 			// Find date of Leave shift for console debug purposes
 			string vacayShiftDetector = "DTSTART;VALUE=DATE:";
 			int datePos = s.find(vacayShiftDetector);
 			string dateOfVacay = s.substr(datePos + vacayShiftDetector.length(), 8);
-			lg.i("The event on " + dateOfVacay + " is a Leave shift, skipping.");
+			lg.i("The event on " + dateOfVacay + " is a " + settings::u_ignoredWord1 + " shift, skipping.");
 
 			continue;
 		}
-		else if (s.find("Spare") != string::npos)
+		else if (s.find(settings::u_ignoredWord2) != string::npos)
 		{
 			// Find date of spare shift for console debug purposes
 			string spareShiftDetector = "DTSTART:";
 			int datePos = s.find(spareShiftDetector);
 			string dateOfSpare = s.substr(datePos + spareShiftDetector.length(), 13);
-			lg.d("The event starting at " + dateOfSpare + " is a Spare shift, skipping.");
+			lg.d("The event starting at " + dateOfSpare + " is a " + settings::u_ignoredWord2 + " shift, skipping.");
 			continue;
 		}
 		else
@@ -151,7 +151,7 @@ void initiateCal()
 // Convert raw DTSTART/DTEND strings into datetime objects
 void calEvent::setEventParams(calEvent& event)
 {
-	// Use a lambda cuz cool, to convert str to tm
+	// Convert str to tm struct taking (raw string & reference to timeStruct to store time in)
 	auto convertToTm = [](string rawstr, tm& timeStruct)
 	{
 		int year, month, day, hour, min, sec;
@@ -253,14 +253,14 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 	}
 
 	// Verify if any event timer is coming up soon (within the defined timer parameter)
-	for (calEvent &event : calEvent::myValidEvents)
+	for (calEvent& event : calEvent::myValidEvents)
 	{
 		// If event start time is less (sooner) than event trigger time
 		if (event.startTimer <= inttriggerTimer)
 		{
 			lg.p
 			(
-				"::Trigger debug::"
+				"::Trigger debug (event start)::"
 				"\nYear=" + (std::to_string(event.end.tm_year)) +
 				"\nMonth=" + (std::to_string(event.end.tm_mon)) +
 				"\nDay=" + (std::to_string(event.end.tm_mday)) +
@@ -273,11 +273,31 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 		}
 		else if (event.endTimer <= inttriggerTimer)
 		{
+			lg.p
+			(
+				"::Trigger debug (event end)::"
+				"\nYear=" + (std::to_string(event.end.tm_year)) +
+				"\nMonth=" + (std::to_string(event.end.tm_mon)) +
+				"\nDay=" + (std::to_string(event.end.tm_mday)) +
+				"\nTime=" + (std::to_string(event.end.tm_hour)) + ":" + (std::to_string(event.end.tm_min)) +
+				"\nStartTimer=" + (std::to_string(event.startTimer)) +
+				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
+			);
 			lg.i("Shift starting at " + string_time_and_date(event.end) + " is valid from work.", true);
 			return "work";
 		}
 		else if ((event.startTimer <= intwakeTimer) || (event.endTimer <= intwakeTimer))
 		{
+			lg.p
+			(
+				"::Trigger debug (wakeTimer)::"
+				"\nYear=" + (std::to_string(event.end.tm_year)) +
+				"\nMonth=" + (std::to_string(event.end.tm_mon)) +
+				"\nDay=" + (std::to_string(event.end.tm_mday)) +
+				"\nTime=" + (std::to_string(event.end.tm_hour)) + ":" + (std::to_string(event.end.tm_min)) +
+				"\nStartTimer=" + (std::to_string(event.startTimer)) +
+				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
+			);
 			lg.i("Upcoming shift start/end, waking car to check temp.", true);
 			return "wake";
 		}

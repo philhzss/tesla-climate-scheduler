@@ -83,6 +83,7 @@
     <ClCompile Include="src\carblock.cpp" />
     <ClCompile Include="src\logger.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\nlohmann\adl_serializer.hpp" />
@@ -124,6 +125,7 @@
     <ClInclude Include="include\nlohmann\thirdparty\hedley\hedley_undef.hpp" />
     <ClInclude Include="src\calendar.h" />
     <ClInclude Include="src\logger.h" />
+    <ClInclude Include="src\settings.h" />
     <ClInclude Include="src\tesla_var.h" />
   </ItemGroup>
   <ItemGroup>
@@ -136,6 +138,9 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
       </DeploymentContent>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="include\nlohmann\LICENSE.MIT" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <Link>
