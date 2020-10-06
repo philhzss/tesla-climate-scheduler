@@ -1,8 +1,9 @@
 #pragma once
 #include <iostream>
-#include <iostream>
+#include <stdio.h>
 #include <vector>
 #include <nlohmann/json.hpp>
+#include <curl/curl.h>
 
 
 using json = nlohmann::json;
@@ -54,7 +55,7 @@ public:
 	// u_ser defined settings (from settings.json):
 
 	// Car Setting
-	// Real amount of MINS of drive time between home and work
+	// (Minutes) Drive time between home and work
 	static string u_commuteTime;
 	static int intcommuteTime;
 	// Car Setting
@@ -75,6 +76,18 @@ public:
 	// Calendar Setting
 	// URL to Calendar file for event triggers
 	static string u_calendarURL;
+	// Calendar Setting
+	// (Minutes), if you leave home when you calendar event ends, this should be 0.
+	// If you leave home to arrive earlier than event start, enter a negative number.
+	static string u_shiftStartBias;
+	static int intshiftStartBias;
+	// Calendar Setting
+	// (Minutes), if you leave work when you calendar event ends, this should be 0.
+	// If you leave work early, enter a negative number, if late, positive number.
+	static string u_shiftEndBias;
+	static int intshiftEndBias;
+
+
 
 	// Tesla Setting
 	// Tesla official API email
@@ -90,11 +103,6 @@ public:
 
 // How long to wait before the program loops entirely, in SECONDS
 const int repeatDelay = 7;
-
-
-
-// Marker leave from work enabled or not. False will add + 30 mins to shift end times. See main CPP file for details
-const bool markerEnabled = false;
 
 
 

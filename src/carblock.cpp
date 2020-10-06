@@ -1,6 +1,3 @@
-#include <iostream>
-#include <stdio.h>
-#include <curl/curl.h>
 #include "tesla_var.h"
 #include "logger.h"
 #include "unordered_map"

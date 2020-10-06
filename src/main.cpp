@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <curl/curl.h>
-#include <iostream>
 #include <fstream>
 #include <unistd.h>
 #include "tesla_var.h"
@@ -17,22 +14,31 @@ time_t nowTime_secs = time(&nowTime_secs);
 
 // Settings definitions
 json settings::teslaSettings, settings::calendarSettings, settings::notifSettings, settings::carSettings;
+
+// Car
 int settings::intwakeTimer;
 int settings::inttriggerTimer;
-string settings::tfiURL;
-string settings::teslaURL;
-string settings::teslaHeader;
 string settings::u_commuteTime;
 int settings::intcommuteTime;
 string settings::u_shutoffTimer;
 int settings::intshutoffTimer;
 string settings::u_garageEnabled;
 string settings::u_garageBias;
+// Notif
 string settings::u_slackChannel;
+// Cal
 string settings::u_calendarURL;
+string settings::shiftStartBias;
+int settings::intshiftStartBias;
+string settings::shiftEndBias;
+int settings::intshiftEndBias;
+// Tesla
 string settings::u_teslaEmail;
 string settings::u_teslaPassword;
 string settings::u_teslaFiToken;
+string settings::tfiURL;
+string settings::teslaURL;
+string settings::teslaHeader;
 
 
 
@@ -218,6 +224,10 @@ void settings::readSettings(string silent = "")
 
 			// CALENDAR SETTINGS
 			u_calendarURL = calendarSettings["calendarURL"];
+			u_shiftStartBias = calendarSettings["shiftStartBias"];
+			intshiftStartBias = std::stoi(u_shiftStartBias);
+			u_shiftEndBias = calendarSettings["shiftEndBias"];
+			intshiftEndBias = std::stoi(u_shiftEndBias);
 
 			// TESLA & TESLAFI ACCOUNT SETTINGS
 			u_teslaEmail = teslaSettings["teslaEmail"];
@@ -246,6 +256,8 @@ void settings::readSettings(string silent = "")
 			"\nTesla Email: " + u_teslaEmail +
 			"\nTeslaFi Token: " + u_teslaFiToken +
 			"\nCommute time setting: " + u_commuteTime + " minutes."
+			"\nCar is therefore ready: \n" + std::to_string(intcommuteTime + intshiftEndBias) + " minutes relative to calendar event start,"
+			"\nAnd " + u_shiftEndBias + " minutes relative to calendar event end time."
 			"\nGarage mode enabled: " + u_garageEnabled + "."
 			"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start.\n"
 		);

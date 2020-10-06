@@ -9,7 +9,7 @@
 *.out
 *.app
 
-# Settings file
+# My settings file (sensitive)
 settings.json
 
 # Visual Studio stuff
