@@ -10,10 +10,10 @@ class settings
 {
 public:
 	// Initial breakdown into separate json objects
-	static json teslaSettings, calendarSettings, notifSettings, carSettings;
+	static json teslaSettings, calendarSettings, generalSettings, carSettings;
 
 	// Car Setting
-	// (commute + HVAC preheat time + buffer) How long before shift start to wake car to check car temps
+	// (commute + max HVAC preheat time + buffer) How long before shift start to wake car to check car temps
 	static int intwakeTimer;
 	// Car Setting
 	// (commute + HVAC preheat time) Determined based on temperature, settings.
@@ -35,6 +35,12 @@ public:
 
 	// u_ser defined settings (from settings.json):
 
+	// General Setting
+	// Slack Channel for Slack notifications
+	static string u_slackChannel;
+	static string u_logToFile;
+
+
 	// Car Setting
 	// (Minutes) Drive time between home and work
 	static string u_commuteTime;
@@ -50,16 +56,15 @@ public:
 	// Garage bias time is how many mins before LEAVING car should activate, if car in garage. Similar to comfy_deltaTime
 	static string u_garageBias;
 
-	// Notification Setting
-	// Slack Channel for Slack notifications
-	static string u_slackChannel;
+
 
 	// Calendar Setting
 	// URL to Calendar file for event triggers
 	static string u_calendarURL;
 	// Calendar Setting
-	// (Minutes), if you leave home when you calendar event ends, this should be 0.
-	// If you leave home to arrive earlier than event start, enter a negative number.
+	// (Minutes) If you leave home to target arriving at work earlier than event start, enter a POSITIVE number.
+	// Ex: Want to arrive at work 15 mins before event start? Enter 15. EXCLUDES commute time. 
+	// The car will be ready at (commuteTime - shiftStartBias) mins before event start.
 	static string u_shiftStartBias;
 	static int intshiftStartBias;
 	// Calendar Setting

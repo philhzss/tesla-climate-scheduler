@@ -34,6 +34,10 @@ public:
 	void p(string message);
 	void n(string message);
 
+	// Blank bare message
+	void b(string message="");
+	
+
 private:
 	// Stores the loggin level for the entire program
 	static int m_LogLevel;
@@ -41,4 +45,6 @@ private:
 
 	//Private functions
 	string notify(string message);
+	inline void toFile(string message);
+	inline string getCurrentDateTime(string s);
 };

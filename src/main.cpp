@@ -3,6 +3,7 @@
 #include "logger.h"
 #include "calendar.h"
 
+
 using std::string;
 
 static Log lg("Main");
@@ -11,7 +12,7 @@ bool crashed = false;
 
 time_t nowTime_secs = time(&nowTime_secs);
 
-
+car Tesla;
 
 
 
@@ -189,6 +190,15 @@ int main()
 
 	lg.n("TCS app initiated" + tcs_versionInfo);
 
+	// Empty lines to make logging file more clear
+	lg.b("\n.\n..\n...\n....\n.....\n......\n.......\n........\n.........\n..........\nTCS app initiated" + tcs_versionInfo+"\n\n");
+
+
+	lg.i("\nTCS  Copyright (C) 2020  Philippe Hewett"
+		"\nThis program comes with ABSOLUTELY NO WARRANTY;"
+		"\nThis is free software, and you are welcome to redistribute it"
+		"\nunder certain conditions.\n\n");
+
 
 	// Set or reset initial variables
 	lg.d("\n\"Crashed\" variable set to " + std::to_string(crashed));
@@ -198,9 +208,12 @@ int main()
 
 	// Start of program, Always loop everything
 	while (true) {
-		cout << "\n>>>>>>>------------------------------PROGRAM STARTS HERE----------------------------<<<<<<<\n\n";
+		lg.i("\n>>>>>>>------------------------------PROGRAM STARTS HERE----------------------------<<<<<<<\n\n");
 		// Everything is based on the time at program start
 		lg.i("Runtime date-time: " + return_current_time_and_date() + " LOCAL\n");
+		Tesla.getData();
+		Tesla.getData("log");
+
 		// Verify internet connection on every loop
 		if (InternetConnected()) {
 			try
@@ -212,10 +225,26 @@ int main()
 				initiateCal();
 
 				// Verify if any event matches the event checking parameters
-				string actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
+				string actionToDo = "";
 
-				// Carblock testing:
-				//testFunc();
+				// Wake loop
+				do
+				{
+					if (actionToDo == "wake")
+					{
+						lg.i("Wake command sent to car (to be programmed)");
+						//testFunc();
+					}
+					// If actionToDo is not wake and is not empty, then its a triggered event (home or work)
+					else if (!actionToDo.empty())
+					{
+						lg.i(actionToDo);
+							lg.i("Car trigger event would go here (to be programmed)");
+						// Carblock testing, with home or work parameter:
+						//testFunc();
+					}
+					actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
+				} while (!actionToDo.empty());
 
 			}
 			catch (string e) {
@@ -226,10 +255,10 @@ int main()
 
 		}
 		else {
-			cout << "\nProgram requires internet to run, will keep retrying.";
+			lg.i("\nProgram requires internet to run, will keep retrying.");
 		}
-		cout << "\n<<<<<<<---------------------------PROGRAM TERMINATES HERE--------------------------->>>>>>>\n";
-		cout << "\nWaiting for " << repeatDelay << " seconds...\n\n\n\n\n\n\n\n\n";
+		lg.i("\n<<<<<<<---------------------------PROGRAM TERMINATES HERE--------------------------->>>>>>>\n");
+		lg.i("\nWaiting for " + std::to_string(repeatDelay) + " seconds...\n\n\n\n\n\n\n\n\n");
 		cin.get();
 		sleep(repeatDelay);
 	}

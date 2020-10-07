@@ -124,6 +124,7 @@
     <ClInclude Include="include\nlohmann\thirdparty\hedley\hedley.hpp" />
     <ClInclude Include="include\nlohmann\thirdparty\hedley\hedley_undef.hpp" />
     <ClInclude Include="src\calendar.h" />
+    <ClInclude Include="src\carblock.h" />
     <ClInclude Include="src\logger.h" />
     <ClInclude Include="src\settings.h" />
     <ClInclude Include="src\tesla_var.h" />

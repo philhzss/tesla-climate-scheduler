@@ -1,4 +1,4 @@
-# Tesla Climate Scheduler
+# Tesla Climate Scheduler (tcs)
 Control your Tesla's climate & heated seats based on events from a .ics file
 
 #### Currently incomplete, no release available at this time
@@ -8,13 +8,13 @@ Control your Tesla's climate & heated seats based on events from a .ics file
 + **This is my first program** and was written primarily for use by myself. Will probably not work out of the box for your use case, but feel free to use/tweak my code if it can be useful to you!
 + Tested on ARM only. Specifically, I run this program continuously on a Raspberry Pi 4.
 + This program is specifically targeting people with a "non standard" schedule (ie shifts), and people who have an ICS calendar containing **only** shifts/work events. This program is (currently) designed to trigger on every event it finds in the given ICS file. You can set it to ignore leave / vacation days, more details to come.
-+ Tested with Tesla Model 3. I am unsure if the API calls are the same for other Tesla models and cannot test right now.<br><br>
++ Tested with Tesla Model 3. I am unsure if the API calls are the same for other Tesla models and cannot test right now.
 
 
 ## Features
 + Automatically control your Tesla's HVAC & heated seats based on events in an online ICS file. If the online ICS file is auto-filled (by your employer for example), this program is 100% autonomous and your car should always be preheated (or cooled down) before you need to drive to and from work.
 + Car's HVAC system will turn on sooner if it's very cold outside, to give it more time to preheat, trigger time is dynamically adjusted based on car's external temperature sensor.
-+ Slightly customisable, and highly customisable if you decide to tweak the source code based on your personal needs.<br><br>
++ Slightly customisable, and highly customisable if you decide to tweak the source code based on your personal needs.
 
 
 ## Requirements (for usage)
@@ -26,7 +26,7 @@ Once again this is my first program and is probably useless for most people. You
 + A Tesla (model 3 tested, other models might or might not work);
 + A constant internet connection;
 + (Optional) A Slack account to receive push notifications to your phone;
-+ Some patience and understanding to set up.<br><br>
++ Some patience and understanding to set up.
 
 
 
@@ -35,7 +35,7 @@ Once again this is my first program and is probably useless for most people. You
 2. Download/open settings.example.json, and fill it up with your desired settings.
 	+ I will add wiki pages with more details eventually, in the meantime look at the file *tesla_var.h* for details on settings.
 3. Rename the file to settings.json and place in the same folder as tcs binary file. The binary file needs to have a settings.json file in the same folder in order to run.
-4. Launch the binary, verify your settings have been applied and let it run 24/7 for it to control your vehicle.<br><br>
+4. Launch the binary, verify your settings have been applied and let it run 24/7 for it to control your vehicle.
 
 
 ## Building requirements

@@ -130,7 +130,7 @@ void initiateCal()
 	}
 
 	// The custom myCalEvents vector is initialized
-	lg.i("There are " + std::to_string(calEvent::myCalEvents.size()) + " events in the database, filtered from " + std::to_string(calEventsVector.size()) + " events.");
+	lg.i("There are " + std::to_string(calEvent::myCalEvents.size()) + " events in the database, filtered from " + std::to_string(calEventsVector.size()) + " events. This includes past events, will be filtered later.");
 
 	// Parse myCalEvents items to get their event start-end times set as datetime objects
 	for (calEvent& event : calEvent::myCalEvents)
@@ -249,14 +249,15 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 
 		}
 		int newSize = myValidEvents.size();
-		lg.d("There are " + std::to_string(newSize) + " potential (future) events in the database, filtered from " + std::to_string(origSize) + " events.");
+		lg.d("Past events filtered, there are now " + std::to_string(newSize) + " events in the database, filtered from " + std::to_string(origSize) + " events.");
 	}
 
 	// Verify if any event timer is coming up soon (within the defined timer parameter)
 	for (calEvent& event : calEvent::myValidEvents)
 	{
 		// If event start time is less (sooner) than event trigger time
-		if (event.startTimer <= inttriggerTimer)
+		// startTimer - (commute + start bias)
+		if ((event.startTimer-settings::intcommuteTime+settings::intshiftStartBias) <= inttriggerTimer)
 		{
 			lg.p
 			(
@@ -269,9 +270,10 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 			);
 			lg.i("Shift starting at " + string_time_and_date(event.start) + " is valid from home.", true);
+			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL\n");
 			return "home";
 		}
-		else if (event.endTimer <= inttriggerTimer)
+		else if ((event.endTimer-settings::intshiftEndBias) <= inttriggerTimer)
 		{
 			lg.p
 			(
@@ -284,6 +286,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 			);
 			lg.i("Shift starting at " + string_time_and_date(event.end) + " is valid from work.", true);
+			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL\n");
 			return "work";
 		}
 		else if ((event.startTimer <= intwakeTimer) || (event.endTimer <= intwakeTimer))
@@ -299,6 +302,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 			);
 			lg.i("Upcoming shift start/end, waking car to check temp.", true);
+			lg.i("Wake event triggered at: " + return_current_time_and_date() + " LOCAL\n");
 			return "wake";
 		}
 		else return "";

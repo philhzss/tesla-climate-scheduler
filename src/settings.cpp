@@ -6,8 +6,11 @@ static Log lg("Settings");
 
 
 // Settings definitions
-json settings::teslaSettings, settings::calendarSettings, settings::notifSettings, settings::carSettings;
+json settings::teslaSettings, settings::calendarSettings, settings::generalSettings, settings::carSettings;
 
+// General
+string settings::u_slackChannel;
+string settings::u_logToFile;
 // Car
 int settings::intwakeTimer;
 int settings::inttriggerTimer;
@@ -17,8 +20,6 @@ string settings::u_shutoffTimer;
 int settings::intshutoffTimer;
 string settings::u_garageEnabled;
 string settings::u_garageBias;
-// Notif
-string settings::u_slackChannel;
 // Cal
 string settings::u_calendarURL;
 string settings::u_shiftStartBias;
@@ -46,7 +47,7 @@ void settings::readSettings(string silent)
 		// Get the settings cubcategories
 		teslaSettings = settingsForm["Tesla & TeslaFi account settings"];
 		calendarSettings = settingsForm["Calendar Settings"];
-		notifSettings = settingsForm["Notification Settings"];
+		generalSettings = settingsForm["General Settings"];
 		carSettings = settingsForm["Car settings"];
 
 		//Save the data from settings in the program variables
@@ -59,8 +60,9 @@ void settings::readSettings(string silent)
 			u_garageEnabled = carSettings["garageEnabled"];
 			u_garageBias = carSettings["garageBias"];
 
-			// NOTIFICATION SETTINGS
-			u_slackChannel = notifSettings["slackChannel"];
+			// GENERAL SETTINGS
+			u_slackChannel = generalSettings["slackChannel"];
+			u_logToFile = generalSettings["logToFile"];
 
 			// CALENDAR SETTINGS
 			u_calendarURL = calendarSettings["calendarURL"];
@@ -94,12 +96,13 @@ void settings::readSettings(string silent)
 	{
 		lg.i("Settings imported from settings.json:"
 			"\nSlack Channel: " + u_slackChannel +
+			"\nLogging to file: " + u_logToFile + 
 			"\nCalendar URL: " + u_calendarURL +
 			"\nCalendar words to ignore (0-2): " + settings::u_ignoredWord1+", "+ settings::u_ignoredWord2 +
 			"\nTesla Email: " + u_teslaEmail +
 			"\nTeslaFi Token: " + u_teslaFiToken +
 			"\nCommute time setting: " + u_commuteTime + " minutes."
-			"\nCar is therefore ready: \n" + std::to_string(intcommuteTime + intshiftStartBias) + " minutes relative to calendar event start,"
+			"\nCar is therefore ready: \n" + std::to_string(-intcommuteTime - intshiftStartBias) + " minutes relative to calendar event start,"
 			"\nAnd " + u_shiftEndBias + " minutes relative to calendar event end time."
 			"\nGarage mode enabled: " + u_garageEnabled + "."
 			"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start.\n"
@@ -114,6 +117,7 @@ void settings::readSettings(string silent)
 	inttriggerTimer = 0;
 
 	// Wake the care approx 45  mins before leaving for shift, to check car temp.
+	// Max HVAC time should probably not exceed ~30-35 mins (excl commute), so waking car 45 mins earlier
 	intwakeTimer = intcommuteTime + 45;
 	return;
 }

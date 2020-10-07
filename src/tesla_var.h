@@ -6,7 +6,8 @@
 #include <curl/curl.h>
 #include "settings.h"
 #include "logger.h"
-
+#include "carblock.h"
+#include <fstream>
 
 using json = nlohmann::json;
 using std::cout;
@@ -25,6 +26,7 @@ string curl_GET(string url);
 string curl_POST(string url, string message);
 extern time_t nowTime_secs;
 const string string_time_and_date(tm tstruct);
+const string return_current_time_and_date();
 
 
 
