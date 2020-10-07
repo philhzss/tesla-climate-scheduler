@@ -86,8 +86,6 @@ void Log::p(string message)
 	if (m_LogLevel >= LevelProgramming)
 	{
 		cout << "[.." << source_file << " Programming..] " << message << endl;
-		if (settings::u_logToFile == "true")
-			toFile("[" + source_file + " Programming] " + message);
 	}
 }
 void Log::n(string message)
