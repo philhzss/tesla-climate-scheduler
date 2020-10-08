@@ -9,6 +9,7 @@
 #include "carblock.h"
 #include <fstream>
 
+
 using json = nlohmann::json;
 using std::cout;
 using std::endl;
@@ -16,12 +17,12 @@ using std::cin;
 using std::string;
 
 
+
 // Program info
 const string tcs_versionInfo = "\nVersion: _*3.0 pre-release*_\nBuild Date: 2020.10.05 - First C++ version";
 
 
 // Declarations
-void testFunc();
 string curl_GET(string url);
 string curl_POST(string url, string message);
 extern time_t nowTime_secs;

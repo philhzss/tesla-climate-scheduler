@@ -176,7 +176,7 @@ const string string_time_and_date(tm tstruct)
 int main()
 {
 	// From least to most info: LevelError(0), LevelInfo(1), LevelDebug(2), LevelProgramming(3).
-	Log::SetLevel(Log::LogLevel::LevelDebug);
+	Log::SetLevel(Log::LogLevel::LevelProgramming);
 
 	try
 	{
@@ -191,7 +191,7 @@ int main()
 	lg.n("TCS app initiated" + tcs_versionInfo);
 
 	// Empty lines to make logging file more clear
-	lg.b("\n.\n..\n...\n....\n.....\n......\n.......\n........\n.........\n..........\nTCS app initiated" + tcs_versionInfo+"\n\n");
+	lg.b("\n.\n..\n...\n....\n.....\n......\n.......\n........\n.........\n..........\nTCS app initiated" + tcs_versionInfo + "\n\n");
 
 
 	lg.i("\nTCS  Copyright (C) 2020  Philippe Hewett"
@@ -208,11 +208,9 @@ int main()
 
 	// Start of program, Always loop everything
 	while (true) {
-		lg.i("\n>>>>>>>------------------------------PROGRAM STARTS HERE----------------------------<<<<<<<\n\n");
+		lg.b("\n>>>>>>>------------------------------PROGRAM STARTS HERE----------------------------<<<<<<<\n\n");
 		// Everything is based on the time at program start
 		lg.i("Runtime date-time: " + return_current_time_and_date() + " LOCAL\n");
-		Tesla.getData();
-		Tesla.getData("log");
 
 		// Verify internet connection on every loop
 		if (InternetConnected()) {
@@ -233,15 +231,15 @@ int main()
 					if (actionToDo == "wake")
 					{
 						lg.i("Wake command sent to car (to be programmed)");
-						//testFunc();
+						Tesla.carAwake;
 					}
 					// If actionToDo is not wake and is not empty, then its a triggered event (home or work)
 					else if (!actionToDo.empty())
 					{
 						lg.i(actionToDo);
-							lg.i("Car trigger event would go here (to be programmed)");
+						lg.i("Car trigger event would go here (to be programmed)");
 						// Carblock testing, with home or work parameter:
-						//testFunc();
+
 					}
 					actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
 				} while (!actionToDo.empty());
@@ -257,7 +255,7 @@ int main()
 		else {
 			lg.i("\nProgram requires internet to run, will keep retrying.");
 		}
-		lg.i("\n<<<<<<<---------------------------PROGRAM TERMINATES HERE--------------------------->>>>>>>\n");
+		lg.b("\n<<<<<<<---------------------------PROGRAM TERMINATES HERE--------------------------->>>>>>>\n");
 		lg.i("\nWaiting for " + std::to_string(repeatDelay) + " seconds...\n\n\n\n\n\n\n\n\n");
 		cin.get();
 		sleep(repeatDelay);

@@ -96,6 +96,8 @@ void Log::n(string message)
 void Log::b(string message)
 {
 	cout << message << endl;
+	if (settings::u_logToFile == "true")
+		toFile(message);
 }
 
 
