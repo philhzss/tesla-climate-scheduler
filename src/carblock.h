@@ -39,6 +39,6 @@ private:
 public:
 	// Public functions
 	std::map<string, string> getData(string log = "");
-
 	void wake();
+	int calcTempMod(int interior_temp);
 };

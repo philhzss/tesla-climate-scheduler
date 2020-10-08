@@ -109,7 +109,7 @@ std::map<string, string> car::getData(string log)
 	if (!log.empty())
 	{
 		lg.i("getData result:");
-	
+
 		for (std::pair<string, string> element : carData)
 		{
 			lg.i(element.first + ": " + element.second);
@@ -123,13 +123,40 @@ void car::wake()
 
 }
 
-//void testFunc()
-//{
-//	car Tesla;
-//	umap carOutput = Tesla.getData();
-//	lg.i("getData result (unordered map):");
-//	
-//	cout << "Car output test" << endl;
-//	cout << carOutput["Tesla Fi Outside temp"] << endl;
-//	cout << "tadaa";
-//}
+
+// Parabola equation to figure out tempModifier from car's interior temp
+int car::calcTempMod(int interior_temp)
+{
+	double rawTempTimeModifier;
+	int finalTempTimeModifier;
+
+	// Choose which curve to use
+	if (interior_temp > 10)
+	{
+		lg.p("Interior temp is " + std::to_string(interior_temp) + "C, using summer curve.");
+		rawTempTimeModifier = pow(interior_temp, 2) / 40 - interior_temp + 15;
+		if (rawTempTimeModifier >= 16)
+		{
+			// Capped at 16 mins when super hot in car
+			lg.p("Calculated temp time is " + std::to_string(rawTempTimeModifier) + " mins, capping at 16 mins.");
+			rawTempTimeModifier = 16;
+		}
+	}
+	else
+	{
+		lg.p("Interior temp is " + std::to_string(interior_temp) + "C, using winter curve.");
+		rawTempTimeModifier = pow(interior_temp, 2) / 300 - interior_temp / 2 + 14;
+		if (rawTempTimeModifier >= 32)
+		{
+			// Capped at 32 mins when super cold in car
+			lg.p("Calculated temp time is " + std::to_string(rawTempTimeModifier) + " mins, capping at 32 mins.");
+			rawTempTimeModifier = 32;
+		}
+	}
+
+	// Round up
+	finalTempTimeModifier = static_cast<int>(rawTempTimeModifier + 0.5);
+	lg.d("Interior car temp is " + std::to_string(interior_temp) + "C, tempTimeModifier is: " + std::to_string(finalTempTimeModifier) + " minutes");
+
+	return finalTempTimeModifier;
+}

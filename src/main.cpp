@@ -188,6 +188,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
+
 	lg.n("TCS app initiated" + tcs_versionInfo);
 
 	// Empty lines to make logging file more clear
@@ -231,7 +232,6 @@ int main()
 					if (actionToDo == "wake")
 					{
 						lg.i("Wake command sent to car (to be programmed)");
-						Tesla.carAwake;
 					}
 					// If actionToDo is not wake and is not empty, then its a triggered event (home or work)
 					else if (!actionToDo.empty())
