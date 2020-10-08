@@ -1,7 +1,7 @@
 #include "logger.h"
 #include "settings.h"
 
-static Log lg("Settings"); 
+static Log lg("Settings");
 
 
 
@@ -18,8 +18,8 @@ string settings::u_commuteTime;
 int settings::intcommuteTime;
 string settings::u_shutoffTimer;
 int settings::intshutoffTimer;
-string settings::u_garageEnabled;
-string settings::u_garageBias;
+string settings::u_default20CMinTime;
+int settings::intdefault20CMinTime;
 // Cal
 string settings::u_calendarURL;
 string settings::u_shiftStartBias;
@@ -35,6 +35,8 @@ string settings::u_teslaFiToken;
 string settings::tfiURL;
 string settings::teslaURL;
 string settings::teslaHeader;
+string settings::u_teslaClientID;
+string settings::u_teslaClientSecret;
 
 
 void settings::readSettings(string silent)
@@ -57,8 +59,8 @@ void settings::readSettings(string silent)
 			intcommuteTime = std::stoi(u_commuteTime);
 			u_shutoffTimer = carSettings["shutoffTimer"];
 			intshutoffTimer = std::stoi(u_shutoffTimer);
-			u_garageEnabled = carSettings["garageEnabled"];
-			u_garageBias = carSettings["garageBias"];
+			u_default20CMinTime = carSettings["default20CMinTime"];
+			intdefault20CMinTime = std::stoi(u_default20CMinTime);
 
 			// GENERAL SETTINGS
 			u_slackChannel = generalSettings["slackChannel"];
@@ -77,6 +79,8 @@ void settings::readSettings(string silent)
 			u_teslaEmail = teslaSettings["teslaEmail"];
 			u_teslaPassword = teslaSettings["teslaPassword"];
 			u_teslaFiToken = teslaSettings["teslaFiToken"];
+			u_teslaClientID = teslaSettings["TESLA_CLIENT_ID"];
+			u_teslaClientSecret = teslaSettings["TESLA_CLIENT_SECRET"];
 			lg.d("Settings file settings.json successfully read.");
 		}
 	}
@@ -96,16 +100,16 @@ void settings::readSettings(string silent)
 	{
 		lg.i("Settings imported from settings.json:"
 			"\nSlack Channel: " + u_slackChannel +
-			"\nLogging to file: " + u_logToFile + 
+			"\nLogging to file: " + u_logToFile +
 			"\nCalendar URL: " + u_calendarURL +
-			"\nCalendar words to ignore (0-2): " + settings::u_ignoredWord1+", "+ settings::u_ignoredWord2 +
+			"\nCalendar words to ignore (0-2): " + settings::u_ignoredWord1 + ", " + settings::u_ignoredWord2 +
 			"\nTesla Email: " + u_teslaEmail +
 			"\nTeslaFi Token: " + u_teslaFiToken +
 			"\nCommute time setting: " + u_commuteTime + " minutes."
 			"\nCar is therefore ready: \n" + std::to_string(-intcommuteTime - intshiftStartBias) + " minutes relative to calendar event start,"
 			"\nAnd " + u_shiftEndBias + " minutes relative to calendar event end time."
-			"\nGarage mode enabled: " + u_garageEnabled + "."
-			"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start.\n"
+			"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start."
+			"\nDefault time value @ 20C interior temp: " + u_default20CMinTime + " minutes.\n"
 		);
 	}
 	// Apply/calculate other setting values

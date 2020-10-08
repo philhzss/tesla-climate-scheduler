@@ -1,25 +1,28 @@
 {
+  "General Settings": {
+    "slackChannel": "https://hooks.slack.com/services/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",
+    "logToFile": "true"
+  },
+
   "Tesla & TeslaFi account settings": {
     "teslaEmail": "your tesla email",
     "teslaPassword": "your tesla password",
-    "teslaFiToken": "obtained from teslafi/settings/account/TeslaFi API access"
+    "teslaFiToken": "obtained from teslafi/settings/account/TeslaFi API access",
+    "TESLA_CLIENT_ID": "81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384",
+    "TESLA_CLIENT_SECRET": "c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3"
   },
 
   "Calendar Settings": {
-    "calendarURL": "link to ICS file"
+    "calendarURL": "link to calendar ics",
+    "shiftStartBias": "0",
+    "shiftEndBias": "-30",
+    "ignoredWord1": "Leave",
+    "ignoredWord2": "Spare"
   },
 
-  "Notification Settings": {
-    "slackChannel": "link to slack channel"
-  },
-
-
-  "Car settings":{
-    "wakeTimer": "60",
-    "triggerTimer": "30",
+  "Car settings": {
     "commuteTime": "30",
     "shutoffTimer": "20",
-    "garageEnabled": "true",
-    "garageBias": "5"
+    "default20CMinTime": "5"
   }
 }

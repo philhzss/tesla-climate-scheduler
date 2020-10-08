@@ -34,6 +34,7 @@ Once again this is my first program and is probably useless for most people. You
 1. Assuming you're running this on Linux like I am, download the binary to your Linux machine.
 2. Download/open settings.example.json, and fill it up with your desired settings.
 	+ I will add wiki pages with more details eventually, in the meantime look at the file *tesla_var.h* for details on settings.
+	+ These don't seem to change often, but you might need to update the tesla-api client ID and client secret values in the settings file. The latest values [can be found here](https://pastebin.com/pS7Z6yyP), I will try to keep the settings file up to date.
 3. Rename the file to settings.json and place in the same folder as tcs binary file. The binary file needs to have a settings.json file in the same folder in order to run.
 4. Launch the binary, verify your settings have been applied and let it run 24/7 for it to control your vehicle.
 

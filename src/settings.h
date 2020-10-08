@@ -50,12 +50,9 @@ public:
 	static string u_shutoffTimer;
 	static int intshutoffTimer;
 	// Car Setting
-	// If car is parked in garage at home, set the following to True to save power.
-	static string u_garageEnabled;
-	// Car Setting
-	// Garage bias time is how many mins before LEAVING car should activate, if car in garage. Similar to comfy_deltaTime
-	static string u_garageBias;
-
+	// (default=5) (Minutes) The higher this is, the more time your car's HVAC will run. More details in docs
+	static string u_default20CMinTime;
+	static int intdefault20CMinTime;
 
 
 	// Calendar Setting
@@ -88,4 +85,10 @@ public:
 	// Tesla Setting
 	// TeslaFi Token
 	static string u_teslaFiToken;
+	// Tesla Setting
+	// CLIENT_ID
+	static string u_teslaClientID;
+	// Tesla Setting
+	// CLIENT_SECRET
+	static string u_teslaClientSecret;
 };
