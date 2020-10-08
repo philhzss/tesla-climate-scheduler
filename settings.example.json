@@ -1,7 +1,8 @@
 {
   "General Settings": {
-    "slackChannel": "https://hooks.slack.com/services/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",
-    "logToFile": "true"
+    "slackChannel": "slack channel URL",
+    "logToFile": "true",
+    "repeatDelay": "7"
   },
 
   "Tesla & TeslaFi account settings": {

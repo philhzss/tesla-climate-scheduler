@@ -11,6 +11,8 @@ json settings::teslaSettings, settings::calendarSettings, settings::generalSetti
 // General
 string settings::u_slackChannel;
 string settings::u_logToFile;
+string settings::u_repeatDelay;
+int settings::intrepeatDelay;
 // Car
 int settings::intwakeTimer;
 int settings::inttriggerTimer;
@@ -65,6 +67,8 @@ void settings::readSettings(string silent)
 			// GENERAL SETTINGS
 			u_slackChannel = generalSettings["slackChannel"];
 			u_logToFile = generalSettings["logToFile"];
+			u_repeatDelay = generalSettings["repeatDelay"];
+			intrepeatDelay = std::stoi(u_repeatDelay);
 
 			// CALENDAR SETTINGS
 			u_calendarURL = calendarSettings["calendarURL"];

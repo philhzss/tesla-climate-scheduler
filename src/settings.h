@@ -38,7 +38,13 @@ public:
 	// General Setting
 	// Slack Channel for Slack notifications
 	static string u_slackChannel;
+	// General Setting
+	// (Bool) If true, logs all logger message to file
 	static string u_logToFile;
+	// General Setting
+	// (Seconds) How long to wait before the program loops entirely
+	static string u_repeatDelay;
+	static int intrepeatDelay;
 
 
 	// Car Setting
