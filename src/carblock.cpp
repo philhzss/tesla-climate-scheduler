@@ -18,7 +18,7 @@ static Log lg("Carblock");
 
 
 
-umap car::getData(string log)
+std::map<string, string> car::getData(string log)
 {
 	try
 	{
@@ -90,32 +90,32 @@ umap car::getData(string log)
 		throw string("Can't get car data from Tesla Fi. (CURL problem?)");
 	}
 	// maybe change to an ordered map, the console log order is annoying
-	carOutput["Success"] = "True";
-	carOutput["Car awake"] = std::to_string(carAwake);
-	carOutput["Tesla Fi Date"] = tfiDate;
-	carOutput["Tesla Fi Name"] = tfiName;
-	carOutput["Tesla Fi Car State"] = tficarState;
-	carOutput["Tesla Fi Connection State"] = tfiState;
-	carOutput["Tesla Fi Shift State"] = tfiShift;
-	carOutput["Tesla Fi Location"] = tfiLocation;
-	carOutput["Tesla Fi Inside temp"] = tfiIntTemp;
-	carOutput["Tesla Fi Outside temp"] = tfiOutTemp;
-	carOutput["Tesla Fi Driver Temp Setting"] = tfiTempSetting;
-	carOutput["Tesla Fi is HVAC On"] = tfiIsHvacOn;
-	carOutput["Tesla Fi Usable Battery"] = tfiUsableBat;
-	carOutput["Tesla Fi Battery level"] = tfiBat;
+	carData["Success"] = "True";
+	carData["Car awake"] = std::to_string(carAwake);
+	carData["Tesla Fi Date"] = tfiDate;
+	carData["Tesla Fi Name"] = tfiName;
+	carData["Tesla Fi Car State"] = tficarState;
+	carData["Tesla Fi Connection State"] = tfiState;
+	carData["Tesla Fi Shift State"] = tfiShift;
+	carData["Tesla Fi Location"] = tfiLocation;
+	carData["Tesla Fi Inside temp"] = tfiIntTemp;
+	carData["Tesla Fi Outside temp"] = tfiOutTemp;
+	carData["Tesla Fi Driver Temp Setting"] = tfiTempSetting;
+	carData["Tesla Fi is HVAC On"] = tfiIsHvacOn;
+	carData["Tesla Fi Usable Battery"] = tfiUsableBat;
+	carData["Tesla Fi Battery level"] = tfiBat;
 	lg.b();
 
 	if (!log.empty())
 	{
 		lg.i("getData result:");
 	
-		for (std::pair<string, string> element : carOutput)
+		for (std::pair<string, string> element : carData)
 		{
 			lg.i(element.first + ": " + element.second);
 		}
 	}
-	return carOutput;
+	return carData;
 }
 
 void car::wake()

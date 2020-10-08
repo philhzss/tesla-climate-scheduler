@@ -1,14 +1,14 @@
+#include "map"
 #pragma once
-#include "unordered_map"
 
-typedef std::unordered_map<string, string> umap;
+
 
 class car
 {
 public:
 	// public vars
 	bool carAwake = false;
-	umap carOutput;
+	std::map<string, string> carData;
 
 private:
 	// private vars
@@ -38,7 +38,7 @@ private:
 
 public:
 	// Public functions
-	umap getData(string log = "");
+	std::map<string, string> getData(string log = "");
 
 	void wake();
 };
