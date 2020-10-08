@@ -257,8 +257,11 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 	{
 		// If event start time is less (sooner) than event trigger time
 		// startTimer - (commute + start bias)
-		if ((event.startTimer-settings::intcommuteTime+settings::intshiftStartBias) <= inttriggerTimer)
+		if ((event.startTimer - settings::intcommuteTime + settings::intshiftStartBias
+			<= inttriggerTimer) && (event.startTimer - settings::intcommuteTime + settings::intshiftStartBias
+			> 0))
 		{
+			lg.p("Triggered by a timer value of: " + std::to_string(event.startTimer));
 			lg.p
 			(
 				"::Trigger debug (event start)::"
@@ -273,8 +276,9 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL\n");
 			return "home";
 		}
-		else if ((event.endTimer-settings::intshiftEndBias) <= inttriggerTimer)
+		else if ((event.endTimer - settings::intshiftEndBias) <= inttriggerTimer)
 		{
+			lg.p("Triggered by a timer value of: " + std::to_string(event.endTimer));
 			lg.p
 			(
 				"::Trigger debug (event end)::"
@@ -289,8 +293,10 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL\n");
 			return "work";
 		}
-		else if ((event.startTimer <= intwakeTimer) || (event.endTimer <= intwakeTimer))
+		// Make sure to ignore a negative startTimer, as it will be negative during an entire work shift
+		else if (((event.startTimer > 0) && (event.startTimer <= intwakeTimer))  || (event.endTimer <= intwakeTimer))
 		{
+			lg.p("Triggered by a timer value of: " + std::to_string(event.startTimer) + " for start, or: " + std::to_string(event.endTimer) + " for end.");
 			lg.p
 			(
 				"::Trigger debug (wakeTimer)::"
