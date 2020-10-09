@@ -163,6 +163,7 @@ inline string Log::getCurrentDateTime(string s) {
 		strftime(buf, sizeof(buf), "%Y-%m-%d", &tstruct);
 	return string(buf);
 };
+
 inline void Log::toFile(string message) {
 
 	string filePath = "log_" + Log::getCurrentDateTime("date") + ".txt";

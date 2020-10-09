@@ -152,6 +152,9 @@ int main()
 		"\nThis is free software, and you are welcome to redistribute it"
 		"\nunder certain conditions.\n\n");
 
+	// Test getData
+	Tesla.getData("log");
+
 
 	// Set or reset initial variables
 	lg.d("\n\"Crashed\" variable set to " + std::to_string(crashed));
