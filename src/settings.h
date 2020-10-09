@@ -21,10 +21,12 @@ public:
 
 
 
-	// Important stuff, TeslaFi(TT) token, Tesla URL
+	// Important stuff, Tesla official token, Tesla URL
 	static string tfiURL;
 	static string teslaURL;
 	static string teslaHeader;
+	static json authPackage;
+	static string teslaOtoken;
 
 
 	// Parse settings.json and save its contents in the program's memory

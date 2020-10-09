@@ -34,11 +34,13 @@ string settings::u_ignoredWord2;
 string settings::u_teslaEmail;
 string settings::u_teslaPassword;
 string settings::u_teslaFiToken;
+string settings::teslaOtoken;
 string settings::tfiURL;
 string settings::teslaURL;
 string settings::teslaHeader;
 string settings::u_teslaClientID;
 string settings::u_teslaClientSecret;
+json settings::authPackage;
 
 
 void settings::readSettings(string silent)
@@ -86,6 +88,13 @@ void settings::readSettings(string silent)
 			u_teslaClientID = teslaSettings["TESLA_CLIENT_ID"];
 			u_teslaClientSecret = teslaSettings["TESLA_CLIENT_SECRET"];
 			lg.d("Settings file settings.json successfully read.");
+
+			settings::authPackage =
+			{ {"grant_type", "password"},
+			{"client_id", settings::u_teslaClientID},
+			{"client_secret", settings::u_teslaClientSecret},
+			{"email", settings::u_teslaEmail},
+			{"password", settings::u_teslaPassword} };
 		}
 	}
 	catch (nlohmann::detail::parse_error)

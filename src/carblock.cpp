@@ -20,6 +20,12 @@ static Log lg("Carblock");
 
 std::map<string, string> car::getData(string log)
 {
+	json authjson;
+	authjson = teslaPOST("oauth/token", settings::authPackage);
+	cout << authjson << endl;
+	settings::teslaOtoken = authjson["access_token"];
+	lg.d("Tesla official token written to settings as: " + settings::teslaOtoken);
+
 	try
 	{
 		string readBufferData = curl_GET(settings::tfiURL);
@@ -89,7 +95,11 @@ std::map<string, string> car::getData(string log)
 		lg.e("CURL TeslaFi exception: " + e);
 		throw string("Can't get car data from Tesla Fi. (CURL problem?)");
 	}
-	// maybe change to an ordered map, the console log order is annoying
+	catch (nlohmann::detail::type_error e)
+	{
+		lg.e("Problem getting data. Car updating? Tesla API down? nlohmann::detail::type_error");
+	}
+
 	carData["Success"] = "True";
 	carData["Car awake"] = std::to_string(carAwake);
 	carData["Tesla Fi Date"] = tfiDate;
@@ -116,16 +126,71 @@ std::map<string, string> car::getData(string log)
 		}
 	}
 	return carData;
+	// Implement somthing that repeats the getData function if the fields arent filled enough??
+	// Or just call the wake function?? (when car updating, missing fields).
 }
 
-string car::auth()
+
+json car::teslaPOST(string url, json package)
 {
+	string fullUrl = settings::teslaURL + url;
+	const char* const url_to_use = fullUrl.c_str();
 
+	CURL* curl;
+	CURLcode res;
+	// Buffer to store result temporarily:
+	string readBuffer;
+	long response_code;
+
+	/* In windows, this will init the winsock stuff */
+	curl_global_init(CURL_GLOBAL_ALL);
+
+	/* get a curl handle */
+	curl = curl_easy_init();
+
+	if (curl) {
+		/* First set the URL that is about to receive our POST. This URL can
+		   just as well be a https:// URL if that is what should receive the
+		   data. */
+		curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
+		/* Now specify the POST data */
+		struct curl_slist* headers = nullptr;
+		headers = curl_slist_append(headers, "Content-Type: application/json");
+
+		// Serialize the package json to string
+		string data = package.dump();
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
+		curl_easy_setopt(curl, CURLOPT_POST, 1);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+		/* Perform the request, res will get the return code */
+		res = curl_easy_perform(curl);
+		/* Check for errors */
+		if (res != CURLE_OK)
+			fprintf(stderr, "curl_easy_perform() failed: %s\n",
+				curl_easy_strerror(res));
+		if (res == CURLE_OK) {
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+			lg.i("Response code: " + std::to_string(response_code));
+		}
+
+		/* always cleanup */
+		curl_easy_cleanup(curl);
+	}
+	curl_global_cleanup();
+
+	json jsonReadBuffer = json::parse(readBuffer);
+	return jsonReadBuffer;
 }
+
+
 
 void car::wake()
 {
-	
+
 }
 
 

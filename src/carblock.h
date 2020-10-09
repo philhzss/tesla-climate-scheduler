@@ -27,11 +27,14 @@ private:
 
 
 private:
-	string auth();
+	
 
 public:
-	// Public functions
+	// Pull data about car without sending any commands
 	std::map<string, string> getData(string log = "");
+	// Send POST request to "https://owner-api.teslamotors.com/ + url"
+	json teslaPOST(string url, json package);
 	void wake();
 	int calcTempMod(int interior_temp);
+	
 };
