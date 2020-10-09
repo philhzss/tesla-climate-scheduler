@@ -27,14 +27,7 @@ private:
 
 
 private:
-	// Private functions
-	/*
-	for each elem in list of properties
-	if (type) ele = [correct type it should be in json]
-	ele = json data value
-	else
-	break
-	*/
+	string auth();
 
 public:
 	// Public functions

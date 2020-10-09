@@ -118,9 +118,14 @@ std::map<string, string> car::getData(string log)
 	return carData;
 }
 
-void car::wake()
+string car::auth()
 {
 
+}
+
+void car::wake()
+{
+	
 }
 
 
@@ -129,12 +134,13 @@ int car::calcTempMod(int interior_temp)
 {
 	double rawTempTimeModifier;
 	int finalTempTimeModifier;
+	int defaultMinTime = settings::intdefault20CMinTime;
 
 	// Choose which curve to use
 	if (interior_temp > 10)
 	{
 		lg.p("Interior temp is " + std::to_string(interior_temp) + "C, using summer curve.");
-		rawTempTimeModifier = pow(interior_temp, 2) / 40 - interior_temp + 15;
+		rawTempTimeModifier = pow(interior_temp, 2) / 40 - interior_temp + (10 + defaultMinTime);
 		if (rawTempTimeModifier >= 16)
 		{
 			// Capped at 16 mins when super hot in car
@@ -145,7 +151,7 @@ int car::calcTempMod(int interior_temp)
 	else
 	{
 		lg.p("Interior temp is " + std::to_string(interior_temp) + "C, using winter curve.");
-		rawTempTimeModifier = pow(interior_temp, 2) / 300 - interior_temp / 2 + 14;
+		rawTempTimeModifier = pow(interior_temp, 2) / 300 - interior_temp / 2 + (9 + defaultMinTime);
 		if (rawTempTimeModifier >= 32)
 		{
 			// Capped at 32 mins when super cold in car
