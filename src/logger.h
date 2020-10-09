@@ -47,4 +47,5 @@ private:
 	string notify(string message);
 	inline void toFile(string message);
 	inline string getCurrentDateTime(string s);
+	string curl_POST_slack(string url, string message);
 };
