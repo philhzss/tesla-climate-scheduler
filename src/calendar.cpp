@@ -136,15 +136,6 @@ void initiateCal()
 	for (calEvent& event : calEvent::myCalEvents)
 	{
 		event.setEventParams(event);
-
-		lg.p
-		(
-			"::AFTER modifications WITHIN forLoop::"
-			"\nYear=" + (std::to_string(event.start.tm_year)) +
-			"\nMonth=" + (std::to_string(event.start.tm_mon)) +
-			"\nDay=" + (std::to_string(event.start.tm_mday)) +
-			"\nTime=" + (std::to_string(event.start.tm_hour)) + ":" + (std::to_string(event.start.tm_min)) + "\n"
-		);
 	}
 }
 
@@ -177,25 +168,7 @@ void calEvent::setEventParams(calEvent& event)
 
 	// lg.p("Converting DTSTART, raw string is: " + DTSTART);
 	event.start = convertToTm(event.DTSTART, event.start);
-	/*lg.p
-	(
-		"::AFTER modifications::"
-		"\nYear=" + (std::to_string(event.start.tm_year)) +
-		"\nMonth=" + (std::to_string(event.start.tm_mon)) +
-		"\nDay=" + (std::to_string(event.start.tm_mday)) +
-		"\nTime=" + (std::to_string(event.start.tm_hour)) + ":" + (std::to_string(event.start.tm_min)) + "\n"
-	);*/
-
-	// lg.p("Converting DTEND, raw string is: " + DTEND);
 	event.end = convertToTm(event.DTEND, event.end);
-	/*lg.p
-	(
-		"::AFTER modifications::"
-		"\nYear=" + (std::to_string(event.end.tm_year)) +
-		"\nMonth=" + (std::to_string(event.end.tm_mon)) +
-		"\nDay=" + (std::to_string(event.end.tm_mday)) +
-		"\nTime=" + (std::to_string(event.end.tm_hour)) + ":" + (std::to_string(event.end.tm_min)) + "\n"
-	);*/
 }
 
 // Check if any start-end event is valid, and return appropriate string based on timers
