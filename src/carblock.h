@@ -34,6 +34,7 @@ public:
 	std::map<string, string> getData(string log = "");
 	// Send POST request to "https://owner-api.teslamotors.com/ + url"
 	json teslaPOST(string url, json package);
+	json teslaGET(string url);
 	void wake();
 	int calcTempMod(int interior_temp);
 	

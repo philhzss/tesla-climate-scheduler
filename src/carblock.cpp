@@ -23,8 +23,10 @@ std::map<string, string> car::getData(string log)
 	json authjson;
 	authjson = teslaPOST("oauth/token", settings::authPackage);
 	cout << authjson << endl;
-	settings::teslaOtoken = authjson["access_token"];
-	lg.d("Tesla official token written to settings as: " + settings::teslaOtoken);
+	string teslaToken = authjson["access_token"];
+	settings::teslaAuthHeader = { { "Authorization", "Bearer " + teslaToken } };
+	lg.d("Tesla official token written to settings as: " + settings::teslaAuthHeader.dump());
+
 
 	try
 	{
@@ -186,7 +188,43 @@ json car::teslaPOST(string url, json package)
 	return jsonReadBuffer;
 }
 
+json car::teslaGET(string url)
+{
+		const char* const url_to_use = url.c_str();
+		CURL* curl;
+		CURLcode res;
+		// Buffer to store result temporarily:
+		string readBuffer;
+		curl_global_init(CURL_GLOBAL_DEFAULT);
+		curl = curl_easy_init();
+		if (curl) {
+			
+			
+			
+			struct curl_slist* headers = nullptr;
+			headers = curl_slist_append(headers, "Content-Type: application/json");
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			/* Perform the request, res will get the return code */
+			res = curl_easy_perform(curl);
+			/* Check for errors */
+			if (res != CURLE_OK)
+			{
+				fprintf(stderr, "curl_easy_perform() failed: %s\n",
+					curl_easy_strerror(res));
+				throw "curl_easy_perform() failed: " + std::to_string(res);
+			}
 
+			/* always cleanup */
+			curl_easy_cleanup(curl);
+		}
+		curl_global_cleanup();
+
+		json jsonReadBuffer = json::parse(readBuffer);
+		return jsonReadBuffer;
+}
 
 void car::wake()
 {

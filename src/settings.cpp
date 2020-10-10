@@ -34,7 +34,7 @@ string settings::u_ignoredWord2;
 string settings::u_teslaEmail;
 string settings::u_teslaPassword;
 string settings::u_teslaFiToken;
-string settings::teslaOtoken;
+json settings::teslaAuthHeader;
 string settings::tfiURL;
 string settings::teslaURL;
 string settings::teslaHeader;

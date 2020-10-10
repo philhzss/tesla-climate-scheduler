@@ -26,7 +26,7 @@ public:
 	static string teslaURL;
 	static string teslaHeader;
 	static json authPackage;
-	static string teslaOtoken;
+	static json teslaAuthHeader;
 
 
 	// Parse settings.json and save its contents in the program's memory
