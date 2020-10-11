@@ -40,6 +40,7 @@ public:
 	// General Setting
 	// Slack Channel for Slack notifications
 	static string u_slackChannel;
+	static bool slackEnabled;
 	// General Setting
 	// (Bool) If true, logs all logger message to file
 	static string u_logToFile;

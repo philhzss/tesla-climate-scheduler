@@ -1,6 +1,6 @@
 {
   "General Settings": {
-    "slackChannel": "slack channel URL",
+    "slackChannel": "slack channel URL, or blank if no slack",
     "logToFile": "true",
     "repeatDelay": "7"
   },

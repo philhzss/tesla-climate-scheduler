@@ -10,6 +10,7 @@ json settings::teslaSettings, settings::calendarSettings, settings::generalSetti
 
 // General
 string settings::u_slackChannel;
+bool settings::slackEnabled;
 string settings::u_logToFile;
 string settings::u_repeatDelay;
 int settings::intrepeatDelay;
@@ -87,6 +88,7 @@ void settings::readSettings(string silent)
 			u_teslaFiToken = teslaSettings["teslaFiToken"];
 			u_teslaClientID = teslaSettings["TESLA_CLIENT_ID"];
 			u_teslaClientSecret = teslaSettings["TESLA_CLIENT_SECRET"];
+			
 			lg.d("Settings file settings.json successfully read.");
 
 			settings::authPackage =
@@ -108,9 +110,11 @@ void settings::readSettings(string silent)
 		throw string("settings.json type_error");
 	}
 
+
 	// Print this unless reading settings silently
 	if (silent != "silent")
 	{
+		lg.b();
 		lg.i("Settings imported from settings.json:"
 			"\nSlack Channel: " + u_slackChannel +
 			"\nLogging to file: " + u_logToFile +
@@ -122,9 +126,23 @@ void settings::readSettings(string silent)
 			"\nCar is therefore ready: \n" + std::to_string(-intcommuteTime - intshiftStartBias) + " minutes relative to calendar event start,"
 			"\nAnd " + u_shiftEndBias + " minutes relative to calendar event end time."
 			"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start."
-			"\nDefault time value @ 20C interior temp: " + u_default20CMinTime + " minutes.\n"
+			"\nDefault time value @ 20C interior temp: " + u_default20CMinTime + " minutes."
 		);
 	}
+
+	// Check if Slack channel is empty
+	if (u_slackChannel.empty())
+	{
+		slackEnabled = false;
+		if (silent != "silent")
+			lg.i("Mobile notifications are disabled.\n");
+	}
+	else
+	{
+		slackEnabled = true;
+		lg.b();
+	}
+
 	// Apply/calculate other setting values
 	tfiURL = ("https://www.teslafi.com/feed.php?&token=" + u_teslaFiToken);
 	teslaURL = "https://owner-api.teslamotors.com/";

@@ -128,7 +128,7 @@ const string string_time_and_date(tm tstruct)
 int main()
 {
 	// From least to most info: LevelError(0), LevelInfo(1), LevelDebug(2), LevelProgramming(3).
-	Log::SetLevel(Log::LogLevel::LevelProgramming);
+	Log::SetLevel(Log::LogLevel::LevelDebug);
 
 	try
 	{
@@ -141,23 +141,24 @@ int main()
 	}
 
 
-	lg.n("TCS app initiated" + tcs_versionInfo);
-
 	// Empty lines to make logging file more clear
-	lg.b("\n.\n..\n...\n....\n.....\n......\n.......\n........\n.........\n..........\nTCS app initiated" + tcs_versionInfo + "\n\n");
+	lg.b("\n.\n..\n...\n....\n.....\n......\n.......\n........\n.........\n..........\nTCS app initiated" + tcs_versionInfo + "\n");
 
 
 	lg.i("\nTCS  Copyright (C) 2020  Philippe Hewett"
 		"\nThis program comes with ABSOLUTELY NO WARRANTY;"
 		"\nThis is free software, and you are welcome to redistribute it"
 		"\nunder certain conditions.\n\n");
+	lg.n("TCS app initiated" + tcs_versionInfo);
 
+	// test
 	// Test getData
-	Tesla.getData("log");
+	// Tesla.getData("log");
 
 
 	// Set or reset initial variables
-	lg.d("\n\"Crashed\" variable set to " + std::to_string(crashed));
+	lg.b();
+	lg.d("\"Crashed\" variable set to " + std::to_string(crashed));
 	bool carblock_ran_success = false;
 	lg.d("\"carblock_ran_success\" variable set to " + std::to_string(carblock_ran_success));
 	lg.d("Reason: Initial values should be False\n\n");

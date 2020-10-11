@@ -92,8 +92,15 @@ string Log::curl_POST_slack(string url, string message)
 
 string Log::notify(string message)
 {
-	string res = Log::curl_POST_slack(settings::u_slackChannel, message);
-	return res;
+	if (settings::slackEnabled)
+	{
+		string res = Log::curl_POST_slack(settings::u_slackChannel, message);
+		return "[Notif info] Notification result: " + res;
+	}
+	else
+	{
+		return "[Notif info] Notifications disabled, not pushing to Slack";
+	}
 }
 
 
@@ -104,7 +111,7 @@ void Log::e(string message, bool notification)
 	{
 		cout << "**[" << source_file << " ERROR]** " << message << endl;
 		if (notification)
-			notify("*!!ERROR:* " + message);
+			b(notify("*!!ERROR:* " + message));
 		if (settings::u_logToFile == "true")
 			toFile("**[" + source_file + " ERROR]** " + message);
 	}
@@ -117,7 +124,7 @@ void Log::i(string message, bool notification)
 		if (settings::u_logToFile == "true")
 			toFile("[" + source_file + " info] " + message);
 		if (notification)
-			notify(message);
+			b(notify(message));
 	}
 }
 void Log::d(string message, bool notification)
@@ -128,7 +135,7 @@ void Log::d(string message, bool notification)
 		if (settings::u_logToFile == "true")
 			toFile("[" + source_file + " Debug] " + message);
 		if (notification)
-			notify(message);
+			b(notify(message));
 	}
 }
 void Log::p(string message)
@@ -140,8 +147,7 @@ void Log::p(string message)
 }
 void Log::n(string message)
 {
-	string res = notify(message);
-	i("Notification sent to Slack channel, response code: " + res);
+	b(notify(message));
 }
 void Log::b(string message)
 {
