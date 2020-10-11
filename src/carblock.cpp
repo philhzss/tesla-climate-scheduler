@@ -265,6 +265,11 @@ int car::calcTempMod(int interior_temp)
 
 	// Round up
 	finalTempTimeModifier = static_cast<int>(rawTempTimeModifier + 0.5);
+	if (finalTempTimeModifier <= 2)
+	{	
+		finalTempTimeModifier = 2;
+		lg.d("Calculated TempTimeModifier too low, bottoming out at 2 minutes");
+	}
 	lg.d("Interior car temp is " + std::to_string(interior_temp) + "C, tempTimeModifier is: " + std::to_string(finalTempTimeModifier) + " minutes");
 
 	return finalTempTimeModifier;

@@ -95,7 +95,7 @@ string Log::notify(string message)
 	if (settings::slackEnabled)
 	{
 		string res = Log::curl_POST_slack(settings::u_slackChannel, message);
-		return "[Notif info] Notification result: " + res;
+		return "[Notif info] Notification sent: " + res;
 	}
 	else
 	{

@@ -128,7 +128,7 @@ const string string_time_and_date(tm tstruct)
 int main()
 {
 	// From least to most info: LevelError(0), LevelInfo(1), LevelDebug(2), LevelProgramming(3).
-	Log::SetLevel(Log::LogLevel::LevelDebug);
+	Log::SetLevel(Log::LogLevel::LevelProgramming);
 
 	try
 	{
@@ -155,6 +155,12 @@ int main()
 	// Test getData
 	// Tesla.getData("log");
 
+	Tesla.calcTempMod(20);
+	lg.b();
+	Tesla.calcTempMod(-35);
+	lg.b();
+	Tesla.calcTempMod(40);
+	lg.b();
 
 	// Set or reset initial variables
 	lg.b();
