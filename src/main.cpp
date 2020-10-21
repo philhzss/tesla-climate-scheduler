@@ -155,12 +155,7 @@ int main()
 	// Test getData
 	// Tesla.getData("log");
 
-	Tesla.calcTempMod(20);
-	lg.b();
-	Tesla.calcTempMod(-35);
-	lg.b();
-	Tesla.calcTempMod(40);
-	lg.b();
+
 
 	// Set or reset initial variables
 	lg.b();

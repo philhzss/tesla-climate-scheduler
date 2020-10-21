@@ -267,6 +267,8 @@ int car::calcTempMod(int interior_temp)
 	finalTempTimeModifier = static_cast<int>(rawTempTimeModifier + 0.5);
 	if (finalTempTimeModifier <= 2)
 	{	
+		lg.d("rawTempTimeModifier was calculated as " + std::to_string(rawTempTimeModifier) + " mins, probably because default20CMinTime is set to "
+			+ settings::u_default20CMinTime + " mins.");
 		finalTempTimeModifier = 2;
 		lg.d("Calculated TempTimeModifier too low, bottoming out at 2 minutes");
 	}
