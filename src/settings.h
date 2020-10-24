@@ -12,14 +12,6 @@ public:
 	// Initial breakdown into separate json objects
 	static json teslaSettings, calendarSettings, generalSettings, carSettings;
 
-	// Car Setting
-	// (commute + max HVAC preheat time + buffer) How long before shift start to wake car to check car temps
-	static int intwakeTimer;
-	// Car Setting
-	// (commute + HVAC preheat time) Determined based on temperature, settings.
-	static int inttriggerTimer;
-
-
 
 	// Important stuff, Tesla official token, Tesla URL
 	static string tfiURL;
@@ -62,6 +54,18 @@ public:
 	// (default=5) (Minutes) The higher this is, the more time your car's HVAC will run. More details in docs
 	static string u_default20CMinTime;
 	static int intdefault20CMinTime;
+	// Car Setting
+	// (commute + max HVAC preheat time + buffer) How long before shift start to wake car to check car temps
+	static int intwakeTimer;
+	// Car Setting
+	// (commute + HVAC preheat time) Determined based on temperature, settings.
+	static int inttriggerTimer;
+	// Car Setting
+	// Real amount of time BEFORE shift (event) you leave from home
+	static int intshiftStartTimer;
+	// Car Setting
+	// Real amount of time AFTER shift (event) end you leave from work
+	static int intshiftEndTimer;
 
 
 	// Calendar Setting

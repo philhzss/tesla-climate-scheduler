@@ -23,6 +23,8 @@ string settings::u_shutoffTimer;
 int settings::intshutoffTimer;
 string settings::u_default20CMinTime;
 int settings::intdefault20CMinTime;
+int settings::intshiftStartTimer;
+int settings::intshiftEndTimer;
 // Cal
 string settings::u_calendarURL;
 string settings::u_shiftStartBias;
@@ -59,6 +61,12 @@ void settings::readSettings(string silent)
 
 		//Save the data from settings in the program variables
 		{
+			// GENERAL SETTINGS
+			u_slackChannel = generalSettings["slackChannel"];
+			u_logToFile = generalSettings["logToFile"];
+			u_repeatDelay = generalSettings["repeatDelay"];
+			intrepeatDelay = std::stoi(u_repeatDelay);
+
 			// CAR SETTINGS
 			u_commuteTime = carSettings["commuteTime"];
 			intcommuteTime = std::stoi(u_commuteTime);
@@ -66,12 +74,7 @@ void settings::readSettings(string silent)
 			intshutoffTimer = std::stoi(u_shutoffTimer);
 			u_default20CMinTime = carSettings["default20CMinTime"];
 			intdefault20CMinTime = std::stoi(u_default20CMinTime);
-
-			// GENERAL SETTINGS
-			u_slackChannel = generalSettings["slackChannel"];
-			u_logToFile = generalSettings["logToFile"];
-			u_repeatDelay = generalSettings["repeatDelay"];
-			intrepeatDelay = std::stoi(u_repeatDelay);
+		
 
 			// CALENDAR SETTINGS
 			u_calendarURL = calendarSettings["calendarURL"];
@@ -110,6 +113,10 @@ void settings::readSettings(string silent)
 		throw string("settings.json type_error");
 	}
 
+	// Calculate shift timers (real time before & after events car has to be ready for)
+	intshiftStartTimer = -intcommuteTime - intshiftStartBias;
+	intshiftEndTimer = intshiftEndBias;
+
 
 	// Print this unless reading settings silently
 	if (silent != "silent")
@@ -123,8 +130,8 @@ void settings::readSettings(string silent)
 			"\nTesla Email: " + u_teslaEmail +
 			"\nTeslaFi Token: " + u_teslaFiToken +
 			"\nCommute time setting: " + u_commuteTime + " minutes."
-			"\nCar is therefore ready: \n" + std::to_string(-intcommuteTime - intshiftStartBias) + " minutes relative to calendar event start,"
-			"\nAnd " + u_shiftEndBias + " minutes relative to calendar event end time."
+			"\nCar is therefore ready: \n" + std::to_string(intshiftStartTimer) + " minutes relative to calendar event start, which is "
+			"\nAnd " + std::to_string(intshiftEndTimer) + " minutes relative to calendar event end time. which is "
 			"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start."
 			"\nDefault time value @ 20C interior temp: " + u_default20CMinTime + " minutes."
 		);
@@ -148,11 +155,18 @@ void settings::readSettings(string silent)
 	teslaURL = "https://owner-api.teslamotors.com/";
 	teslaHeader = {};
 
-	// Default to 0 to avoid an error in eventTimeCheck, calculate after waketimer
+	// Default to 0 to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.
 	inttriggerTimer = 0;
 
-	// Wake the care approx 45  mins before leaving for shift, to check car temp.
-	// Max HVAC time should probably not exceed ~30-35 mins (excl commute), so waking car 45 mins earlier
-	intwakeTimer = intcommuteTime + 45;
+
+	// Figure out if its event start or event end that makes the car HVAC start earlier
+	int longest_timer = (intshiftStartTimer > intshiftEndTimer ? intshiftStartTimer : intshiftEndTimer);
+	lg.p(std::to_string(longest_timer));
+	
+	// Longest timer is often negative as its a DELTA time to the end/start of event on cal.
+	// Wake the care approx 5  mins before the earliest it would need to turn on HVAC, to check car temp.
+	// No point in waking up car earlier than: -longest_timer + max TempTimeModifier(32) + 5 min buffer
+	intwakeTimer = -longest_timer + 32 + 5;
+	lg.p(std::to_string(intwakeTimer));
 	return;
 }

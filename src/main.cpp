@@ -12,6 +12,9 @@ bool crashed = false;
 
 time_t nowTime_secs = time(&nowTime_secs);
 
+// Should be blank by default
+string actionToDo = "";
+
 car Tesla;
 
 
@@ -133,7 +136,7 @@ int main()
 	try
 	{
 		// Read settings initially for Slack Channel (without output results)
-		settings::readSettings("silent");
+		settings::readSettings("silent not");
 	}
 	catch (string e) {
 		lg.e("Critical failure (before start), program stopping: " + e, true);
@@ -181,8 +184,6 @@ int main()
 				initiateCal();
 
 				// Verify if any event matches the event checking parameters
-				string actionToDo = "";
-
 				// Wake loop
 				do
 				{

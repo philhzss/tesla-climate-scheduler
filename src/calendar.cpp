@@ -225,7 +225,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 		lg.d("Past events filtered, there are now " + std::to_string(newSize) + " events in the database, filtered from " + std::to_string(origSize) + " events.");
 	}
 
-	// Verify if any event timer is coming up soon (within the defined timer parameter)
+	// Verify if any event timer is coming up soon (within the defined timer parameter) and return location-validity
 	for (calEvent& event : calEvent::myValidEvents)
 	{
 		// If event start time is less (sooner) than event trigger time
@@ -247,6 +247,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			);
 			lg.i("Shift starting at " + string_time_and_date(event.start) + " is valid from home.", true);
 			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL\n");
+			// Return home since this shift is triggered and its "going to work"
 			return "home";
 		}
 		else if ((event.endTimer - settings::intshiftEndBias) <= inttriggerTimer)
@@ -264,6 +265,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			);
 			lg.i("Shift starting at " + string_time_and_date(event.end) + " is valid from work.", true);
 			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL\n");
+			// Return work since this shift is triggered and its "coming back from to work"
 			return "work";
 		}
 		// Make sure to ignore a negative startTimer, as it will be negative during an entire work shift
@@ -282,6 +284,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			);
 			lg.i("Upcoming shift start/end, waking car to check temp.", true);
 			lg.i("Wake event triggered at: " + return_current_time_and_date() + " LOCAL\n");
+			// Return wake since this shift is upcoming but not close enough to start the car yet
 			return "wake";
 		}
 		else return "";
