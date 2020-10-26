@@ -27,15 +27,22 @@ private:
 
 
 private:
-	
+	bool wake();
+	// Write token to settings::teslaAuthString for Tesla official API usage
+	void teslaAuth();
 
 public:
-	// Pull data about car without sending any commands
+	// Pull data from car, waking the car if required (waking not yet implemented)
 	std::map<string, string> getData(string log = "");
-	// Send POST request to "https://owner-api.teslamotors.com/ + url"
+	
+	// POST request to "https://owner-api.teslamotors.com/ + url"
 	json teslaPOST(string url, json package);
+
+	// RE WRITE TeslaPOST as teslaAUTH, and create another with oAuth built in like GET??
+
+
+	// GET request to "https://owner-api.teslamotors.com/ + url", oAuth token built-in
 	json teslaGET(string url);
-	void wake();
 	int calcTempMod(int interior_temp);
 	
 };

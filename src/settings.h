@@ -17,8 +17,8 @@ public:
 	static string tfiURL;
 	static string teslaURL;
 	static string teslaHeader;
-	static json authPackage;
-	static json teslaAuthHeader;
+	static json authReqPackage;
+	static string teslaAuthString;
 
 
 	// Parse settings.json and save its contents in the program's memory
@@ -72,8 +72,8 @@ public:
 	// URL to Calendar file for event triggers
 	static string u_calendarURL;
 	// Calendar Setting
-	// (Minutes) If you leave home to target arriving at work earlier than event start, enter a POSITIVE number.
-	// Ex: Want to arrive at work 15 mins before event start? Enter 15. EXCLUDES commute time. 
+	// (Minutes) If you leave home to target arriving at work earlier than event start, enter a NEGATIVE number.
+	// Ex: Want to arrive at work 15 mins before event start? Enter -15. EXCLUDES commute time. 
 	// The car will be ready at (commuteTime - shiftStartBias) mins before event start.
 	static string u_shiftStartBias;
 	static int intshiftStartBias;

@@ -37,13 +37,13 @@ string settings::u_ignoredWord2;
 string settings::u_teslaEmail;
 string settings::u_teslaPassword;
 string settings::u_teslaFiToken;
-json settings::teslaAuthHeader;
 string settings::tfiURL;
 string settings::teslaURL;
 string settings::teslaHeader;
 string settings::u_teslaClientID;
 string settings::u_teslaClientSecret;
-json settings::authPackage;
+json settings::authReqPackage;
+string settings::teslaAuthString;
 
 
 void settings::readSettings(string silent)
@@ -94,7 +94,7 @@ void settings::readSettings(string silent)
 			
 			lg.d("Settings file settings.json successfully read.");
 
-			settings::authPackage =
+			settings::authReqPackage =
 			{ {"grant_type", "password"},
 			{"client_id", settings::u_teslaClientID},
 			{"client_secret", settings::u_teslaClientSecret},
@@ -114,7 +114,7 @@ void settings::readSettings(string silent)
 	}
 
 	// Calculate shift timers (real time before & after events car has to be ready for)
-	intshiftStartTimer = -intcommuteTime - intshiftStartBias;
+	intshiftStartTimer = -intcommuteTime + intshiftStartBias;
 	intshiftEndTimer = intshiftEndBias;
 
 
@@ -130,8 +130,8 @@ void settings::readSettings(string silent)
 			"\nTesla Email: " + u_teslaEmail +
 			"\nTeslaFi Token: " + u_teslaFiToken +
 			"\nCommute time setting: " + u_commuteTime + " minutes."
-			"\nCar is therefore ready: \n" + std::to_string(intshiftStartTimer) + " minutes relative to calendar event start, which is "
-			"\nAnd " + std::to_string(intshiftEndTimer) + " minutes relative to calendar event end time. which is "
+			"\nCar is therefore ready: \n" + std::to_string(intshiftStartTimer) + " minutes relative to calendar event start."
+			"\nAnd " + std::to_string(intshiftEndTimer) + " minutes relative to calendar event end time."
 			"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start."
 			"\nDefault time value @ 20C interior temp: " + u_default20CMinTime + " minutes."
 		);
@@ -160,13 +160,13 @@ void settings::readSettings(string silent)
 
 
 	// Figure out if its event start or event end that makes the car HVAC start earlier
-	int longest_timer = (intshiftStartTimer > intshiftEndTimer ? intshiftStartTimer : intshiftEndTimer);
-	lg.p(std::to_string(longest_timer));
+	int longest_timer = (std::abs(intshiftStartTimer) > std::abs(intshiftEndTimer) ? intshiftStartTimer : intshiftEndTimer);
+	lg.p("Longest timer (shift start or end): " + std::to_string(longest_timer) + " minutes.");
 	
 	// Longest timer is often negative as its a DELTA time to the end/start of event on cal.
 	// Wake the care approx 5  mins before the earliest it would need to turn on HVAC, to check car temp.
 	// No point in waking up car earlier than: -longest_timer + max TempTimeModifier(32) + 5 min buffer
 	intwakeTimer = -longest_timer + 32 + 5;
-	lg.p(std::to_string(intwakeTimer));
+	lg.p("Wake timer (longest timer + 32 + 5): " + std::to_string(intwakeTimer) + " minutes.");
 	return;
 }

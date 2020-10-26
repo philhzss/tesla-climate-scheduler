@@ -282,7 +282,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				"\nStartTimer=" + (std::to_string(event.startTimer)) +
 				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 			);
-			lg.i("Upcoming shift start/end, waking car to check temp.", true);
+			// Notification for wake action now in main.cpp
 			lg.i("Wake event triggered at: " + return_current_time_and_date() + " LOCAL\n");
 			// Return wake since this shift is upcoming but not close enough to start the car yet
 			return "wake";

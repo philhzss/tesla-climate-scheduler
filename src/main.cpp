@@ -3,7 +3,6 @@
 #include "logger.h"
 #include "calendar.h"
 
-
 using std::string;
 
 static Log lg("Main");
@@ -15,9 +14,9 @@ time_t nowTime_secs = time(&nowTime_secs);
 // Should be blank by default
 string actionToDo = "";
 
+
+// Initialize car
 car Tesla;
-
-
 
 
 
@@ -183,13 +182,23 @@ int main()
 				// Get & parse calendar data
 				initiateCal();
 
-				// Verify if any event matches the event checking parameters
-				// Wake loop
+
+				// Test functions
+				Tesla.getData();
+				Tesla.teslaGET("api/1/vehicles");
+				// Test functions end
+
+
+				// Verify if any event matches the event checking parameters (Wake loop)
 				do
 				{
+					bool wakeHasBeenSent = false;
 					if (actionToDo == "wake")
 					{
+						lg.i("Upcoming shift start/end, waking car to check temp.", true);
 						lg.i("Wake command sent to car (to be programmed)");
+						// Wait X seconds to check if car is awake now
+						sleep(45);
 					}
 					// If actionToDo is not wake and is not empty, then its a triggered event (home or work)
 					else if (!actionToDo.empty())
@@ -197,7 +206,6 @@ int main()
 						lg.i(actionToDo);
 						lg.i("Car trigger event would go here (to be programmed)");
 						// Carblock testing, with home or work parameter:
-
 					}
 					actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
 				} while (!actionToDo.empty());

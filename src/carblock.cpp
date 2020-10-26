@@ -16,18 +16,23 @@ using std::string;
 static Log lg("Carblock");
 
 
+void car::teslaAuth()
+{
+	json authjson;
+	authjson = teslaPOST("oauth/token", settings::authReqPackage);
+	//cout << authjson << endl;
+	string teslaToken = authjson["access_token"];
+	settings::teslaAuthString = "Authorization: Bearer " + teslaToken;
+	lg.d("Tesla Token header is set to: " + settings::teslaAuthString);
+	return;
+}
 
 
 std::map<string, string> car::getData(string log)
 {
-	json authjson;
-	authjson = teslaPOST("oauth/token", settings::authPackage);
-	cout << authjson << endl;
-	string teslaToken = authjson["access_token"];
-	settings::teslaAuthHeader = { { "Authorization", "Bearer " + teslaToken } };
-	lg.d("Tesla official token written to settings as: " + settings::teslaAuthHeader.dump());
-
-
+	// Get token from Tesla servers and store it in settings cpp
+	car::teslaAuth();
+	
 	try
 	{
 		string readBufferData = curl_GET(settings::tfiURL);
@@ -78,7 +83,6 @@ std::map<string, string> car::getData(string log)
 		{
 			lg.i("The car is trying to sleep, sleep mode assumed, will attempt to wake.");
 			carAwake = false;
-
 		}
 		try {
 			string tfiShift = jsonTfiData["shift_state"];
@@ -127,6 +131,12 @@ std::map<string, string> car::getData(string log)
 			lg.i(element.first + ": " + element.second);
 		}
 	}
+
+	if (!carAwake)
+	{
+
+	}
+
 	return carData;
 	// Implement somthing that repeats the getData function if the fields arent filled enough??
 	// Or just call the wake function?? (when car updating, missing fields).
@@ -188,45 +198,68 @@ json car::teslaPOST(string url, json package)
 	return jsonReadBuffer;
 }
 
+
+
 json car::teslaGET(string url)
 {
-		const char* const url_to_use = url.c_str();
-		CURL* curl;
-		CURLcode res;
-		// Buffer to store result temporarily:
-		string readBuffer;
-		curl_global_init(CURL_GLOBAL_DEFAULT);
-		curl = curl_easy_init();
-		if (curl) {
-			
-			
-			
-			struct curl_slist* headers = nullptr;
-			headers = curl_slist_append(headers, "Content-Type: application/json");
-			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-			/* Perform the request, res will get the return code */
-			res = curl_easy_perform(curl);
-			/* Check for errors */
-			if (res != CURLE_OK)
-			{
-				fprintf(stderr, "curl_easy_perform() failed: %s\n",
-					curl_easy_strerror(res));
-				throw "curl_easy_perform() failed: " + std::to_string(res);
-			}
+	string fullUrl = settings::teslaURL + url;
+	const char* const url_to_use = fullUrl.c_str();
+	CURL* curl;
+	CURLcode res;
+	// Buffer to store result temporarily:
+	string readBuffer;
+	long response_code;
 
-			/* always cleanup */
-			curl_easy_cleanup(curl);
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+	curl = curl_easy_init();
+	if (curl) {
+
+
+		// Header for auth
+		const char* authHeaderC = settings::teslaAuthString.c_str();
+		cout << "cteslaauth header is:";
+		cout << settings::teslaAuthString << endl;
+		cout << "Which is the same as:";
+		cout << authHeaderC << endl;
+
+		struct curl_slist* headers = nullptr;
+		headers = curl_slist_append(headers, authHeaderC);
+		headers = curl_slist_append(headers, "Content-Type: application/json");
+
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+		curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
+
+		/* use a GET to fetch this */
+		//curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+		/* Perform the request, res will get the return code */
+		res = curl_easy_perform(curl);
+		/* Check for errors */
+		if (res != CURLE_OK)
+		{
+			fprintf(stderr, "curl_easy_perform() failed: %s\n",
+				curl_easy_strerror(res));
+			throw "curl_easy_perform() failed: " + std::to_string(res);
 		}
-		curl_global_cleanup();
+		if (res == CURLE_OK) {
+			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+			lg.i("Response code: " + std::to_string(response_code));
+		}
 
-		json jsonReadBuffer = json::parse(readBuffer);
-		return jsonReadBuffer;
+		/* always cleanup */
+		curl_easy_cleanup(curl);
+	}
+	curl_global_cleanup();
+	cout << readBuffer << endl;
+	lg.p(readBuffer);
+	json jsonReadBuffer = json::parse(readBuffer);
+	return jsonReadBuffer;
 }
 
-void car::wake()
+
+bool car::wake()
 {
 
 }
@@ -266,7 +299,7 @@ int car::calcTempMod(int interior_temp)
 	// Round up
 	finalTempTimeModifier = static_cast<int>(rawTempTimeModifier + 0.5);
 	if (finalTempTimeModifier <= 2)
-	{	
+	{
 		lg.d("rawTempTimeModifier was calculated as " + std::to_string(rawTempTimeModifier) + " mins, probably because default20CMinTime is set to "
 			+ settings::u_default20CMinTime + " mins.");
 		finalTempTimeModifier = 2;
