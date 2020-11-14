@@ -12,20 +12,18 @@ public:
 	// Public variables
 	enum LogLevel
 	{
-		LevelError = 0, LevelInfo, LevelDebug, LevelProgramming
+		Error = 0, Info, Debug, Programming
 	};
 
 
 	// Public functions
 	/* Constructor that'll take a string for parameter,
 	will be inserted before each log message to make sure we know what file its from */
-	Log(string sourceFile);
+	Log(string sourceFile, int level);
 
-	// Set level of logging ONCE for whole program, and print whatever the level is
-	static void SetLevel(int level);
 
 	// Read log level for block of text outputs
-	static int ReadLevel();
+	int ReadLevel();
 
 	// Logging functions for e-Error, i-Info, d-Debug, n-Notification only
 	void e(string message, bool notification = false);
@@ -39,8 +37,8 @@ public:
 	
 
 private:
-	// Stores the loggin level for the entire program
-	static int m_LogLevel;
+	// Stores the logging level for the file
+	int fileLogLevel;
 	string source_file;
 
 	//Private functions

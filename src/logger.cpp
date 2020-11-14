@@ -10,18 +10,14 @@ using std::string;
 
 
 /* Constructor that'll take a string for parameter,
-	will be inserted before each log message to make sure we know what file its from */
-Log::Log(string sourceFile)
+	will be inserted before each log message to make sure we know what file its from
+	Also requires logging level per file now*/
+Log::Log(string sourceFile, int level)
 {
 	source_file = sourceFile;
-}
 
-
-// Set level of logging ONCE for whole program, and print whatever the level is
-void Log::SetLevel(int level)
-{
 	string tempLevelVar;
-	m_LogLevel = level;
+	fileLogLevel = level;
 	if (level == 0)
 		tempLevelVar = "[Errors only]";
 	else if (level == 1)
@@ -30,12 +26,13 @@ void Log::SetLevel(int level)
 		tempLevelVar = "[Debug - all messages]";
 	else if (level == 3)
 		tempLevelVar = "[Programming - High debugging level messages]";
-	cout << "\nLog level is: " << tempLevelVar << "\n\n";
+	cout << "\nLog level for " + source_file + " is: " << tempLevelVar << endl;
 }
+
 
 int Log::ReadLevel()
 {
-	return m_LogLevel;
+	return fileLogLevel;
 }
 
 
@@ -107,7 +104,7 @@ string Log::notify(string message)
 // Logging functions for e-Error, i-Info, d-Debug
 void Log::e(string message, bool notification)
 {
-	if (m_LogLevel >= LevelError)
+	if (fileLogLevel >= Error)
 	{
 		cout << "**[" << source_file << " ERROR]** " << message << endl;
 		if (notification)
@@ -118,7 +115,7 @@ void Log::e(string message, bool notification)
 }
 void Log::i(string message, bool notification)
 {
-	if (m_LogLevel >= LevelInfo)
+	if (fileLogLevel >= Info)
 	{
 		cout << "[" << source_file << " info] " << message << endl;
 		if (settings::u_logToFile == "true")
@@ -129,7 +126,7 @@ void Log::i(string message, bool notification)
 }
 void Log::d(string message, bool notification)
 {
-	if (m_LogLevel >= LevelDebug)
+	if (fileLogLevel >= Debug)
 	{
 		cout << "[" << source_file << " Debug] " << message << endl;
 		if (settings::u_logToFile == "true")
@@ -140,7 +137,7 @@ void Log::d(string message, bool notification)
 }
 void Log::p(string message)
 {
-	if (m_LogLevel >= LevelProgramming)
+	if (fileLogLevel >= Programming)
 	{
 		cout << "[.." << source_file << " Programming..] " << message << endl;
 	}
