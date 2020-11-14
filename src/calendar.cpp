@@ -4,7 +4,7 @@
 
 using std::string;
 
-static Log lg("Calendar");
+static Log lg("Calendar", Log::LogLevel::Info);
 
 
 std::vector<calEvent> calEvent::myCalEvents;

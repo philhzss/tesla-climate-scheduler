@@ -5,7 +5,7 @@
 
 using std::string;
 
-static Log lg("Main");
+static Log lg("Main", Log::LogLevel::Debug);
 
 bool crashed = false;
 
@@ -20,7 +20,6 @@ car Tesla;
 
 
 
-int Log::m_LogLevel;
 
 // CURL stuff
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp)
@@ -95,7 +94,7 @@ const string return_current_time_and_date()
 	struct tm tstruct;
 	char buf[80];
 	tstruct = *localtime(&nowTime_secs);
-	if (Log::ReadLevel() == 3)
+	if (lg.ReadLevel() == 3)
 	{
 		cout << "TEST NOW TIME STRUCT" << endl;
 		cout << "nowTime_secs before conversions, should be the same after:" << endl;
@@ -129,9 +128,6 @@ const string string_time_and_date(tm tstruct)
 
 int main()
 {
-	// From least to most info: LevelError(0), LevelInfo(1), LevelDebug(2), LevelProgramming(3).
-	Log::SetLevel(Log::LogLevel::LevelProgramming);
-
 	try
 	{
 		// Read settings initially for Slack Channel (without output results)
@@ -184,8 +180,7 @@ int main()
 
 
 				// Test functions
-				Tesla.getData();
-				Tesla.teslaGET("api/1/vehicles");
+				Tesla.getData(true, "log");
 				// Test functions end
 
 
@@ -194,9 +189,10 @@ int main()
 				{
 					bool wakeHasBeenSent = false;
 					if (actionToDo == "wake")
+					// if (true)
 					{
 						lg.i("Upcoming shift start/end, waking car to check temp.", true);
-						lg.i("Wake command sent to car (to be programmed)");
+						Tesla.getData(true);
 						// Wait X seconds to check if car is awake now
 						sleep(45);
 					}

@@ -6,7 +6,7 @@ using std::string;
 using json = nlohmann::json;
 
 // Stores program settings, including but not limited to settings.json stuff
-class settings 
+class settings
 {
 public:
 	// Initial breakdown into separate json objects
@@ -16,7 +16,10 @@ public:
 	// Important stuff, Tesla official token, Tesla URL
 	static string tfiURL;
 	static string teslaURL;
-	static string teslaHeader;
+	// In post requests where no params are required, use this
+	static string teslaBlankParams;
+	static string teslaVURL;
+	static string teslaVID;
 	static json authReqPackage;
 	static string teslaAuthString;
 

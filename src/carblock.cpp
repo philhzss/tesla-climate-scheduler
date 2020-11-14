@@ -13,26 +13,30 @@ using std::string;
 
 
 // Log file name for console messages
-static Log lg("Carblock");
+static Log lg("Carblock", Log::LogLevel::Programming);
 
 
 void car::teslaAuth()
 {
+	lg.d("teslaAuth function start");
 	json authjson;
-	authjson = teslaPOST("oauth/token", settings::authReqPackage);
+	authjson = teslaPOST("oauth/token", settings::authReqPackage, true);
 	//cout << authjson << endl;
 	string teslaToken = authjson["access_token"];
 	settings::teslaAuthString = "Authorization: Bearer " + teslaToken;
 	lg.d("Tesla Token header is set to: " + settings::teslaAuthString);
+	lg.d("teslaAuth function end");
 	return;
 }
 
 
-std::map<string, string> car::getData(string log)
+std::map<string, string> car::getData(bool wakeCar, string log)
 {
 	// Get token from Tesla servers and store it in settings cpp
+	// This must be run at least once before getData
 	car::teslaAuth();
-	
+
+	// Get Tesla Fi data
 	try
 	{
 		string readBufferData = curl_GET(settings::tfiURL);
@@ -103,15 +107,36 @@ std::map<string, string> car::getData(string log)
 	}
 	catch (nlohmann::detail::type_error e)
 	{
-		lg.e("Problem getting data. Car updating? Tesla API down? nlohmann::detail::type_error");
+		lg.e("Problem getting data from Tesla Fi. Car updating? Tesla API down? nlohmann::detail::type_error");
 	}
 
+	// Get Tesla official server vehicleS data
+	try
+	{
+		json teslaGetData = car::teslaGET("api/1/vehicles");
+		tstate = teslaGetData["state"];
+		// Store VID and VURL in settings
+		settings::teslaVID = teslaGetData["id_s"];
+		settings::teslaVURL = "api/1/vehicles/" + settings::teslaVID + "/";
+	}
+	catch (string e)
+	{
+		lg.e("CURL Tesla API exception: " + e);
+		throw string("Can't get car data from Tesla Official API. (CURL problem?)");
+	}
+	catch (nlohmann::detail::type_error e)
+	{
+		lg.e("Problem getting data from Tesla API. Car updating? Tesla API down? nlohmann::detail::type_error");
+	}
+
+	// Store the data in the map, then check wake status and wake if required
 	carData["Success"] = "True";
 	carData["Car awake"] = std::to_string(carAwake);
 	carData["Tesla Fi Date"] = tfiDate;
 	carData["Tesla Fi Name"] = tfiName;
 	carData["Tesla Fi Car State"] = tficarState;
 	carData["Tesla Fi Connection State"] = tfiState;
+	carData["Tesla API Online State"] = tstate;
 	carData["Tesla Fi Shift State"] = tfiShift;
 	carData["Tesla Fi Location"] = tfiLocation;
 	carData["Tesla Fi Inside temp"] = tfiIntTemp;
@@ -120,21 +145,23 @@ std::map<string, string> car::getData(string log)
 	carData["Tesla Fi is HVAC On"] = tfiIsHvacOn;
 	carData["Tesla Fi Usable Battery"] = tfiUsableBat;
 	carData["Tesla Fi Battery level"] = tfiBat;
+	carData["Tesla API vehicle ID"] = settings::teslaVID;
 	lg.b();
 
 	if (!log.empty())
 	{
+		lg.i("getData logging enabled for this call");
 		lg.i("getData result:");
-
 		for (std::pair<string, string> element : carData)
 		{
 			lg.i(element.first + ": " + element.second);
 		}
 	}
 
-	if (!carAwake)
-	{
 
+	if (wakeCar)
+	{
+		do { car::wake(); } while (!carAwake);
 	}
 
 	return carData;
@@ -143,10 +170,11 @@ std::map<string, string> car::getData(string log)
 }
 
 
-json car::teslaPOST(string url, json package)
+json car::teslaPOST(string url, json package, bool noBearerToken)
 {
 	string fullUrl = settings::teslaURL + url;
 	const char* const url_to_use = fullUrl.c_str();
+	lg.d("teslaPOSTing to this URL: " + fullUrl);
 
 	CURL* curl;
 	CURLcode res;
@@ -168,6 +196,13 @@ json car::teslaPOST(string url, json package)
 		/* Now specify the POST data */
 		struct curl_slist* headers = nullptr;
 		headers = curl_slist_append(headers, "Content-Type: application/json");
+		// This should only be specified false on teslaAuth as we dont have token yet
+		if (!noBearerToken) {
+			const char* token_c = settings::teslaAuthString.c_str();
+			lg.p("Sending this header" + settings::teslaAuthString);
+			headers = curl_slist_append(headers, token_c);
+		}
+
 
 		// Serialize the package json to string
 		string data = package.dump();
@@ -198,8 +233,6 @@ json car::teslaPOST(string url, json package)
 	return jsonReadBuffer;
 }
 
-
-
 json car::teslaGET(string url)
 {
 	string fullUrl = settings::teslaURL + url;
@@ -218,8 +251,6 @@ json car::teslaGET(string url)
 		// Header for auth
 		const char* authHeaderC = settings::teslaAuthString.c_str();
 		cout << "cteslaauth header is:";
-		cout << settings::teslaAuthString << endl;
-		cout << "Which is the same as:";
 		cout << authHeaderC << endl;
 
 		struct curl_slist* headers = nullptr;
@@ -252,16 +283,19 @@ json car::teslaGET(string url)
 		curl_easy_cleanup(curl);
 	}
 	curl_global_cleanup();
-	cout << readBuffer << endl;
 	lg.p(readBuffer);
 	json jsonReadBuffer = json::parse(readBuffer);
-	return jsonReadBuffer;
+	// Inside "response" is an array, the first item is what contains the response:
+	json responseObject = (jsonReadBuffer["response"])[0];
+	return responseObject;
 }
 
 
 bool car::wake()
 {
-
+	// Test TeslaPOST with climate on cmd
+	json j;
+	teslaPOST(settings::teslaVURL + "command/auto_conditioning_start", j);
 }
 
 

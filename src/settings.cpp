@@ -1,7 +1,7 @@
 #include "logger.h"
 #include "settings.h"
 
-static Log lg("Settings");
+static Log lg("Settings", Log::LogLevel::Debug);
 
 
 
@@ -39,7 +39,9 @@ string settings::u_teslaPassword;
 string settings::u_teslaFiToken;
 string settings::tfiURL;
 string settings::teslaURL;
-string settings::teslaHeader;
+string settings::teslaBlankParams;
+string settings::teslaVURL;
+string settings::teslaVID;
 string settings::u_teslaClientID;
 string settings::u_teslaClientSecret;
 json settings::authReqPackage;
@@ -153,7 +155,8 @@ void settings::readSettings(string silent)
 	// Apply/calculate other setting values
 	tfiURL = ("https://www.teslafi.com/feed.php?&token=" + u_teslaFiToken);
 	teslaURL = "https://owner-api.teslamotors.com/";
-	teslaHeader = {};
+	// Tesla VID and VURL defined in carblock
+	teslaBlankParams = {};
 
 	// Default to 0 to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.
 	inttriggerTimer = 0;

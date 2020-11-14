@@ -25,6 +25,8 @@ private:
 	string tfiUsableBat = "";
 	string tfiBat = "";
 
+	string tstate = "";
+
 
 private:
 	bool wake();
@@ -32,11 +34,11 @@ private:
 	void teslaAuth();
 
 public:
-	// Pull data from car, waking the car if required (waking not yet implemented)
-	std::map<string, string> getData(string log = "");
+	// Pull data from car, waking the car if requested
+	std::map<string, string> getData(bool wakeCar, string log = "");
 	
 	// POST request to "https://owner-api.teslamotors.com/ + url"
-	json teslaPOST(string url, json package);
+	json teslaPOST(string url, json package, bool noBearerToken=false);
 
 	// RE WRITE TeslaPOST as teslaAUTH, and create another with oAuth built in like GET??
 
