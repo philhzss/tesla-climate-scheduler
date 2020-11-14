@@ -32,13 +32,16 @@ private:
 	bool wake();
 	// Write token to settings::teslaAuthString for Tesla official API usage
 	void teslaAuth();
+	// Function that checks TFi data, checks if polling disabled, etc
+	// WARNING, DOES NOT UPDATE CARDATA MAP!!!!!!!!
+	void teslaFiGetData();
 
 public:
 	// Pull data from car, waking the car if requested
 	std::map<string, string> getData(bool wakeCar, string log = "");
 	
 	// POST request to "https://owner-api.teslamotors.com/ + url"
-	json teslaPOST(string url, json package, bool noBearerToken=false);
+	json teslaPOST(string url, json package=json(), bool noBearerToken=false);
 
 	// RE WRITE TeslaPOST as teslaAUTH, and create another with oAuth built in like GET??
 

@@ -128,6 +128,7 @@ const string string_time_and_date(tm tstruct)
 
 int main()
 {
+	cout << "start of main" << endl;
 	try
 	{
 		// Read settings initially for Slack Channel (without output results)
@@ -148,10 +149,6 @@ int main()
 		"\nThis is free software, and you are welcome to redistribute it"
 		"\nunder certain conditions.\n\n");
 	lg.n("TCS app initiated" + tcs_versionInfo);
-
-	// test
-	// Test getData
-	// Tesla.getData("log");
 
 
 
@@ -179,22 +176,24 @@ int main()
 				initiateCal();
 
 
-				// Test functions
-				Tesla.getData(true, "log");
-				// Test functions end
-
-
 				// Verify if any event matches the event checking parameters (Wake loop)
 				do
 				{
 					bool wakeHasBeenSent = false;
-					if (actionToDo == "wake")
-					// if (true)
+					int tempTimeMod;
+					//if (actionToDo == "wake")
+					if (true)
 					{
-						lg.i("Upcoming shift start/end, waking car to check temp.", true);
-						Tesla.getData(true);
-						// Wait X seconds to check if car is awake now
-						sleep(45);
+						// Implement timeout for getData, maybe in all cURL functions??
+						Tesla.getData(true, "log");
+						if (Tesla.carAwake) {
+							lg.i("Car is awake and int temp is: " + Tesla.carData["Tesla Fi Inside temp"]);
+							tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData["Tesla Fi Inside temp"]));
+							lg.i("HVAC will trigger " + std::to_string(tempTimeMod) + " mins before depart time", true);
+						}
+						else {
+							lg.e("Could not wake car??");
+						}
 					}
 					// If actionToDo is not wake and is not empty, then its a triggered event (home or work)
 					else if (!actionToDo.empty())

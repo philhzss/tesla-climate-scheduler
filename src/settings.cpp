@@ -39,7 +39,6 @@ string settings::u_teslaPassword;
 string settings::u_teslaFiToken;
 string settings::tfiURL;
 string settings::teslaURL;
-string settings::teslaBlankParams;
 string settings::teslaVURL;
 string settings::teslaVID;
 string settings::u_teslaClientID;
@@ -93,7 +92,8 @@ void settings::readSettings(string silent)
 			u_teslaFiToken = teslaSettings["teslaFiToken"];
 			u_teslaClientID = teslaSettings["TESLA_CLIENT_ID"];
 			u_teslaClientSecret = teslaSettings["TESLA_CLIENT_SECRET"];
-			
+
+			lg.b();
 			lg.d("Settings file settings.json successfully read.");
 
 			settings::authReqPackage =
@@ -156,7 +156,6 @@ void settings::readSettings(string silent)
 	tfiURL = ("https://www.teslafi.com/feed.php?&token=" + u_teslaFiToken);
 	teslaURL = "https://owner-api.teslamotors.com/";
 	// Tesla VID and VURL defined in carblock
-	teslaBlankParams = {};
 
 	// Default to 0 to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.
 	inttriggerTimer = 0;

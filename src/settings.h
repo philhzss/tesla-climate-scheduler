@@ -16,8 +16,6 @@ public:
 	// Important stuff, Tesla official token, Tesla URL
 	static string tfiURL;
 	static string teslaURL;
-	// In post requests where no params are required, use this
-	static string teslaBlankParams;
 	static string teslaVURL;
 	static string teslaVID;
 	static json authReqPackage;

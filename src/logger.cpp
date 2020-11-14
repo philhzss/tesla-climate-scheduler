@@ -26,7 +26,7 @@ Log::Log(string sourceFile, int level)
 		tempLevelVar = "[Debug - all messages]";
 	else if (level == 3)
 		tempLevelVar = "[Programming - High debugging level messages]";
-	cout << "\nLog level for " + source_file + " is: " << tempLevelVar << endl;
+	cout << "Log level for " + source_file + " is: " << tempLevelVar << endl;
 }
 
 
