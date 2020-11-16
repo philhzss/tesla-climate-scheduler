@@ -101,39 +101,7 @@ string Log::notify(string message)
 }
 
 
-// Logging functions for e-Error, i-Info, d-Debug
-void Log::e(string contents, bool notification)
-{
-	if (fileLogLevel >= Error)
-	{
-		string message = contents;
-		write(message, source_file, "**ERROR**", notification);
-	}
-}
-void Log::i(string contents, bool notification)
-{
-	if (fileLogLevel >= Info)
-	{
-		string message = contents;
-		write(message, source_file, "Info", notification);
-	}
-}
-void Log::d(string contents, bool notification)
-{
-	if (fileLogLevel >= Debug)
-	{
-		string message = contents;
-		write(message, source_file, "Debug", notification);
-	}
-}
-void Log::p(string contents)
-{
-	if (fileLogLevel >= Programming)
-	{
-		string message = contents;
-		write(message, source_file, "..Programming..", false);
-	}
-}
+// Notification & blank loggers can only take strings as inputs
 void Log::n(string message)
 {
 	b(notify(message));

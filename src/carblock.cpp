@@ -55,7 +55,7 @@ std::map<string, string> car::getData(bool wakeCar)
 	}
 	catch (string e)
 	{
-		lg.e("CURL Tesla API exception: " + e);
+		lg.e("CURL Tesla API exception: ", e);
 		throw string("Can't get car data from Tesla API. (CURL problem?)");
 	}
 	catch (nlohmann::detail::type_error e)
@@ -102,8 +102,8 @@ std::map<string, string> car::getData(bool wakeCar)
 		carData_s["display_name"] = Tdisplay_name;
 		carData_s["shift_state"] = Tshift_state;
 		// not good
-		carData_s["inside_temp"] = std::to_string((int)Tinside_temp*10);
-		carData_s["outside_temp"] = std::to_string((int)Toutside_temp*10);
+		carData_s["inside_temp"] = std::to_string((int)Tinside_temp * 10);
+		carData_s["outside_temp"] = std::to_string((int)Toutside_temp * 10);
 		carData_s["driver_temp_setting"] = std::to_string(Tdriver_temp_setting);
 		carData_s["is_climate_on"] = std::to_string(Tis_climate_on);
 		carData_s["usable_battery_level"] = std::to_string(Tusable_battery_level);
@@ -286,23 +286,23 @@ int car::calcTempMod(int interior_temp)
 	// Choose which curve to use
 	if (interior_temp > 10)
 	{
-		lg.p("Interior temp is " + std::to_string(interior_temp) + "C, using summer curve.");
+		lg.p("Interior temp is ", interior_temp, "C, using summer curve.");
 		rawTempTimeModifier = pow(interior_temp, 2) / 40 - interior_temp + (10 + defaultMinTime);
 		if (rawTempTimeModifier >= 16)
 		{
 			// Capped at 16 mins when super hot in car
-			lg.p("Calculated temp time is " + std::to_string(rawTempTimeModifier) + " mins, capping at 16 mins.");
+			lg.p("Calculated temp time is ", rawTempTimeModifier, " mins, capping at 16 mins.");
 			rawTempTimeModifier = 16;
 		}
 	}
 	else
 	{
-		lg.p("Interior temp is " + std::to_string(interior_temp) + "C, using winter curve.");
+		lg.p("Interior temp is ", interior_temp, "C, using winter curve.");
 		rawTempTimeModifier = pow(interior_temp, 2) / 300 - interior_temp / 2 + (9 + defaultMinTime);
 		if (rawTempTimeModifier >= 32)
 		{
 			// Capped at 32 mins when super cold in car
-			lg.p("Calculated temp time is " + std::to_string(rawTempTimeModifier) + " mins, capping at 32 mins.");
+			lg.p("Calculated temp time is ", rawTempTimeModifier, " mins, capping at 32 mins.");
 			rawTempTimeModifier = 32;
 		}
 	}
@@ -311,12 +311,12 @@ int car::calcTempMod(int interior_temp)
 	finalTempTimeModifier = static_cast<int>(rawTempTimeModifier + 0.5);
 	if (finalTempTimeModifier <= 2)
 	{
-		lg.d("rawTempTimeModifier was calculated as " + std::to_string(rawTempTimeModifier) + " mins, probably because default20CMinTime is set to "
+		lg.d("rawTempTimeModifier was calculated as ", rawTempTimeModifier, " mins, probably because default20CMinTime is set to "
 			+ settings::u_default20CMinTime + " mins.");
 		finalTempTimeModifier = 2;
 		lg.d("Calculated TempTimeModifier too low, bottoming out at 2 minutes");
 	}
-	lg.d("Interior car temp is " + std::to_string(interior_temp) + "C, tempTimeModifier is: " + std::to_string(finalTempTimeModifier) + " minutes");
+	lg.d("Interior car temp is ", interior_temp, "C, tempTimeModifier is: ", finalTempTimeModifier, +" minutes");
 
 	return finalTempTimeModifier;
 }

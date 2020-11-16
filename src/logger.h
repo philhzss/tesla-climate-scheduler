@@ -29,30 +29,80 @@ public:
 	// Read log level for block of text outputs
 	int ReadLevel();
 
+
 	// Logging functions for e-Error, i-Info, d-Debug, n-Notification only
-
-	void e(string contents, bool notification = false);
-	void i(string contents, bool notification = false);
-	void d(string contents, bool notification = false);
-	void p(string contents);
-	void n(string message);
-
-
-	// Blank bare message
-	void b(string message = "");
-
-	// Should be private eventually:
-	// Logger preparator (define outside logger class)
 	template<typename ...Args>
-	string prepare(Args&&... args)
+	void e(Args&&... args)
 	{
-		std::ostringstream out;
-		out.precision(1);
-		out << std::fixed << std::boolalpha;
-		(out << ... << args);
-		return out.str();
+		if (fileLogLevel >= Error)
+		{
+			string message = Log::prepare(std::forward<Args>(args)...);
+			write(message, source_file, "**ERROR**");
+		}
+	}
+	template<typename ...Args>
+	void en(Args&&... args)
+	{
+		if (fileLogLevel >= Error)
+		{
+			string message = Log::prepare(std::forward<Args>(args)...);
+			write(message, source_file, "**ERROR**", true);
+		}
 	}
 
+	template<typename ...Args>
+	void i(Args&&... args)
+	{
+		if (fileLogLevel >= Info)
+		{
+			string message = Log::prepare(std::forward<Args>(args)...);
+			write(message, source_file, "Info");
+		}
+	}
+	template<typename ...Args>
+	void in(Args&&... args)
+	{
+		if (fileLogLevel >= Info)
+		{
+			string message = Log::prepare(std::forward<Args>(args)...);
+			write(message, source_file, "Info", true);
+		}
+	}
+	
+	template<typename ...Args>
+	void d(Args&&... args)
+	{
+		if (fileLogLevel >= Debug)
+		{
+			string message = Log::prepare(std::forward<Args>(args)...);
+			write(message, source_file, "Debug");
+		}
+	}
+	template<typename ...Args>
+	void dn(Args&&... args)
+	{
+		if (fileLogLevel >= Debug)
+		{
+			string message = Log::prepare(std::forward<Args>(args)...);
+			write(message, source_file, "Debug", true);
+		}
+	}
+
+	template<typename ...Args>
+	void p(Args&&... args)
+	{
+		if (fileLogLevel >= Programming)
+		{
+			string message = Log::prepare(std::forward<Args>(args)...);
+			write(message, source_file, "..Programming..");
+		}
+	}
+
+
+	// Notification only (no log)
+	void n(string message);
+	// Blank bare message (blank line)
+	void b(string message = "");
 
 private:
 	// Stores the logging level for the file
@@ -65,6 +115,17 @@ private:
 	inline string getCurrentDateTime(string s);
 	string curl_POST_slack(string url, string message);
 
-	void write(string message, string source_file, string level, bool notification);
+	void write(string message, string source_file, string level, bool notification=false);
 
+
+	// Logger preparator
+	template<typename ...Args>
+	string prepare(Args&&... args)
+	{
+		std::ostringstream out;
+		out.precision(1);
+		out << std::fixed << std::boolalpha;
+		(out << ... << args);
+		return out.str();
+	}
 };

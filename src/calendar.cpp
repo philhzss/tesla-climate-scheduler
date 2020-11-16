@@ -111,12 +111,12 @@ void initiateCal()
 			int datePos = s.find(vacayShiftDetector);
 			string dateOfVacay = s.substr(datePos + vacayShiftDetector.length(), 8);
 			lg.i("The event on " + dateOfVacay + " is a " + settings::u_ignoredWord1 + " shift, skipping.");
-
 			continue;
 		}
 		else if (s.find(settings::u_ignoredWord2) != string::npos)
 		{
 			// Find date of spare shift for console debug purposes
+			// IS THIS WORKING? Spare detector to fix:
 			string spareShiftDetector = "DTSTART:";
 			int datePos = s.find(spareShiftDetector);
 			string dateOfSpare = s.substr(datePos + spareShiftDetector.length(), 13);

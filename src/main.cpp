@@ -2,6 +2,8 @@
 #include "tesla_var.h"
 #include "logger.h"
 #include "calendar.h"
+#include <iomanip>
+
 
 using std::string;
 
@@ -37,7 +39,6 @@ string curl_GET(string url)
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 	curl = curl_easy_init();
 	if (curl) {
-		// The tFI URL is here, Phil:
 		curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -79,8 +80,8 @@ bool InternetConnected() {
 			lg.e("***** INTERNET DOWN *****");
 			long response_code;
 			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-			lg.e("CURL Error Code: " + std::to_string(curlRes));
-			lg.d("HTTP Error Code (will be 0 if absolutely can't connect): " + std::to_string(response_code));
+			lg.e("CURL Error Code: ", curlRes);
+			lg.d("HTTP Error Code (will be 0 if absolutely can't connect): ", response_code);
 			lg.d("See https://curl.haxx.se/libcurl/c/libcurl-errors.html for details.");
 		}
 	}
@@ -94,7 +95,8 @@ const string return_current_time_and_date()
 	struct tm tstruct;
 	char buf[80];
 	tstruct = *localtime(&nowTime_secs);
-	if (lg.ReadLevel() == 3)
+	// VERIFY LOGGER HERE
+	if (lg.ReadLevel() == Log::Programming)
 	{
 		cout << "TEST NOW TIME STRUCT" << endl;
 		cout << "nowTime_secs before conversions, should be the same after:" << endl;
@@ -128,14 +130,13 @@ const string string_time_and_date(tm tstruct)
 
 int main()
 {
-	cout << "start of main" << endl;
 	try
 	{
 		// Read settings initially for Slack Channel (without output results)
 		settings::readSettings("silent not");
 	}
 	catch (string e) {
-		lg.e("Critical failure (before start), program stopping: " + e, true);
+		lg.en("Critical failure (before start), program stopping: " + e);
 		return EXIT_FAILURE;
 	}
 
@@ -154,9 +155,9 @@ int main()
 
 	// Set or reset initial variables
 	lg.b();
-	lg.d("\"Crashed\" variable set to " + std::to_string(crashed));
+	lg.d("\"Crashed\" variable set to ", crashed);
 	bool carblock_ran_success = false;
-	lg.d("\"carblock_ran_success\" variable set to " + std::to_string(carblock_ran_success));
+	lg.d("\"carblock_ran_success\" variable set to ", carblock_ran_success);
 	lg.d("Reason: Initial values should be False\n\n");
 
 	// Start of program, Always loop everything
@@ -176,20 +177,22 @@ int main()
 				initiateCal();
 
 
+
+
+
 				// Verify if any event matches the event checking parameters (Wake loop)
 				do
 				{
 					bool wakeHasBeenSent = false;
 					int tempTimeMod;
 					//if (actionToDo == "wake")
-					if (true)
+					if (false)
 					{
-						// Implement timeout for getData, maybe in all cURL functions??
-						Tesla.getData(true, "log");
-						if (Tesla.carAwake) {
-							lg.i("Car is awake and int temp is: " + Tesla.carData["Tesla Fi Inside temp"]);
-							tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData["Tesla Fi Inside temp"]));
-							lg.i("HVAC will trigger " + std::to_string(tempTimeMod) + " mins before depart time", true);
+						Tesla.getData(true);
+						if (Tesla.carOnline) {
+							lg.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
+							tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
+							lg.in("HVAC will trigger ", tempTimeMod, " mins before depart time");
 						}
 						else {
 							lg.e("Could not wake car??");
@@ -207,7 +210,7 @@ int main()
 
 			}
 			catch (string e) {
-				lg.e("Critical failure, program stopping: " + e, true);
+				lg.en("Critical failure, program stopping: " + e);
 				return EXIT_FAILURE;
 			}
 

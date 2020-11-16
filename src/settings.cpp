@@ -73,7 +73,7 @@ void settings::readSettings(string silent)
 			intshutoffTimer = std::stoi(u_shutoffTimer);
 			u_default20CMinTime = carSettings["default20CMinTime"];
 			intdefault20CMinTime = std::stoi(u_default20CMinTime);
-		
+
 
 			// CALENDAR SETTINGS
 			u_calendarURL = calendarSettings["calendarURL"];
@@ -103,12 +103,12 @@ void settings::readSettings(string silent)
 	}
 	catch (nlohmann::detail::parse_error)
 	{
-		lg.e("readSettings json parsing error, verify that settings.json exists in same directory as binary", true);
+		lg.en("readSettings json parsing error, verify that settings.json exists in same directory as binary");
 		throw string("settings.json parse_error");
 	}
 	catch (nlohmann::detail::type_error)
 	{
-		lg.e("readSettings json type error, settings.json most likely corrupt, verify example", true);
+		lg.en("readSettings json type error, settings.json most likely corrupt, verify example");
 		throw string("settings.json type_error");
 	}
 
@@ -128,8 +128,8 @@ void settings::readSettings(string silent)
 			"\nCalendar words to ignore (0-2): " + settings::u_ignoredWord1 + ", " + settings::u_ignoredWord2 +
 			"\nTesla Email: " + u_teslaEmail +
 			"\nCommute time setting: " + u_commuteTime + " minutes."
-			"\nCar is therefore ready: \n" + std::to_string(intshiftStartTimer) + " minutes relative to calendar event start."
-			"\nAnd " + std::to_string(intshiftEndTimer) + " minutes relative to calendar event end time."
+			"\nCar is therefore ready: \n", intshiftStartTimer, " minutes relative to calendar event start."
+			"\nAnd ", intshiftEndTimer, " minutes relative to calendar event end time."
 			"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start."
 			"\nDefault time value @ 20C interior temp: " + u_default20CMinTime + " minutes."
 		);
@@ -157,12 +157,12 @@ void settings::readSettings(string silent)
 
 	// Figure out if its event start or event end that makes the car HVAC start earlier
 	int longest_timer = (std::abs(intshiftStartTimer) > std::abs(intshiftEndTimer) ? intshiftStartTimer : intshiftEndTimer);
-	lg.p("Longest timer (shift start or end): " + std::to_string(longest_timer) + " minutes.");
-	
+	lg.p("Longest timer (shift start or end): ", longest_timer, " minutes.");
+
 	// Longest timer is often negative as its a DELTA time to the end/start of event on cal.
 	// Wake the care approx 5  mins before the earliest it would need to turn on HVAC, to check car temp.
 	// No point in waking up car earlier than: -longest_timer + max TempTimeModifier(32) + 5 min buffer
 	intwakeTimer = -longest_timer + 32 + 5;
-	lg.p("Wake timer (longest timer + 32 + 5): " + std::to_string(intwakeTimer) + " minutes.");
+	lg.p("Wake timer (longest timer + 32 + 5): ", intwakeTimer, " minutes.");
 	return;
 }
