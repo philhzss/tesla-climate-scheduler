@@ -2,11 +2,11 @@
 #include "tesla_var.h"
 
 
+
 using std::cout;
 using std::endl;
 using std::cin;
 using std::string;
-
 
 
 /* Constructor that'll take a string for parameter,
@@ -102,50 +102,43 @@ string Log::notify(string message)
 
 
 // Logging functions for e-Error, i-Info, d-Debug
-void Log::e(string message, bool notification)
+void Log::e(string contents, bool notification)
 {
 	if (fileLogLevel >= Error)
 	{
-		cout << "**[" << source_file << " ERROR]** " << message << endl;
-		if (notification)
-			b(notify("*!!ERROR:* " + message));
-		if (settings::u_logToFile == "true")
-			toFile("**[" + source_file + " ERROR]** " + message);
+		string message = contents;
+		write(message, source_file, "**ERROR**", notification);
 	}
 }
-void Log::i(string message, bool notification)
+void Log::i(string contents, bool notification)
 {
 	if (fileLogLevel >= Info)
 	{
-		cout << "[" << source_file << " info] " << message << endl;
-		if (settings::u_logToFile == "true")
-			toFile("[" + source_file + " info] " + message);
-		if (notification)
-			b(notify(message));
+		string message = contents;
+		write(message, source_file, "Info", notification);
 	}
 }
-void Log::d(string message, bool notification)
+void Log::d(string contents, bool notification)
 {
 	if (fileLogLevel >= Debug)
 	{
-		cout << "[" << source_file << " Debug] " << message << endl;
-		if (settings::u_logToFile == "true")
-			toFile("[" + source_file + " Debug] " + message);
-		if (notification)
-			b(notify(message));
+		string message = contents;
+		write(message, source_file, "Debug", notification);
 	}
 }
-void Log::p(string message)
+void Log::p(string contents)
 {
 	if (fileLogLevel >= Programming)
 	{
-		cout << "[.." << source_file << " Programming..] " << message << endl;
+		string message = contents;
+		write(message, source_file, "..Programming..", false);
 	}
 }
 void Log::n(string message)
 {
 	b(notify(message));
 }
+
 void Log::b(string message)
 {
 	cout << message << endl;
@@ -153,6 +146,16 @@ void Log::b(string message)
 		toFile(message);
 }
 
+
+void Log::write(string message, string sourceFileWrite, string levelPrint, bool notification) {
+	string toWrite;
+	toWrite = "[" + sourceFileWrite + " " + levelPrint + "] " + message;
+	cout << toWrite << endl;
+	if (notification)
+		b(notify(levelPrint + " " + message));
+	if (settings::u_logToFile == "true")
+		toFile(toWrite);
+}
 
 // Logging to file functions
 inline string Log::getCurrentDateTime(string s) {
@@ -175,3 +178,4 @@ inline void Log::toFile(string message) {
 	ofs << now << '\t' << message << '\n';
 	ofs.close();
 }
+

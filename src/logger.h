@@ -1,10 +1,14 @@
 #pragma once
 #include <iostream>
+#include <sstream>
+#include <iomanip> 
+
 
 using std::cout;
 using std::endl;
 using std::cin;
 using std::string;
+
 
 class Log
 {
@@ -26,15 +30,29 @@ public:
 	int ReadLevel();
 
 	// Logging functions for e-Error, i-Info, d-Debug, n-Notification only
-	void e(string message, bool notification = false);
-	void i(string message, bool notification = false);
-	void d(string message, bool notification = false);
-	void p(string message);
+
+	void e(string contents, bool notification = false);
+	void i(string contents, bool notification = false);
+	void d(string contents, bool notification = false);
+	void p(string contents);
 	void n(string message);
 
+
 	// Blank bare message
-	void b(string message="");
-	
+	void b(string message = "");
+
+	// Should be private eventually:
+	// Logger preparator (define outside logger class)
+	template<typename ...Args>
+	string prepare(Args&&... args)
+	{
+		std::ostringstream out;
+		out.precision(1);
+		out << std::fixed << std::boolalpha;
+		(out << ... << args);
+		return out.str();
+	}
+
 
 private:
 	// Stores the logging level for the file
@@ -46,4 +64,7 @@ private:
 	inline void toFile(string message);
 	inline string getCurrentDateTime(string s);
 	string curl_POST_slack(string url, string message);
+
+	void write(string message, string source_file, string level, bool notification);
+
 };
