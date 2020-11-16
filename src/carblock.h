@@ -7,38 +7,30 @@ class car
 {
 public:
 	// public vars
-	bool carAwake = false;
-	std::map<string, string> carData;
+	bool carOnline = false;
+	std::map<string, string> carData_s;
+	
+	string Tdisplay_name = "";
+	string Tshift_state = "";
+	float Tinside_temp;
+	float Toutside_temp;
+	float Tdriver_temp_setting;
+	bool Tis_climate_on;
+	float Tusable_battery_level;
+	float Tbattery_level;
 
-private:
-	// private vars
-	string tfiDate = "";
-	string tfiName = "";
-	string tficarState = "";
-	string tfiState = "";
-	string tfiShift = "";
-	string tfiLocation = "";
-	string tfiIntTemp = "";
-	string tfiOutTemp = "";
-	string tfiTempSetting = "";
-	string tfiIsHvacOn = "";
-	string tfiUsableBat = "";
-	string tfiBat = "";
-
-	string tstate = "";
+	string _state = "";
 
 
 private:
-	bool wake();
+	void wake();
 	// Write token to settings::teslaAuthString for Tesla official API usage
 	void teslaAuth();
-	// Function that checks TFi data, checks if polling disabled, etc
-	// WARNING, DOES NOT UPDATE CARDATA MAP!!!!!!!!
-	void teslaFiGetData();
+
 
 public:
 	// Pull data from car, waking the car if requested
-	std::map<string, string> getData(bool wakeCar, string log = "");
+	std::map<string, string> getData(bool wakeCar=false);
 	
 	// POST request to "https://owner-api.teslamotors.com/ + url"
 	json teslaPOST(string url, json package=json(), bool noBearerToken=false);

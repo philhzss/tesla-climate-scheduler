@@ -14,7 +14,6 @@ public:
 
 
 	// Important stuff, Tesla official token, Tesla URL
-	static string tfiURL;
 	static string teslaURL;
 	static string teslaVURL;
 	static string teslaVID;
@@ -96,9 +95,6 @@ public:
 	// Tesla Setting
 	// Tesla official API password
 	static string u_teslaPassword;
-	// Tesla Setting
-	// TeslaFi Token
-	static string u_teslaFiToken;
 	// Tesla Setting
 	// CLIENT_ID
 	static string u_teslaClientID;

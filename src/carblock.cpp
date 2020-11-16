@@ -19,32 +19,36 @@ static Log lg("Carblock", Log::LogLevel::Programming);
 
 void car::teslaAuth()
 {
-	lg.d("teslaAuth function start");
+	if (lg.ReadLevel() >= Log::Debug) {
+		lg.b();
+		lg.d("teslaAuth function start");
+	}
 	json authjson;
 	authjson = teslaPOST("oauth/token", settings::authReqPackage, true);
 	//cout << authjson << endl;
 	string teslaToken = authjson["access_token"];
 	settings::teslaAuthString = "Authorization: Bearer " + teslaToken;
 	lg.d("Tesla Token header is set to: " + settings::teslaAuthString);
-	lg.d("teslaAuth function end");
+	if (lg.ReadLevel() >= Log::Debug) {
+		lg.d("teslaAuth function end");
+		lg.b();
+	}
 	return;
 }
 
 
-std::map<string, string> car::getData(bool wakeCar, string log)
+std::map<string, string> car::getData(bool wakeCar)
 {
 	// Get token from Tesla servers and store it in settings cpp
-	// This must be run at least once before getData
+	// This must be run before everything else
 	car::teslaAuth();
 
-	// Get Tesla Fi data
-	teslaFiGetData();
-
-	// Get Tesla official server vehicleS data
+	// Get Tesla vehicleS state and vID
 	try
 	{
 		json teslaGetData = car::teslaGET("api/1/vehicles");
-		tstate = teslaGetData["state"];
+		_state = teslaGetData["state"];
+		carOnline = (_state == "online") ? true : false;
 		// Store VID and VURL in settings
 		settings::teslaVID = teslaGetData["id_s"];
 		settings::teslaVURL = "api/1/vehicles/" + settings::teslaVID + "/";
@@ -52,144 +56,72 @@ std::map<string, string> car::getData(bool wakeCar, string log)
 	catch (string e)
 	{
 		lg.e("CURL Tesla API exception: " + e);
-		throw string("Can't get car data from Tesla Official API. (CURL problem?)");
+		throw string("Can't get car data from Tesla API. (CURL problem?)");
 	}
 	catch (nlohmann::detail::type_error e)
 	{
 		lg.e("Problem getting data from Tesla API. Car updating? Tesla API down? nlohmann::detail::type_error");
 	}
 
-	// Store the data in the map, then check wake status and wake if required
-	carData["Success"] = "True";
-	carData["Car awake"] = std::to_string(carAwake);
-	carData["Tesla Fi Date"] = tfiDate;
-	carData["Tesla Fi Name"] = tfiName;
-	carData["Tesla Fi Car State"] = tficarState;
-	carData["Tesla Fi Connection State"] = tfiState;
-	carData["Tesla API Online State"] = tstate;
-	carData["Tesla Fi Shift State"] = tfiShift;
-	carData["Tesla Fi Location"] = tfiLocation;
-	carData["Tesla Fi Inside temp"] = tfiIntTemp;
-	carData["Tesla Fi Outside temp"] = tfiOutTemp;
-	carData["Tesla Fi Driver Temp Setting"] = tfiTempSetting;
-	carData["Tesla Fi is HVAC On"] = tfiIsHvacOn;
-	carData["Tesla Fi Usable Battery"] = tfiUsableBat;
-	carData["Tesla Fi Battery level"] = tfiBat;
-	carData["Tesla API vehicle ID"] = settings::teslaVID;
-	lg.b();
-
-	if (!log.empty())
-	{
-		lg.i("getData logging enabled for this call");
-		lg.i("getData result:");
-		for (std::pair<string, string> element : carData)
-		{
-			lg.i(element.first + ": " + element.second);
-		}
-	}
-
+	// State and vehicle ID always obtained, even if wakeCar false
+	carData_s["vehicle_id"] = settings::teslaVID;
+	carData_s["state"] = _state;
+	carData_s["Car awake"] = std::to_string(carOnline);
 
 	if (wakeCar)
 	{
-		// Start by resuming Tfi polling if required
-		if (carData["Tesla Fi Name"] == "") {
-			lg.d("Restarting Tesla Fi polling");
-			string readBufferData = curl_GET(settings::tfiURL + "&command=wake");
-			lg.i("TFIAPI call used!! : " + readBufferData);
-			sleep(10);
-			while (tfiName == "") {
-				// Then recheck Tfi data
-				teslaFiGetData();
-				lg.i("WAITING");
-				sleep(15);
-			}
-		}
-		
-		// Wake through Tesla Official API
-		do { car::wake(); } while (!carAwake);
-		if (carAwake) {
-			lg.i("carAwake now true, exiting do-while wakeCar loop");
-		}
-	}
+		do {
+			// Run wake function until carOnline is true
+			car::wake();
+		} while (!carOnline);
 
-	return carData;
-}
+		// Now that the car is online, we can get more data
+		json response = teslaGET(settings::teslaVURL + "vehicle_data");
+		Tdisplay_name = response["display_name"];
 
+		json climate_state = response["climate_state"];
+		Tinside_temp = climate_state["inside_temp"];
+		Toutside_temp = climate_state["outside_temp"];
+		Tdriver_temp_setting = climate_state["driver_temp_setting"];
+		Tis_climate_on = climate_state["is_climate_on"];
 
-void car::teslaFiGetData() {
-	try
-	{
-		string readBufferData = curl_GET(settings::tfiURL);
-		lg.i("TFIAPI call used!!");
+		json charge_state = response["charge_state"];
+		Tusable_battery_level = charge_state["usable_battery_level"];
+		Tbattery_level = charge_state["battery_level"];
 
-		// Parse and log the data from tfi, after making sure you're authorized
-		lg.b();
-		lg.d("Raw data from TeslaFi: " + readBufferData);
-		if (readBufferData.find("unauthorized") != string::npos)
-		{
-			lg.e("TeslaFi access denied.");
-			throw string("TeslaFi token incorrect or expired.");
-		}
-		json jsonTfiData = json::parse(readBufferData);
-
-		// Display all the data and store in variables
-		tfiDate = jsonTfiData["Date"];
-		lg.d("tfiDate: " + tfiDate);
-		if (jsonTfiData["display_name"].type() == json::value_t::string) {
-			// Car is not sleeping, no need to wake
-			lg.d("Car display_name is a string (good), car is awake. Getting more data.");
-			tfiName = jsonTfiData["display_name"];
-			lg.d("tfiName: " + tfiName);
-			tfiIntTemp = jsonTfiData["inside_temp"];
-			lg.d("tfiIntTemp: " + tfiIntTemp);
-			tfiOutTemp = jsonTfiData["outside_temp"];
-			lg.d("tfiOutTemp: " + tfiOutTemp);
-			tfiTempSetting = jsonTfiData["driver_temp_setting"];
-			lg.d("tfiTempSetting: " + tfiTempSetting);
-			tfiIsHvacOn = jsonTfiData["is_climate_on"];
-			lg.d("tfiIsHvacOn: " + tfiIsHvacOn);
-			tfiUsableBat = jsonTfiData["usable_battery_level"];
-			lg.d("tfiUsableBat: " + tfiUsableBat);
-			tfiBat = jsonTfiData["battery_level"];
-			lg.d("tfiBat :" + tfiBat);
-			carAwake = true;
+		json drive_state = response["drive_state"];
+		if (drive_state["shift_state"].is_null()) {
+			Tshift_state = "P";
 		}
 		else {
-			// Car is sleeping or trying to sleep, will have to wake
-			lg.d("Car display_name is null, not a string, car is most likely sleeping OR trying to sleep, carAwake=False");
-			carAwake = false;
+			Tshift_state = drive_state["shift_state"];
+			lg.i("Shift state is not null, is: " + Tshift_state);
 		}
-		tficarState = jsonTfiData["carState"];
-		lg.d("tficarState: " + tficarState);
-		tfiState = jsonTfiData["state"];
-		lg.d("tfiState (connection state): " + tfiState);
-		// If the connection state is reported as online, but no other data can be pulled, car is in Tesla Fi sleep mode attempt. Detect this and assume car is asleep if so:
-		if ((tfiState == "online") and (jsonTfiData["display_name"].type() != json::value_t::string))
-		{
-			lg.i("The car is trying to sleep, sleep mode assumed, carAwake=False");
-			carAwake = false;
-		}
-		try {
-			string tfiShift = jsonTfiData["shift_state"];
-		}
-		catch (nlohmann::detail::type_error)
-		{
-			lg.d("json type_error for shift_state in TeslaFi, car assumed to be in park, manually writing");
-			tfiShift = "P";
-		}
-		lg.d("tfiShift: " + tfiShift);
-		tfiLocation = jsonTfiData["location"];
-		lg.d("tfiLocation: " + tfiLocation);
+
+		// remove trailing 0s?
+		carData_s["display_name"] = Tdisplay_name;
+		carData_s["shift_state"] = Tshift_state;
+		// not good
+		carData_s["inside_temp"] = std::to_string((int)Tinside_temp*10);
+		carData_s["outside_temp"] = std::to_string((int)Toutside_temp*10);
+		carData_s["driver_temp_setting"] = std::to_string(Tdriver_temp_setting);
+		carData_s["is_climate_on"] = std::to_string(Tis_climate_on);
+		carData_s["usable_battery_level"] = std::to_string(Tusable_battery_level);
+		carData_s["battery_level"] = std::to_string(Tbattery_level);
 	}
-	catch (string e)
+
+	// Print map contents if LogLevelDebug
+	if (lg.ReadLevel() >= Log::Debug)
 	{
-		lg.e("CURL TeslaFi exception: " + e);
-		throw string("Can't get car data from Tesla Fi. (CURL problem?)");
+		lg.b();
+		lg.d("carData_s map contents:");
+		for (std::pair<string, string> element : carData_s)
+		{
+			lg.d(element.first + ": " + element.second);
+		}
 	}
-	catch (nlohmann::detail::type_error e)
-	{
-		lg.e("Problem getting data from Tesla Fi. Car updating? Tesla API down? nlohmann::detail::type_error");
-	}
+
+	return carData_s;
 }
 
 
@@ -258,14 +190,14 @@ json car::teslaPOST(string url, json package, bool noBearerToken)
 	// If noBearerToken then it doesnt return "response", returns "access token" so cant do this
 	if (noBearerToken) {
 		responseObject = jsonReadBuffer;
-	} else {
+	}
+	else {
 		// Inside "response" is an array, the first item is what contains the response:
 		responseObject = jsonReadBuffer["response"];
 	}
 	return responseObject;
 }
 
-// WARNING: Currently only works for get/vehicles, if another call uses GET, must tweak return as it returns array 0.
 json car::teslaGET(string url)
 {
 	string fullUrl = settings::teslaURL + url;
@@ -283,9 +215,6 @@ json car::teslaGET(string url)
 
 		// Header for auth
 		const char* authHeaderC = settings::teslaAuthString.c_str();
-		cout << "cteslaauth header is:";
-		cout << authHeaderC << endl;
-
 		struct curl_slist* headers = nullptr;
 		headers = curl_slist_append(headers, authHeaderC);
 		headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -319,21 +248,31 @@ json car::teslaGET(string url)
 	curl_global_cleanup();
 
 	json jsonReadBuffer = json::parse(readBuffer);
-	/* Inside "response" is an array, one item PER VEHICLE. Currently only supports 1 vehicle
-	* But I will ahve to change this code to check for multiple vehicles eventually*/
-	json responseObject = (jsonReadBuffer["response"])[0];
+	json responseObject;
+	if (jsonReadBuffer["response"].is_array()) {
+		/* Inside "response" is an array, one item PER VEHICLE. Currently only supports 1 vehicle
+		* But I will ahve to change this code to check for multiple vehicles eventually*/
+		responseObject = (jsonReadBuffer["response"])[0];
+	}
+	else {
+		responseObject = (jsonReadBuffer["response"]);
+	}
 	return responseObject;
 }
 
 
-bool car::wake()
+void car::wake()
 {
+	lg.b();
 	json wake_result = teslaPOST(settings::teslaVURL + "wake_up");
 	string state_after_wake = wake_result["state"];
-	lg.d("Wake command sent while state was: " + state_after_wake + ", waiting and rechecking.");
-	carAwake = (state_after_wake == "online") ? true : false;
-	lg.p("carAwake bool: " + std::to_string(carAwake));
-	sleep(15);
+	lg.d("Wake command sent while state was: " + state_after_wake);
+	carOnline = (state_after_wake == "online") ? true : false;
+	if (carOnline) {
+		return;
+	}
+	sleep(5);
+	return;
 }
 
 

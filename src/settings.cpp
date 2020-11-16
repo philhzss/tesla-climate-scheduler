@@ -36,8 +36,6 @@ string settings::u_ignoredWord2;
 // Tesla
 string settings::u_teslaEmail;
 string settings::u_teslaPassword;
-string settings::u_teslaFiToken;
-string settings::tfiURL;
 string settings::teslaURL;
 string settings::teslaVURL;
 string settings::teslaVID;
@@ -55,7 +53,7 @@ void settings::readSettings(string silent)
 		stream >> settingsForm;
 
 		// Get the settings cubcategories
-		teslaSettings = settingsForm["Tesla & TeslaFi account settings"];
+		teslaSettings = settingsForm["Tesla account settings"];
 		calendarSettings = settingsForm["Calendar Settings"];
 		generalSettings = settingsForm["General Settings"];
 		carSettings = settingsForm["Car settings"];
@@ -86,10 +84,9 @@ void settings::readSettings(string silent)
 			u_ignoredWord1 = calendarSettings["ignoredWord1"];
 			u_ignoredWord2 = calendarSettings["ignoredWord2"];
 
-			// TESLA & TESLAFI ACCOUNT SETTINGS
+			// TESLA ACCOUNT SETTINGS
 			u_teslaEmail = teslaSettings["teslaEmail"];
 			u_teslaPassword = teslaSettings["teslaPassword"];
-			u_teslaFiToken = teslaSettings["teslaFiToken"];
 			u_teslaClientID = teslaSettings["TESLA_CLIENT_ID"];
 			u_teslaClientSecret = teslaSettings["TESLA_CLIENT_SECRET"];
 
@@ -130,7 +127,6 @@ void settings::readSettings(string silent)
 			"\nCalendar URL: " + u_calendarURL +
 			"\nCalendar words to ignore (0-2): " + settings::u_ignoredWord1 + ", " + settings::u_ignoredWord2 +
 			"\nTesla Email: " + u_teslaEmail +
-			"\nTeslaFi Token: " + u_teslaFiToken +
 			"\nCommute time setting: " + u_commuteTime + " minutes."
 			"\nCar is therefore ready: \n" + std::to_string(intshiftStartTimer) + " minutes relative to calendar event start."
 			"\nAnd " + std::to_string(intshiftEndTimer) + " minutes relative to calendar event end time."
@@ -152,10 +148,8 @@ void settings::readSettings(string silent)
 		lg.b();
 	}
 
-	// Apply/calculate other setting values
-	tfiURL = ("https://www.teslafi.com/feed.php?&token=" + u_teslaFiToken);
 	teslaURL = "https://owner-api.teslamotors.com/";
-	// Tesla VID and VURL defined in carblock
+	// Note: Tesla VID and VURL defined in carblock
 
 	// Default to 0 to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.
 	inttriggerTimer = 0;
