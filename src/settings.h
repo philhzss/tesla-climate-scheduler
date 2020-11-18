@@ -86,7 +86,9 @@ public:
 	// Enter 0, 1 or 2 words that will cause the program to IGNORE events containing them
 	static string u_ignoredWord1;
 	static string u_ignoredWord2;
-
+	static std::vector<string> u_wordsToIgnore;
+	static bool ignoredWordsExist();
+	static string ignoredWordsPrint();
 
 
 	// Tesla Setting

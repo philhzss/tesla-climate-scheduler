@@ -33,6 +33,7 @@ string settings::u_shiftEndBias;
 int settings::intshiftEndBias;
 string settings::u_ignoredWord1;
 string settings::u_ignoredWord2;
+std::vector<string> settings::u_wordsToIgnore;
 // Tesla
 string settings::u_teslaEmail;
 string settings::u_teslaPassword;
@@ -83,6 +84,7 @@ void settings::readSettings(string silent)
 			intshiftEndBias = std::stoi(u_shiftEndBias);
 			u_ignoredWord1 = calendarSettings["ignoredWord1"];
 			u_ignoredWord2 = calendarSettings["ignoredWord2"];
+			calendarSettings["wordsToIgnore"].get_to(u_wordsToIgnore);
 
 			// TESLA ACCOUNT SETTINGS
 			u_teslaEmail = teslaSettings["teslaEmail"];
@@ -106,11 +108,11 @@ void settings::readSettings(string silent)
 		lg.en("readSettings json parsing error, verify that settings.json exists in same directory as binary");
 		throw string("settings.json parse_error");
 	}
-	catch (nlohmann::detail::type_error)
+	/*catch (nlohmann::detail::type_error)
 	{
 		lg.en("readSettings json type error, settings.json most likely corrupt, verify example");
 		throw string("settings.json type_error");
-	}
+	}*/
 
 	// Calculate shift timers (real time before & after events car has to be ready for)
 	intshiftStartTimer = -intcommuteTime + intshiftStartBias;
@@ -121,18 +123,34 @@ void settings::readSettings(string silent)
 	if (silent != "silent")
 	{
 		lg.b();
+
 		lg.i("Settings imported from settings.json:"
-			"\nSlack Channel: " + u_slackChannel +
-			"\nLogging to file: " + u_logToFile +
-			"\nCalendar URL: " + u_calendarURL +
-			"\nCalendar words to ignore (0-2): " + settings::u_ignoredWord1 + ", " + settings::u_ignoredWord2 +
-			"\nTesla Email: " + u_teslaEmail +
-			"\nCommute time setting: " + u_commuteTime + " minutes."
-			"\nCar is therefore ready: \n", intshiftStartTimer, " minutes relative to calendar event start."
-			"\nAnd ", intshiftEndTimer, " minutes relative to calendar event end time."
-			"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start."
-			"\nDefault time value @ 20C interior temp: " + u_default20CMinTime + " minutes."
-		);
+			"\nGen: Slack Channel: " + u_slackChannel +
+			"\nGen: Logging to file: " + u_logToFile +
+			"\nGen: Program repeats every ", settings::intrepeatDelay, " seconds");
+		if (settings::ignoredWordsExist)
+		{
+			string ignoredString = settings::ignoredWordsPrint();
+			lg.b("Cal: Calendar URL: " + u_calendarURL +
+				"\nCal: Word(s) to ignore events in calendar (", u_wordsToIgnore.size(), "): " + ignoredString);
+		}
+		else {
+			lg.b("Cal: Calendar URL: " + u_calendarURL);
+		}
+		// Scope for clarity
+		{
+			string startKw;
+			string endKw;
+			startKw = (intshiftStartTimer < 0) ? "BEFORE" : "AFTER";
+			endKw = (intshiftEndTimer < 0) ? "BEFORE" : "AFTER";
+			lg.b("Car: Tesla Account Email: " + u_teslaEmail +
+				"\nCar: Commute time setting: " + u_commuteTime + " minutes."
+				"\nCar will be ready for driving: \n", abs(intshiftStartTimer), " minutes ", startKw, " calendar event start time."
+				"\n", abs(intshiftEndTimer), " minutes ", endKw, " calendar event end time."
+				"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start."
+				"\nCar: Default time value @ 20C interior temp: " + u_default20CMinTime + " minutes."
+			);
+		}
 	}
 
 	// Check if Slack channel is empty
@@ -165,4 +183,22 @@ void settings::readSettings(string silent)
 	intwakeTimer = -longest_timer + 32 + 5;
 	lg.p("Wake timer (longest timer + 32 + 5): ", intwakeTimer, " minutes.");
 	return;
+}
+
+bool settings::ignoredWordsExist()
+{
+	return (u_wordsToIgnore.empty()) ? false : true;
+}
+
+string settings::ignoredWordsPrint()
+{
+	auto* comma = ", ";
+	auto* sep = "";
+	std::ostringstream stream;
+	for (string word : u_wordsToIgnore)
+	{
+		stream << sep << word;
+		sep = comma;
+	}
+	return stream.str();
 }
