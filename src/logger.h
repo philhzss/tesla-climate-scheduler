@@ -98,11 +98,19 @@ public:
 		}
 	}
 
+	template<typename ...Args>
+	void n(Args&&... args)
+	{
+		string message = Log::prepare(std::forward<Args>(args)...);
+		b(notify(message));
+	}
 
-	// Notification only (no log)
-	void n(string message);
-	// Blank bare message (blank line)
-	void b(string message = "");
+	template<typename ...Args>
+	void b(Args&&... args)
+	{
+		string message = Log::prepare(std::forward<Args>(args)...);
+		write(message, "", "");
+	}
 
 private:
 	// Stores the logging level for the file

@@ -101,23 +101,16 @@ string Log::notify(string message)
 }
 
 
-// Notification & blank loggers can only take strings as inputs
-void Log::n(string message)
+void Log::write(string message, string sourceFileWrite, string levelPrint, bool notification)
 {
-	b(notify(message));
-}
-
-void Log::b(string message)
-{
-	cout << message << endl;
-	if (settings::u_logToFile == "true")
-		toFile(message);
-}
-
-
-void Log::write(string message, string sourceFileWrite, string levelPrint, bool notification) {
 	string toWrite;
-	toWrite = "[" + sourceFileWrite + " " + levelPrint + "] " + message;
+	if ((sourceFileWrite == "") && (levelPrint == ""))
+	{
+		toWrite = message;
+	}
+	else {
+		toWrite = "[" + sourceFileWrite + " " + levelPrint + "] " + message;
+	}
 	cout << toWrite << endl;
 	if (notification)
 		b(notify(levelPrint + " " + message));
