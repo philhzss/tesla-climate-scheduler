@@ -31,8 +31,6 @@ string settings::u_shiftStartBias;
 int settings::intshiftStartBias;
 string settings::u_shiftEndBias;
 int settings::intshiftEndBias;
-string settings::u_ignoredWord1;
-string settings::u_ignoredWord2;
 std::vector<string> settings::u_wordsToIgnore;
 // Tesla
 string settings::u_teslaEmail;
@@ -82,8 +80,6 @@ void settings::readSettings(string silent)
 			intshiftStartBias = std::stoi(u_shiftStartBias);
 			u_shiftEndBias = calendarSettings["shiftEndBias"];
 			intshiftEndBias = std::stoi(u_shiftEndBias);
-			u_ignoredWord1 = calendarSettings["ignoredWord1"];
-			u_ignoredWord2 = calendarSettings["ignoredWord2"];
 			calendarSettings["wordsToIgnore"].get_to(u_wordsToIgnore);
 
 			// TESLA ACCOUNT SETTINGS
@@ -128,7 +124,7 @@ void settings::readSettings(string silent)
 			"\nGen: Slack Channel: " + u_slackChannel +
 			"\nGen: Logging to file: " + u_logToFile +
 			"\nGen: Program repeats every ", settings::intrepeatDelay, " seconds");
-		if (settings::ignoredWordsExist)
+		if (settings::ignoredWordsExist())
 		{
 			string ignoredString = settings::ignoredWordsPrint();
 			lg.b("Cal: Calendar URL: " + u_calendarURL +
@@ -136,6 +132,7 @@ void settings::readSettings(string silent)
 		}
 		else {
 			lg.b("Cal: Calendar URL: " + u_calendarURL);
+			lg.b("No ignored words were specified.");
 		}
 		// Scope for clarity
 		{
