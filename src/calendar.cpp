@@ -4,7 +4,7 @@
 
 using std::string;
 
-static Log lg("Calendar", Log::LogLevel::Info);
+static Log lg("Calendar", Log::LogLevel::Debug);
 
 
 std::vector<calEvent> calEvent::myCalEvents;
@@ -90,6 +90,7 @@ calEvent::calEvent(string singleEvent_str)
 	cout << DESCRIPTION << endl;*/
 }
 
+
 // Function to be called from main.cpp, creates myCalEvents vector containing all calEvent objects from scratch
 void initiateCal()
 {
@@ -101,33 +102,47 @@ void initiateCal()
 
 	// Create custom calEvents and stick them in a vector (code by Carl!!!!)
 	std::vector<string> calEventsVector = calStringSep(calRawData);
+
+
 	for (string s : calEventsVector)
 	{
-		// If the word "Leave" is found in the individual event strings, don't create custom calEvents
-		if (s.find(settings::u_ignoredWord1) != string::npos)
-		{
-			// Find date of Leave shift for console debug purposes
-			string vacayShiftDetector = "DTSTART;VALUE=DATE:";
-			int datePos = s.find(vacayShiftDetector);
-			string dateOfVacay = s.substr(datePos + vacayShiftDetector.length(), 8);
-			lg.i("The event on " + dateOfVacay + " is a " + settings::u_ignoredWord1 + " shift, skipping.");
-			continue;
+		bool noIgnoredWordsInEvent = true;
+		if (settings::ignoredWordsExist()) {
+			// Check for every word in the words to ignore vector, for every event.
+			for (string ignoredWord : settings::u_wordsToIgnore)
+			{
+				lg.p("Checking word ", ignoredWord);
+				if (s.find(ignoredWord) != string::npos)
+				{
+					// Tell the user what is the date of the ignored event for debugging
+					string ignoredWordDTSTART = "DTSTART";
+					int datePos = s.find(ignoredWordDTSTART);
+					// sFromDTSTART is DTSTART: the date and some extra (40 chars total)
+					string sFromDTSTART = s.substr(datePos, 40);
+					// Start at where the DTSTART starts, add its length, +1 for the : or ; which changes
+					// -10 is because I must subtract the length of the word DTSTART + 1, AND the first char of LOC (L). I think
+					string dateOfignoredWord = s.substr(datePos + ignoredWordDTSTART.length() + 1, sFromDTSTART.find("LOC") - 10);
+					// Remove the first 11 chars (they are VALUE=DATE:) if its an all day event
+					dateOfignoredWord = (dateOfignoredWord.find("VALUE=") != string::npos) ? dateOfignoredWord.erase(0, 11) : dateOfignoredWord;
+					lg.i("Ignored word \"", ignoredWord, "\" found in event on ", dateOfignoredWord, " skipping.");
+					noIgnoredWordsInEvent = false;
+					break;
+				}
+				else {
+					noIgnoredWordsInEvent = true;
+				}
+			}
 		}
-		else if (s.find(settings::u_ignoredWord2) != string::npos)
-		{
-			// Find date of spare shift for console debug purposes
-			// IS THIS WORKING? Spare detector to fix:
-			string spareShiftDetector = "DTSTART:";
-			int datePos = s.find(spareShiftDetector);
-			string dateOfSpare = s.substr(datePos + spareShiftDetector.length(), 13);
-			lg.d("The event starting at " + dateOfSpare + " is a " + settings::u_ignoredWord2 + " shift, skipping.");
-			continue;
+		else {
+			noIgnoredWordsInEvent = true;
 		}
-		else
+		if (noIgnoredWordsInEvent)
 		{
 			calEvent::myCalEvents.push_back(calEvent(s));
 		}
+
 	}
+
 
 	// The custom myCalEvents vector is initialized
 	lg.i("There are " + std::to_string(calEvent::myCalEvents.size()) + " events in the database, filtered from " + std::to_string(calEventsVector.size()) + " events. This includes past events, will be filtered later.");
@@ -199,7 +214,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 		event.endTimer = (difftime(endTime_secs, nowTime_secs)) / 60;
 		lg.p
 		(
-			"::AFTER modifications by eventTimeCheck::"
+			"::AFTER modifications by eventTimeCheck, based on shift END TIME::"
 			"\nYear=" + (std::to_string(event.end.tm_year)) +
 			"\nMonth=" + (std::to_string(event.end.tm_mon)) +
 			"\nDay=" + (std::to_string(event.end.tm_mday)) +
@@ -223,6 +238,29 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 		}
 		int newSize = myValidEvents.size();
 		lg.d("Past events filtered, there are now " + std::to_string(newSize) + " events in the database, filtered from " + std::to_string(origSize) + " events.");
+
+		// Only print this if level is higher than programming as it's a lot of lines
+		if (lg.ReadLevel() >= Log::Programming) {
+			lg.d("All events INCLUDING past:");
+			for (calEvent event : calEvent::myCalEvents)
+			{
+				lg.d("Start");
+				lg.d(event.DTSTART);
+				lg.d("End");
+				lg.d(event.DTEND);
+				lg.b();
+			}
+			lg.b("\n");
+			lg.d("All events EXCLUDINTG past (valid only):");
+			for (calEvent event : calEvent::myValidEvents)
+			{
+				lg.d("Start");
+				lg.d(event.DTSTART);
+				lg.d("End");
+				lg.d(event.DTEND);
+				lg.b();
+			}
+		}
 	}
 
 	// Verify if any event timer is coming up soon (within the defined timer parameter) and return location-validity
@@ -269,7 +307,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			return "work";
 		}
 		// Make sure to ignore a negative startTimer, as it will be negative during an entire work shift
-		else if (((event.startTimer > 0) && (event.startTimer <= intwakeTimer))  || (event.endTimer <= intwakeTimer))
+		else if (((event.startTimer > 0) && (event.startTimer <= intwakeTimer)) || (event.endTimer <= intwakeTimer))
 		{
 			lg.p("Triggered by a timer value of: " + std::to_string(event.startTimer) + " for start, or: " + std::to_string(event.endTimer) + " for end.");
 			lg.p
@@ -288,5 +326,5 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			return "wake";
 		}
 		else return "";
-	}
+	} return "";
 }

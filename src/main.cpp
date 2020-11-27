@@ -133,7 +133,7 @@ int main()
 	try
 	{
 		// Read settings initially for Slack Channel (without output results)
-		settings::readSettings("silent not");
+		settings::readSettings("silent");
 	}
 	catch (string e) {
 		lg.en("Critical failure (before start), program stopping: " + e);
