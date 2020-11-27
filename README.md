@@ -19,8 +19,6 @@ Control your Tesla's climate & heated seats based on events from a .ics file
 
 ## Requirements (for usage)
 Once again this is my first program and is probably useless for most people. You can most likely do what you want to do using TeslaFi/another more complete package. This program requires:
-+ A (paid) TeslaFi account.;
-	+ I realise it's not ideal to depend on a paid external service but I use TeslaFi for a lot of API calls. Might rewrite some functions to use directly the Tesla API in the future to avoid requiring TeslaFi. This being said, TeslaFi is a great service in my opinion.
 + An online calendar containing **only** events you want to trigger the car (shifts for work for example);
 	+ There is a way to ignore events containig certain keywords (I use it to ignore sick leave days) but it's not super polished. I wouldn't advise feeding your entire calendar into this program unless you just use it to store events to which you must drive to.
 + A Tesla (model 3 tested, other models might or might not work);
