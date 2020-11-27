@@ -83,9 +83,7 @@ public:
 	static string u_shiftEndBias;
 	static int intshiftEndBias;
 	// Calendar Setting
-	// Enter 0, 1 or 2 words that will cause the program to IGNORE events containing them
-	static string u_ignoredWord1;
-	static string u_ignoredWord2;
+	// Enter words that will cause the program to IGNORE events containing them
 	static std::vector<string> u_wordsToIgnore;
 	static bool ignoredWordsExist();
 	static string ignoredWordsPrint();
