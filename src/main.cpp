@@ -8,8 +8,8 @@
 using std::string;
 
 static Log lg("Main", Log::LogLevel::Debug);
+static Log lgw("WakeLoop", Log::LogLevel::Debug);
 
-bool crashed = false;
 
 time_t nowTime_secs = time(&nowTime_secs);
 
@@ -152,14 +152,6 @@ int main()
 	lg.n("TCS app initiated" + tcs_versionInfo);
 
 
-
-	// Set or reset initial variables
-	lg.b();
-	lg.d("\"Crashed\" variable set to ", crashed);
-	bool carblock_ran_success = false;
-	lg.d("\"carblock_ran_success\" variable set to ", carblock_ran_success);
-	lg.d("Reason: Initial values should be False\n\n");
-
 	// Start of program, Always loop everything
 	while (true) {
 		lg.b("\n>>>>>>>------------------------------PROGRAM STARTS HERE----------------------------<<<<<<<\n\n");
@@ -177,36 +169,62 @@ int main()
 				initiateCal();
 
 
-
-
-
 				// Verify if any event matches the event checking parameters (Wake loop)
+				bool carAwokenOnce = false;
+				bool actionDone = false;
+				bool actionCancelDone = false;
+				int tempTimeMod;
 				do
 				{
-					bool wakeHasBeenSent = false;
-					int tempTimeMod;
-					//if (actionToDo == "wake")
-					if (false)
+					if (actionToDo == "wake")
 					{
-						Tesla.getData(true);
+						Tesla.getData(true); // Wake car and pull all data from it
 						if (Tesla.carOnline) {
-							lg.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
-							tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
-							lg.in("HVAC will trigger ", tempTimeMod, " mins before depart time");
+							if (!carAwokenOnce) {
+								lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
+								tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
+								lgw.in("(Car awake) HVAC will trigger ", tempTimeMod, " mins before depart time ",
+									"if all parameters are met");
+								lgw.i("Car seems to be located at ", Tesla.location);
+								carAwokenOnce = true;
+							}
+							else { lgw.i("waiting"); }
 						}
 						else {
-							lg.e("Could not wake car??");
+							lgw.e("Could not wake car?? Car still reporting as offline after wakeLoop");
+							// Could print a raw tesla-feed here for debugging if this triggers one day?
 						}
 					}
 					// If actionToDo is not wake and is not empty, then its a triggered event (home or work)
 					else if (!actionToDo.empty())
 					{
-						lg.i(actionToDo);
-						lg.i("Car trigger event would go here (to be programmed)");
-						// Carblock testing, with home or work parameter:
+						Tesla.getData(true); // Make sure you have most up to date data
+						lgw.i("Event triggered: ", actionToDo, ", car location: ", Tesla.location);
+						if (actionToDo == Tesla.location)
+						{
+							if (!actionDone)
+							{
+								lgw.i("EVENT & LOCATION VALID");
+								lgw.i("Car trigger event would go here (to be programmed)");
+								actionDone = true;
+							}
+						}
+						else
+						{
+							if (!actionCancelDone)
+							{
+								lgw.in("Event triggered for ", actionToDo, ", but car location is ", Tesla.location,
+									", not activating HVAC.");
+								actionCancelDone = true;
+							}
+						}
 					}
-					actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
-				} while (!actionToDo.empty());
+					// actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);					actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
+					actionToDo = "home"; // for testing
+					lgw.i("Waiting ", settings::intrepeatDelay/2, " seconds and re-running wakeLoop");
+					sleep(settings::intrepeatDelay/2);
+					} while (!actionToDo.empty());
+				// }  while (true); // for testing
 
 			}
 			catch (string e) {
