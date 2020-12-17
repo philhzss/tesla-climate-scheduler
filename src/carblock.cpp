@@ -14,7 +14,7 @@ using std::string;
 
 
 // Log file name for console messages
-static Log lg("Carblock", Log::LogLevel::Programming);
+static Log lg("Carblock", Log::LogLevel::Debug);
 
 
 void car::teslaAuth()
@@ -105,8 +105,8 @@ std::map<string, string> car::getData(bool wakeCar)
 		carData_s["display_name"] = Tdisplay_name;
 		carData_s["shift_state"] = Tshift_state;
 		// not good
-		carData_s["inside_temp"] = std::to_string((int)Tinside_temp * 10);
-		carData_s["outside_temp"] = std::to_string((int)Toutside_temp * 10);
+		carData_s["inside_temp"] = std::to_string(Tinside_temp);
+		carData_s["outside_temp"] = std::to_string(Toutside_temp);
 		carData_s["driver_temp_setting"] = std::to_string(Tdriver_temp_setting);
 		carData_s["is_climate_on"] = std::to_string(Tis_climate_on);
 		carData_s["usable_battery_level"] = std::to_string(Tusable_battery_level);
