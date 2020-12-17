@@ -47,8 +47,8 @@ std::map<string, string> car::getData(bool wakeCar)
 	try
 	{
 		json teslaGetData = car::teslaGET("api/1/vehicles");
-		_state = teslaGetData["state"];
-		carOnline = (_state == "online") ? true : false;
+		Tconnection_state = teslaGetData["state"];
+		carOnline = (Tconnection_state == "online") ? true : false;
 		// Store VID and VURL in settings
 		settings::teslaVID = teslaGetData["id_s"];
 		settings::teslaVURL = "api/1/vehicles/" + settings::teslaVID + "/";
@@ -65,7 +65,7 @@ std::map<string, string> car::getData(bool wakeCar)
 
 	// State and vehicle ID always obtained, even if wakeCar false
 	carData_s["vehicle_id"] = settings::teslaVID;
-	carData_s["state"] = _state;
+	carData_s["state"] = Tconnection_state;
 	carData_s["Car awake"] = std::to_string(carOnline);
 
 	if (wakeCar)
@@ -97,6 +97,9 @@ std::map<string, string> car::getData(bool wakeCar)
 			Tshift_state = drive_state["shift_state"];
 			lg.i("Shift state is not null, is: " + Tshift_state);
 		}
+		Tlat = drive_state["latitude"];
+		Tlong = drive_state["longitude"];
+		location = checkCarLocation();
 
 		// remove trailing 0s?
 		carData_s["display_name"] = Tdisplay_name;
@@ -108,6 +111,7 @@ std::map<string, string> car::getData(bool wakeCar)
 		carData_s["is_climate_on"] = std::to_string(Tis_climate_on);
 		carData_s["usable_battery_level"] = std::to_string(Tusable_battery_level);
 		carData_s["battery_level"] = std::to_string(Tbattery_level);
+		carData_s["location_home_or_work"] = location;
 	}
 
 	// Print map contents if LogLevelDebug
@@ -319,4 +323,48 @@ int car::calcTempMod(int interior_temp)
 	lg.d("Interior car temp is ", interior_temp, "C, tempTimeModifier is: ", finalTempTimeModifier, +" minutes");
 
 	return finalTempTimeModifier;
+}
+
+
+string car::checkCarLocation()
+{
+	float distanceRadius = 0.005; // Degrees
+	float homeLat = std::stof(settings::u_homeCoords[0]);
+	float homeLong = std::stof(settings::u_homeCoords[1]);
+	float workLat = std::stof(settings::u_workCoords[0]);
+	float workLong = std::stof(settings::u_workCoords[1]);
+	string latRes;
+	string longRes;
+	string locationRes;
+
+	// Compare lat
+	if ((Tlat - homeLat + distanceRadius) * (Tlat - homeLat - distanceRadius) <= 0) // true if in range
+	{
+		latRes = "home";
+	}
+	else if ((Tlat - workLat + distanceRadius) * (Tlat - workLat - distanceRadius) <= 0)
+	{
+		latRes = "work";
+	}
+	else
+	{
+		latRes = "unknown";
+	}
+
+	// Compare long
+	if ((Tlong - homeLong + distanceRadius) * (Tlong - homeLong - distanceRadius) <= 0) // true if in range
+	{
+		longRes = "home";
+	}
+	else if ((Tlong - workLong + distanceRadius) * (Tlong - workLong - distanceRadius) <= 0)
+	{
+		longRes = "work";
+	}
+	else
+	{
+		longRes = "unknown";
+	}
+
+	// Verify and return
+	return (latRes == longRes) ? longRes : "unknown";
 }

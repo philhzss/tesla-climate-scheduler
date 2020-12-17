@@ -14,6 +14,8 @@ bool settings::slackEnabled;
 string settings::u_logToFile;
 string settings::u_repeatDelay;
 int settings::intrepeatDelay;
+std::vector<string> settings::u_homeCoords;
+std::vector<string> settings::u_workCoords;
 // Car
 int settings::intwakeTimer;
 int settings::inttriggerTimer;
@@ -64,6 +66,9 @@ void settings::readSettings(string silent)
 			u_logToFile = generalSettings["logToFile"];
 			u_repeatDelay = generalSettings["repeatDelay"];
 			intrepeatDelay = std::stoi(u_repeatDelay);
+			generalSettings["homeCoords"].get_to(u_homeCoords);
+			generalSettings["workCoords"].get_to(u_workCoords);
+
 
 			// CAR SETTINGS
 			u_commuteTime = carSettings["commuteTime"];
@@ -199,3 +204,4 @@ string settings::ignoredWordsPrint()
 	}
 	return stream.str();
 }
+

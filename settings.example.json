@@ -2,7 +2,9 @@
   "General Settings": {
     "slackChannel": "slack channel URL, or blank if no slack",
     "logToFile": "true",
-    "repeatDelay": "7"
+    "repeatDelay": "7",
+    "homeCoords": [ "lat", "long" ],
+    "workCoords": [ "lat", "long" ]
   },
 
   "Tesla & TeslaFi account settings": {

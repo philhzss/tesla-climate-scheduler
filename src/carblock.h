@@ -12,20 +12,26 @@ public:
 	
 	string Tdisplay_name = "";
 	string Tshift_state = "";
+	string Tconnection_state = "";
 	float Tinside_temp;
 	float Toutside_temp;
 	float Tdriver_temp_setting;
 	bool Tis_climate_on;
 	float Tusable_battery_level;
 	float Tbattery_level;
+	float Tlat;
+	float Tlong;
+	string location;
 
-	string _state = "";
-
+	
 
 private:
 	void wake();
 	// Write token to settings::teslaAuthString for Tesla official API usage
 	void teslaAuth();
+
+	// Verify if at home or work based on lat/lon and tolerance
+	string checkCarLocation();
 
 
 public:

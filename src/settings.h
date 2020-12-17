@@ -40,6 +40,13 @@ public:
 	// (Seconds) How long to wait before the program loops entirely
 	static string u_repeatDelay;
 	static int intrepeatDelay;
+	// General Setting
+	// [lat, long] Home coordinates
+	static std::vector<string> u_homeCoords;
+	// General Setting
+	// [lat, long] Work coordinates
+	static std::vector<string> u_workCoords;
+
 
 
 	// Car Setting
