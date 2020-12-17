@@ -113,7 +113,7 @@ void Log::write(string message, string sourceFileWrite, string levelPrint, bool 
 	}
 	cout << toWrite << endl;
 	if (notification)
-		b(notify(levelPrint + " " + message));
+		b(notify("[" + levelPrint + "] " + message));
 	if (settings::u_logToFile == "true")
 		toFile(toWrite);
 }
