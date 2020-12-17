@@ -4,7 +4,7 @@
 
 using std::string;
 
-static Log lg("Calendar", Log::LogLevel::Debug);
+static Log lg("Calendar", Log::LogLevel::Info);
 
 
 std::vector<calEvent> calEvent::myCalEvents;
@@ -143,7 +143,6 @@ void initiateCal()
 
 	}
 
-
 	// The custom myCalEvents vector is initialized
 	lg.i("There are " + std::to_string(calEvent::myCalEvents.size()) + " events in the database, filtered from " + std::to_string(calEventsVector.size()) + " events. This includes past events, will be filtered later.");
 
@@ -152,6 +151,12 @@ void initiateCal()
 	{
 		event.setEventParams(event);
 	}
+
+	// Calculate start & end timers for each event and store them in the event instance
+	calEvent::createEventTimers();
+
+	// Get rid of all events in the past
+	calEvent::removePastEvents();
 }
 
 // Convert raw DTSTART/DTEND strings into datetime objects
@@ -186,10 +191,8 @@ void calEvent::setEventParams(calEvent& event)
 	event.end = convertToTm(event.DTEND, event.end);
 }
 
-// Check if any start-end event is valid, and return appropriate string based on timers
-string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
+void calEvent::createEventTimers()
 {
-	// Calculate start & end timers for each event and store them in the event instance
 	for (calEvent& event : calEvent::myCalEvents)
 	{
 		/*lg.p
@@ -223,9 +226,10 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 		);
 	}
+}
 
-	// Get rid of all events in the past
-	{
+void calEvent::removePastEvents()
+{
 		int origSize = myCalEvents.size();
 		for (calEvent& event : calEvent::myCalEvents)
 		{
@@ -237,7 +241,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 
 		}
 		int newSize = myValidEvents.size();
-		lg.d("Past events filtered, there are now " + std::to_string(newSize) + " events in the database, filtered from " + std::to_string(origSize) + " events.");
+		lg.i("Past events filtered, there are now " + std::to_string(newSize) + " events in the database, filtered from " + std::to_string(origSize) + " events.");
 
 		// Only print this if level is higher than programming as it's a lot of lines
 		if (lg.ReadLevel() >= Log::Programming) {
@@ -263,6 +267,9 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 		}
 	}
 
+// Check if any start-end event is valid, and return appropriate string based on timers
+string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
+{
 	// Verify if any event timer is coming up soon (within the defined timer parameter) and return location-validity
 	for (calEvent& event : calEvent::myValidEvents)
 	{

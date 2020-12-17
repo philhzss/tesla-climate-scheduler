@@ -23,6 +23,10 @@ private:
 public:
 	// Function to convert string DTSTARTs into tm objects
 	void setEventParams(calEvent &event);
+	static void removePastEvents();
+	static void createEventTimers();
+
+	// Whys isnt initiateCal part of calendar.h?
 
 	// Static vars
 	static std::vector<calEvent> myCalEvents;
