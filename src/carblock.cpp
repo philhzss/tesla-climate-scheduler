@@ -19,22 +19,12 @@ static Log lg("Carblock", Log::LogLevel::Debug);
 
 void car::teslaAuth()
 {
-	if (lg.ReadLevel() >= Log::Debug) {
-		lg.b();
-		lg.b();
-		lg.d("teslaAuth function start");
-	}
 	json authjson;
 	authjson = teslaPOST("oauth/token", settings::authReqPackage, true);
 	//cout << authjson << endl;
 	string teslaToken = authjson["access_token"];
 	settings::teslaAuthString = "Authorization: Bearer " + teslaToken;
 	lg.d("Tesla Token header is set to: " + settings::teslaAuthString);
-	if (lg.ReadLevel() >= Log::Debug) {
-		lg.d("teslaAuth function end");
-		lg.b();
-		lg.b();
-	}
 	return;
 }
 
@@ -369,4 +359,48 @@ string car::checkCarLocation()
 
 	// Verify and return
 	return (latRes == longRes) ? longRes : "unknown";
+}
+
+std::vector<string> car::coldCheckSet()
+{
+	int requestedSeatHeat; // power, 0-1-2-3
+	bool max_defrost_on = false; // if if triggers it gets set to true
+	std::vector<string> resultVector;
+	if (Tinside_temp <= -10)
+	{
+		requestedSeatHeat = 3;
+	}
+	else if (Tinside_temp <= 5)
+	{
+		requestedSeatHeat = 2;
+	}
+	else if (Tinside_temp < 14)
+	{
+		requestedSeatHeat = 1;
+	}
+	else
+	{
+		requestedSeatHeat = 0;
+	}
+
+	// Send the heat-seat request, turning the heated seat off if it's hot enough
+	json seat_result = teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", 0}, {"level", requestedSeatHeat } });
+	if (seat_result["result"]) {
+		resultVector.push_back(std::to_string(requestedSeatHeat));
+		lg.d("seat_result: ", seat_result["result"]);
+	}
+	else {
+		resultVector.push_back("heated seats error");
+	}
+
+	if (Tinside_temp <= -1)
+	{
+		json jdefrost_result = teslaPOST(settings::teslaVURL + "command/set_preconditioning_max", json{ {"on", true } });
+		max_defrost_on = jdefrost_result["result"];
+	}
+	lg.d("max_defrost_on: ", max_defrost_on);
+
+	resultVector.push_back(std::to_string(max_defrost_on));
+	lg.d("resultVector, seat: ", resultVector[0], "// defrost_on: ", resultVector[1]);
+	return resultVector;
 }

@@ -41,8 +41,8 @@ public:
 	// POST request to "https://owner-api.teslamotors.com/ + url"
 	json teslaPOST(string url, json package=json(), bool noBearerToken=false);
 
-	// RE WRITE TeslaPOST as teslaAUTH, and create another with oAuth built in like GET??
-
+	// Returns confirmed heated seat setting, & if max condition is on
+	std::vector<string> coldCheckSet();
 
 	// GET request to "https://owner-api.teslamotors.com/ + url", oAuth token built-in
 	json teslaGET(string url);
