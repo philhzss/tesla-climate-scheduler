@@ -9,6 +9,7 @@ static Log lg("Calendar", Log::LogLevel::Info);
 
 std::vector<calEvent> calEvent::myCalEvents;
 std::vector<calEvent> calEvent::myValidEvents;
+calEvent* calEvent::lastTriggeredEvent;
 
 
 // Get long string of raw calendar data from URL
@@ -189,6 +190,8 @@ void calEvent::setEventParams(calEvent& event)
 	// lg.p("Converting DTSTART, raw string is: " + DTSTART);
 	event.start = convertToTm(event.DTSTART, event.start);
 	event.end = convertToTm(event.DTEND, event.end);
+	event.homeDone = false;
+	event.workDone = false;
 }
 
 void calEvent::createEventTimers()
@@ -217,7 +220,7 @@ void calEvent::createEventTimers()
 		event.endTimer = (difftime(endTime_secs, nowTime_secs)) / 60;
 		lg.p
 		(
-			"::AFTER modifications by eventTimeCheck, based on shift END TIME::"
+			"::AFTER modifications by createEventTimers, based on shift END TIME::"
 			"\nYear=" + (std::to_string(event.end.tm_year)) +
 			"\nMonth=" + (std::to_string(event.end.tm_mon)) +
 			"\nDay=" + (std::to_string(event.end.tm_mday)) +
@@ -230,42 +233,42 @@ void calEvent::createEventTimers()
 
 void calEvent::removePastEvents()
 {
-		int origSize = myCalEvents.size();
-		for (calEvent& event : calEvent::myCalEvents)
+	int origSize = myCalEvents.size();
+	for (calEvent& event : calEvent::myCalEvents)
+	{
+
+		if ((event.startTimer > 0) || (event.endTimer > 0))
 		{
-
-			if ((event.startTimer > 0) || (event.endTimer > 0))
-			{
-				calEvent::myValidEvents.push_back(event);
-			}
-
+			calEvent::myValidEvents.push_back(event);
 		}
-		int newSize = myValidEvents.size();
-		lg.i("Past events filtered, there are now " + std::to_string(newSize) + " events in the database, filtered from " + std::to_string(origSize) + " events.");
 
-		// Only print this if level is higher than programming as it's a lot of lines
-		if (lg.ReadLevel() >= Log::Programming) {
-			lg.d("All events INCLUDING past:");
-			for (calEvent event : calEvent::myCalEvents)
-			{
-				lg.d("Start");
-				lg.d(event.DTSTART);
-				lg.d("End");
-				lg.d(event.DTEND);
-				lg.b();
-			}
-			lg.b("\n");
-			lg.d("All events EXCLUDINTG past (valid only):");
-			for (calEvent event : calEvent::myValidEvents)
-			{
-				lg.d("Start");
-				lg.d(event.DTSTART);
-				lg.d("End");
-				lg.d(event.DTEND);
-				lg.b();
-			}
+	}
+	int newSize = myValidEvents.size();
+	lg.i("Past events filtered, there are now " + std::to_string(newSize) + " events in the database, filtered from " + std::to_string(origSize) + " events.");
+
+	// Only print this if level is higher than programming as it's a lot of lines
+	if (lg.ReadLevel() >= Log::Programming) {
+		lg.d("All events INCLUDING past:");
+		for (calEvent event : calEvent::myCalEvents)
+		{
+			lg.d("Start");
+			lg.d(event.DTSTART);
+			lg.d("End");
+			lg.d(event.DTEND);
+			lg.b();
+		}
+		lg.b("\n");
+		lg.d("All events EXCLUDINTG past (valid only):");
+		for (calEvent event : calEvent::myValidEvents)
+		{
+			lg.d("Start");
+			lg.d(event.DTSTART);
+			lg.d("End");
+			lg.d(event.DTEND);
+			lg.b();
 		}
 	}
+}
 
 // Check if any start-end event is valid, and return appropriate string based on timers
 string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
@@ -290,10 +293,20 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				"\nStartTimer=" + (std::to_string(event.startTimer)) +
 				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 			);
-			lg.i("Shift starting at " + string_time_and_date(event.start) + " is valid from home.", true);
-			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL\n");
-			// Return home since this shift is triggered and its "going to work"
-			return "home";
+			lg.i("Shift starting at " + string_time_and_date(event.start) + " is valid from home.");
+			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL");
+
+			if (!event.homeDone) // make sure this event hasn't be triggered before for home
+			{
+				// Return home since this shift is triggered and its "going to work"
+				event.updateLastTriggeredEvent();
+				return "home";
+			}
+			else
+			{
+				lg.i("EVENT HAD ALREADY TRIGGERED FOR HOME, ignoring.");
+				return "duplicate";
+			}
 		}
 		else if ((event.endTimer - settings::intshiftEndBias) <= inttriggerTimer)
 		{
@@ -310,8 +323,18 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			);
 			lg.i("Shift starting at " + string_time_and_date(event.end) + " is valid from work.", true);
 			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL\n");
-			// Return work since this shift is triggered and its "coming back from to work"
-			return "work";
+
+			if (!event.workDone) // make sure this event hasn't be triggered before for work
+			{
+				// Return work since this shift is triggered and its "coming back from to work"
+				event.updateLastTriggeredEvent();
+				return "work";
+			}
+			else
+			{
+				lg.i("EVENT HAD ALREADY TRIGGERED FOR WORK, ignoring.");
+				return "duplicate";
+			}
 		}
 		// Make sure to ignore a negative startTimer, as it will be negative during an entire work shift
 		else if (((event.startTimer > 0) && (event.startTimer <= intwakeTimer)) || (event.endTimer <= intwakeTimer))
@@ -334,4 +357,16 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 		}
 		else return "";
 	} return "";
+}
+
+void calEvent::updateLastTriggeredEvent()
+{
+	lg.d("lastTriggeredEvent has been updated");
+	lastTriggeredEvent = this;
+}
+
+void calEvent::cleanup()
+{
+	myCalEvents.clear();
+	myValidEvents.clear();
 }

@@ -28,9 +28,13 @@ public:
 
 	// Whys isnt initiateCal part of calendar.h?
 
+	// Cleanup at end of program
+	static void cleanup();
+
 	// Static vars
 	static std::vector<calEvent> myCalEvents;
 	static std::vector<calEvent> myValidEvents;
+	static calEvent* lastTriggeredEvent;
 
 	// Static methods
 	static string eventTimeCheck(int wakeTimer, int triggerTimer);
@@ -41,6 +45,11 @@ public:
 
 	// Difference (in minutes) between program runtime and event start/end time
 	int startTimer, endTimer;
+
+	// Keep track of if action has been done for start-end on a given shift
+	bool homeDone;
+	bool workDone;
+	void updateLastTriggeredEvent();
 
 	// Custom constructor
 	calEvent(string singleEvent_str);
