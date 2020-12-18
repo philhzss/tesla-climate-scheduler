@@ -200,7 +200,7 @@ int main()
 					}
 					else if ((actionToDo == "home") || (actionToDo == "work"))
 					{
-						Tesla.getData(true); // Make sure you have most up to date data
+						Tesla.getData(true); // Make sure you have most up to date data with car awake
 						lgw.i("Event triggered: ", actionToDo, ", car location: ", Tesla.location);
 						if (actionToDo == Tesla.location)
 						{
@@ -210,12 +210,18 @@ int main()
 								if (Tesla.carOnline && Tesla.Tshift_state == "P")
 								{
 									json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
-
 									bool state_after_hvac = hvac_result["result"]; // should return true
+
+									std::vector<string> seats_defrost = Tesla.coldCheckSet();
+									string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
+									lg.in(seats_defrost[0]);
+									lg.in(seats_defrost[1]);
+
 									if (state_after_hvac)
 									{
 										// If we're here, it's success
-										lgw.in("HVAC ON\nSeat Heater: ____\nInside Temp: ",
+										lgw.b();
+										lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], "\nInside Temp: ",
 											Tesla.Tinside_temp, "C\nOutside Temp: ", Tesla.Toutside_temp, "C");
 
 
@@ -270,7 +276,7 @@ int main()
 							"\nTime=", datetime.tm_hour, ":", datetime.tm_min, "\n");
 					}
 					// settings::intwakeTimer = 3900; // for testing
-					// settings::inttriggerTimer = 3740; // for testing
+					// settings::inttriggerTimer = 3624; // for testing
 					lgw.d("Running eventTimeCheck with wakeTimer: ", settings::intwakeTimer,
 						"mins, triggerTimer: ", settings::inttriggerTimer, "mins");
 					lgw.d("triggerTimer might not be calculated if wakeTimer hasn't run yet!!");
@@ -295,7 +301,7 @@ int main()
 			lg.i("\nProgram requires internet to run, will keep retrying.");
 		}
 		lg.b("\n<<<<<<<---------------------------PROGRAM TERMINATES HERE--------------------------->>>>>>>\n");
-		calEvent::cleanup();
+		calEvent::cleanup(); // to avoid calendar vectors overflowing
 
 		lg.i("\nWaiting for " + settings::u_repeatDelay + " seconds...\n\n\n\n\n\n\n\n\n");
 		sleep(settings::intrepeatDelay);
