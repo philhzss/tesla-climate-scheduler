@@ -21,6 +21,7 @@ void car::teslaAuth()
 {
 	if (lg.ReadLevel() >= Log::Debug) {
 		lg.b();
+		lg.b();
 		lg.d("teslaAuth function start");
 	}
 	json authjson;
@@ -31,6 +32,7 @@ void car::teslaAuth()
 	lg.d("Tesla Token header is set to: " + settings::teslaAuthString);
 	if (lg.ReadLevel() >= Log::Debug) {
 		lg.d("teslaAuth function end");
+		lg.b();
 		lg.b();
 	}
 	return;
@@ -133,7 +135,7 @@ json car::teslaPOST(string url, json package, bool noBearerToken)
 {
 	string fullUrl = settings::teslaURL + url;
 	const char* const url_to_use = fullUrl.c_str();
-	lg.d("teslaPOSTing to this URL: " + fullUrl);
+	// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
 
 	CURL* curl;
 	CURLcode res;
