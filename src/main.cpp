@@ -157,7 +157,8 @@ int main()
 	while (true) {
 		lg.b("\n>>>>>>>------------------------------PROGRAM STARTS HERE----------------------------<<<<<<<\n\n");
 		// Everything is based on the time at program start
-		lg.i("Runtime date-time: " + return_current_time_and_date() + " LOCAL\n");
+		nowTime_secs = time(&nowTime_secs); // update to current time
+		lg.i("Runtime date-time (this loop): " + return_current_time_and_date() + " LOCAL\n");
 
 		// Verify internet connection on every loop
 		if (InternetConnected()) {
