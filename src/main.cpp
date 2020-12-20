@@ -189,7 +189,7 @@ int main()
 								lgw.in("Trigger ", tempTimeMod, " mins before depart time ",
 									"if all parameters are met");
 								lgw.i("Car seems to be located at ", Tesla.location);
-								settings::inttriggerTimer = settings::intcommuteTime + tempTimeMod;
+								settings::inttriggerTimer = tempTimeMod;
 								carAwokenOnce = true;
 							}
 							else { lgw.i("waiting"); }
@@ -215,8 +215,7 @@ int main()
 
 									std::vector<string> seats_defrost = Tesla.coldCheckSet();
 									string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
-									lg.in(seats_defrost[0]);
-									lg.in(seats_defrost[1]);
+
 
 									if (state_after_hvac)
 									{
@@ -276,11 +275,10 @@ int main()
 							"\nDay=", datetime.tm_mday,
 							"\nTime=", datetime.tm_hour, ":", datetime.tm_min, "\n");
 					}
-					// settings::intwakeTimer = 3900; // for testing
-					// settings::inttriggerTimer = 3624; // for testing
+					settings::intwakeTimer = 46; // for testing
+					settings::inttriggerTimer = 42; // for testing
 					lgw.d("Running eventTimeCheck with wakeTimer: ", settings::intwakeTimer,
 						"mins, triggerTimer: ", settings::inttriggerTimer, "mins");
-					lgw.d("triggerTimer might not be calculated if wakeTimer hasn't run yet!!");
 					actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
 					// actionToDo = "home"; // for testing
 					if (!actionToDo.empty())

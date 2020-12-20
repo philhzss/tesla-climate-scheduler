@@ -171,8 +171,8 @@ void settings::readSettings(string silent)
 	teslaURL = "https://owner-api.teslamotors.com/";
 	// Note: Tesla VID and VURL defined in carblock
 
-	// Default to the bare minimum to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.
-	inttriggerTimer = intcommuteTime + 1;
+	// Default to the bare minimum (2mins is tempTimeMod min) to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.
+	inttriggerTimer = 2;
 
 
 	// Figure out if its event start or event end that makes the car HVAC start earlier
