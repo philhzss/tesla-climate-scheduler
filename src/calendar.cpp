@@ -125,7 +125,7 @@ void initiateCal()
 					string dateOfignoredWord = s.substr(datePos + ignoredWordDTSTART.length() + 1, sFromDTSTART.find("LOC") - 10);
 					// Remove the first 11 chars (they are VALUE=DATE:) if its an all day event
 					dateOfignoredWord = (dateOfignoredWord.find("VALUE=") != string::npos) ? dateOfignoredWord.erase(0, 11) : dateOfignoredWord;
-					lg.i("Ignored word \"", ignoredWord, "\" found in event on ", dateOfignoredWord, " skipping.");
+					lg.p("Ignored word \"", ignoredWord, "\" found in event on ", dateOfignoredWord, " skipping.");
 					noIgnoredWordsInEvent = false;
 					break;
 				}
@@ -308,7 +308,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				return "duplicate";
 			}
 		}
-		else if ((event.endTimer - settings::intshiftEndBias) <= inttriggerTimer)
+		else if ((event.endTimer + settings::intshiftEndBias) <= inttriggerTimer)
 		{
 			lg.d("Triggered by a timer value of: " + std::to_string(event.endTimer));
 			lg.p
@@ -355,7 +355,11 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			// Return wake since this shift is upcoming but not close enough to start the car yet
 			return "wake";
 		}
-		else return "";
+		else
+		{
+			lg.d("No matching event for wakeTimer: ", intwakeTimer, "mins, triggerTimer: ", inttriggerTimer, "mins.");
+			return "";
+		}
 	} return "";
 }
 
