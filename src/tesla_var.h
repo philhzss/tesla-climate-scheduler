@@ -19,7 +19,7 @@ using std::string;
 
 
 // Program info
-const string tcs_versionInfo = "\nVersion: _*3.0.1*_\nBuild Date: 2020.12.20 - First C++ version";
+const string tcs_versionInfo = "\nVersion: _*3.0.1*_\nBuild Date: 2020.12.20 - Fixed triggerTimer & commuteTime issue";
 
 
 // Declarations

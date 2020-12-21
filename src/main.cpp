@@ -162,137 +162,154 @@ int main()
 
 		// Verify internet connection on every loop
 		if (InternetConnected()) {
-			try
+			// Count tries if error occurs and quit eventually
+			int count = 0;
+			int maxTries = 10;
+			while (true)
 			{
-				// Only run the program if the settings file is readable, will throw exception if its not
-				settings::readSettings();
-
-				// Get & parse calendar data
-				initiateCal();
-
-
-				// Verify if any event matches the event checking parameters (Wake loop)
-				bool carAwokenOnce = false;
-				bool actionDone = false;
-				bool actionCancelDone = false;
-				int tempTimeMod;
-				int wakeLoopTimer = settings::intrepeatDelay / 2; // by default repeat-delay/2
-				do
+				try
 				{
-					if (actionToDo == "wake")
+					// Only run the program if the settings file is readable, will throw exception if its not
+					settings::readSettings();
+
+					// Get & parse calendar data
+					initiateCal();
+
+
+					// Verify if any event matches the event checking parameters (Wake loop)
+					bool carAwokenOnce = false;
+					bool actionDone = false;
+					bool actionCancelDone = false;
+					int tempTimeMod;
+					int wakeLoopTimer = settings::intrepeatDelay / 2; // by default repeat-delay/2
+					do
 					{
-						Tesla.getData(true); // Wake car and pull all data from it
-						if (Tesla.carOnline) {
-							if (!carAwokenOnce) {
-								lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
-								tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
-								lgw.in("Trigger ", tempTimeMod, " mins before depart time ",
-									"if all parameters are met");
-								lgw.i("Car seems to be located at ", Tesla.location);
-								settings::inttriggerTimer = tempTimeMod;
-								carAwokenOnce = true;
-							}
-							else { lgw.i("waiting"); }
-						}
-						else {
-							lgw.e("Could not wake car?? Car still reporting as offline after wakeLoop");
-							// Could print a raw tesla-feed here for debugging if this triggers one day?
-						}
-					}
-					else if ((actionToDo == "home") || (actionToDo == "work"))
-					{
-						Tesla.getData(true); // Make sure you have most up to date data with car awake
-						lgw.i("Event triggered: ", actionToDo, ", car location: ", Tesla.location);
-						if (actionToDo == Tesla.location)
+						if (actionToDo != "")
 						{
-							if (!actionDone) // only here to retry action if car moved/stopped driving
+							lg.d("actionToDo is: ", actionToDo);
+						}
+
+						if (actionToDo == "wake")
+						{
+							Tesla.getData(true); // Wake car and pull all data from it
+							if (Tesla.carOnline) {
+								if (!carAwokenOnce) {
+									lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
+									tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
+									lgw.in("Trigger ", tempTimeMod, " mins before depart time ",
+										"if all parameters are met");
+									lgw.i("Car seems to be located at ", Tesla.location);
+									settings::inttriggerTimer = tempTimeMod;
+									carAwokenOnce = true;
+								}
+								else { lgw.i("waiting"); }
+							}
+							else {
+								lgw.e("Could not wake car?? Car still reporting as offline after wakeLoop");
+								// Could print a raw tesla-feed here for debugging if this triggers one day?
+							}
+						}
+						else if ((actionToDo == "home") || (actionToDo == "work"))
+						{
+							Tesla.getData(true); // Make sure you have most up to date data with car awake
+							lgw.i("Event triggered: ", actionToDo, ", car location: ", Tesla.location);
+							if (actionToDo == Tesla.location)
 							{
-								lgw.i("EVENT & LOCATION VALID: (", actionToDo, ")");
-								if (Tesla.carOnline && Tesla.Tshift_state == "P")
+								if (!actionDone) // only here to retry action if car moved/stopped driving
 								{
-									json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
-									bool state_after_hvac = hvac_result["result"]; // should return true
-
-									std::vector<string> seats_defrost = Tesla.coldCheckSet();
-									string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
-
-
-									if (state_after_hvac)
+									lgw.i("EVENT & LOCATION VALID: (", actionToDo, ")");
+									if (Tesla.carOnline && Tesla.Tshift_state == "P")
 									{
-										// If we're here, it's success
-										lgw.b();
-										lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], "\nInside Temp: ",
-											Tesla.Tinside_temp, "C\nOutside Temp: ", Tesla.Toutside_temp, "C");
+										json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
+										bool state_after_hvac = hvac_result["result"]; // should return true
+
+										std::vector<string> seats_defrost = Tesla.coldCheckSet();
+										string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
 
 
-										// Update the triggered event to prevent it from re-running
-										if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
-										if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
+										if (state_after_hvac)
+										{
+											// If we're here, it's success
+											lgw.b();
+											lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], "\nInside Temp: ",
+												Tesla.Tinside_temp, "C\nOutside Temp: ", Tesla.Toutside_temp, "C");
 
+
+											// Update the triggered event to prevent it from re-running
+											if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
+											if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
+
+										}
+										else
+										{
+											lgw.en("Could not turn HVAC on??");
+										}
+										actionDone = true;
 									}
 									else
 									{
-										lgw.en("Could not turn HVAC on??");
+										lgw.in("Event and location was valid, but carOnline: ", Tesla.carOnline, " and",
+											" shift_state: ", Tesla.Tshift_state);
 									}
-									actionDone = true;
-								}
-								else
-								{
-									lgw.in("Event and location was valid, but carOnline: ", Tesla.carOnline, " and",
-										" shift_state: ", Tesla.Tshift_state);
 								}
 							}
-						}
-						else
-						{
-							if (!actionCancelDone)
+							else
 							{
-								lgw.in("Event triggered for ", actionToDo, ", but car location is ", Tesla.location,
-									", not activating HVAC.");
-								actionCancelDone = true;
+								if (!actionCancelDone)
+								{
+									lgw.in("Event triggered for ", actionToDo, ", but car location is ", Tesla.location,
+										", not activating HVAC.");
+									actionCancelDone = true;
+								}
 							}
 						}
-					}
-					else if (actionToDo == "duplicate")
-					{
-						wakeLoopTimer = 180; // wait a bit longer to avoid cluttering log file
-						string kindOfEvent;
-						tm datetime;
-						if (calEvent::lastTriggeredEvent->homeDone)
+						else if (actionToDo == "duplicate")
 						{
-							kindOfEvent = "home (shift start)";
-							datetime = calEvent::lastTriggeredEvent->start;
+							wakeLoopTimer = 180; // wait a bit longer to avoid cluttering log file
+							string kindOfEvent;
+							tm datetime;
+							if (calEvent::lastTriggeredEvent->homeDone)
+							{
+								kindOfEvent = "home (shift start)";
+								datetime = calEvent::lastTriggeredEvent->start;
+							}
+							else if (calEvent::lastTriggeredEvent->workDone)
+							{
+								kindOfEvent = "work (shift end)";
+								datetime = calEvent::lastTriggeredEvent->end;
+							}
+							lg.d("This event trigger for ", kindOfEvent, " has already ran.");
+							lg.d("The event trigger datetime is:"
+								"\nYear=", datetime.tm_year,
+								"\nMonth=", datetime.tm_mon,
+								"\nDay=", datetime.tm_mday,
+								"\nTime=", datetime.tm_hour, ":", datetime.tm_min, "\n");
 						}
-						else if (calEvent::lastTriggeredEvent->workDone)
+						// settings::intwakeTimer = 4; // for testing
+						// settings::inttriggerTimer = 238; // for testing
+						lgw.d("Running eventTimeCheck with wakeTimer: ", settings::intwakeTimer,
+							"mins, triggerTimer: ", settings::inttriggerTimer, "mins");
+						actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
+						// actionToDo = "home"; // for testing
+						if (!actionToDo.empty())
 						{
-							kindOfEvent = "work (shift end)";
-							datetime = calEvent::lastTriggeredEvent->end;
+							lgw.i("Waiting ", wakeLoopTimer, " seconds and re-running wakeLoop");
+							sleep(wakeLoopTimer);
 						}
-						lg.d("This event trigger for ", kindOfEvent, " has already ran.");
-						lg.d("The event trigger datetime is:"
-							"\nYear=", datetime.tm_year,
-							"\nMonth=", datetime.tm_mon,
-							"\nDay=", datetime.tm_mday,
-							"\nTime=", datetime.tm_hour, ":", datetime.tm_min, "\n");
-					}
-					settings::intwakeTimer = 46; // for testing
-					settings::inttriggerTimer = 42; // for testing
-					lgw.d("Running eventTimeCheck with wakeTimer: ", settings::intwakeTimer,
-						"mins, triggerTimer: ", settings::inttriggerTimer, "mins");
-					actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
-					// actionToDo = "home"; // for testing
-					if (!actionToDo.empty())
+					} while (!actionToDo.empty());
+					break; // Must exit maxTries loop if no error caught
+				}
+				catch (string e) {
+					lg.en("Critical failure: ", e, "\nFailure #", count, ", waiting and retrying.");
+					sleep(5);
+					if (++count == maxTries)
 					{
-						lgw.i("Waiting ", wakeLoopTimer, " seconds and re-running wakeLoop");
-						sleep(wakeLoopTimer);
+						lg.en("ERROR ", count, " out of max ", maxTries, "!!! Stopping, reason ->\n", e);
+						throw e;
 					}
-				} while (!actionToDo.empty());
+				}
+			}
 
-			}
-			catch (string e) {
-				lg.en("Critical failure, program stopping: " + e);
-				return EXIT_FAILURE;
-			}
 
 
 		}

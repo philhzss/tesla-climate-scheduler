@@ -321,7 +321,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				"\nStartTimer=" + (std::to_string(event.startTimer)) +
 				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 			);
-			lg.i("Shift starting at " + string_time_and_date(event.end) + " is valid from work.", true);
+			lg.i("Shift starting at " + string_time_and_date(event.end) + " is valid from work.");
 			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL\n");
 
 			if (!event.workDone) // make sure this event hasn't be triggered before for work
@@ -357,7 +357,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 		}
 		else
 		{
-			lg.d("No matching event for wakeTimer: ", intwakeTimer, "mins, triggerTimer: ", inttriggerTimer, "mins.");
+			lg.p("No matching event for wakeTimer: ", intwakeTimer, "mins, triggerTimer: ", inttriggerTimer, "mins.");
 			return "";
 		}
 	} return "";
