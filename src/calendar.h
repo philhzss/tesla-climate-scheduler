@@ -24,7 +24,8 @@ public:
 	// Function to convert string DTSTARTs into tm objects
 	void setEventParams(calEvent &event);
 	static void removePastEvents();
-	static void createEventTimers();
+	static void initEventTimers();
+	static void updateValidEventTimers();
 
 	// Whys isnt initiateCal part of calendar.h?
 

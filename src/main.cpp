@@ -185,6 +185,8 @@ int main()
 					do
 					{
 						nowTime_secs = time(&nowTime_secs); // always update to current time!
+						calEvent::updateValidEventTimers(); // always update timers within wakeLoop!
+						
 						if (actionToDo != "")
 						{
 							lg.d("actionToDo is: ", actionToDo);
@@ -286,8 +288,8 @@ int main()
 								"\nDay=", datetime.tm_mday,
 								"\nTime=", datetime.tm_hour, ":", datetime.tm_min, "\n");
 						}
-						// settings::intwakeTimer = 800; // for testing
-						// settings::inttriggerTimer = 238; // for testing
+						// settings::intwakeTimer = 370; // for testing
+						// settings::inttriggerTimer = 339; // for testing
 						lgw.d("Running eventTimeCheck with wakeTimer: ", settings::intwakeTimer,
 							"mins, triggerTimer: ", settings::inttriggerTimer, "mins");
 						actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);

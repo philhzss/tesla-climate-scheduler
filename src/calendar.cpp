@@ -154,7 +154,7 @@ void initiateCal()
 	}
 
 	// Calculate start & end timers for each event and store them in the event instance
-	calEvent::createEventTimers();
+	calEvent::initEventTimers();
 
 	// Get rid of all events in the past
 	calEvent::removePastEvents();
@@ -194,7 +194,7 @@ void calEvent::setEventParams(calEvent& event)
 	event.workDone = false;
 }
 
-void calEvent::createEventTimers()
+void calEvent::initEventTimers()
 {
 	for (calEvent& event : calEvent::myCalEvents)
 	{
@@ -220,7 +220,7 @@ void calEvent::createEventTimers()
 		event.endTimer = (difftime(endTime_secs, nowTime_secs)) / 60;
 		lg.p
 		(
-			"::AFTER modifications by createEventTimers, based on shift END TIME::"
+			"::AFTER modifications by initEventTimers, based on shift END TIME::"
 			"\nYear=" + (std::to_string(event.end.tm_year)) +
 			"\nMonth=" + (std::to_string(event.end.tm_mon)) +
 			"\nDay=" + (std::to_string(event.end.tm_mday)) +
@@ -228,6 +228,24 @@ void calEvent::createEventTimers()
 			"\nStartTimer=" + (std::to_string(event.startTimer)) +
 			"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 		);
+	}
+}
+
+void calEvent::updateValidEventTimers()
+{
+	for (calEvent& event : calEvent::myValidEvents) // applies to valid (non-past) events only
+	{
+		// Make a temporary tm struct to not let the mktime function overwrite my event struct
+		tm tempEventStart = event.start;
+		tm tempEventEnd = event.end;
+
+		// Using the temp tm structs, convert tm to time_t epoch seconds
+		time_t startTime_secs = mktime(&tempEventStart) - timezone;
+		time_t endTime_secs = mktime(&tempEventEnd) - timezone;
+
+		// Calculate diff between now and event start/stop times, store value in minutes in object timers
+		event.startTimer = (difftime(startTime_secs, nowTime_secs)) / 60;
+		event.endTimer = (difftime(endTime_secs, nowTime_secs)) / 60;
 	}
 }
 
