@@ -184,6 +184,7 @@ int main()
 					int wakeLoopTimer = settings::intrepeatDelay / 2; // by default repeat-delay/2
 					do
 					{
+						nowTime_secs = time(&nowTime_secs); // always update to current time!
 						if (actionToDo != "")
 						{
 							lg.d("actionToDo is: ", actionToDo);
@@ -196,8 +197,8 @@ int main()
 								if (!carAwokenOnce) {
 									lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
 									tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
-									lgw.in("Trigger ", tempTimeMod, " mins before depart time ",
-										"if all parameters are met");
+									lgw.in("Trigger: ", tempTimeMod, " mins before drive. ",
+										"\nInside Temp: ", Tesla.Tinside_temp, "C\nOutside Temp: ", Tesla.Toutside_temp, "C");
 									lgw.i("Car seems to be located at ", Tesla.location);
 									settings::inttriggerTimer = tempTimeMod;
 									carAwokenOnce = true;
@@ -285,7 +286,7 @@ int main()
 								"\nDay=", datetime.tm_mday,
 								"\nTime=", datetime.tm_hour, ":", datetime.tm_min, "\n");
 						}
-						// settings::intwakeTimer = 4; // for testing
+						// settings::intwakeTimer = 800; // for testing
 						// settings::inttriggerTimer = 238; // for testing
 						lgw.d("Running eventTimeCheck with wakeTimer: ", settings::intwakeTimer,
 							"mins, triggerTimer: ", settings::inttriggerTimer, "mins");
@@ -319,7 +320,7 @@ int main()
 		lg.b("\n<<<<<<<---------------------------PROGRAM TERMINATES HERE--------------------------->>>>>>>\n");
 		calEvent::cleanup(); // to avoid calendar vectors overflowing
 
-		lg.i("\nWaiting for " + settings::u_repeatDelay + " seconds...\n\n\n\n\n\n\n\n\n");
+		lg.b("Waiting for " + settings::u_repeatDelay + " seconds... (now -> ", return_current_time_and_date(), " LOCAL)\n\n\n\n\n\n\n\n\n");
 		sleep(settings::intrepeatDelay);
 	}
 	return 0;
