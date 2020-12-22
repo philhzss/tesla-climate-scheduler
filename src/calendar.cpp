@@ -326,7 +326,8 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				return "duplicate";
 			}
 		}
-		else if ((event.endTimer + settings::intshiftEndBias) <= inttriggerTimer)
+		else if (((event.endTimer + settings::intshiftEndBias) <= inttriggerTimer) && 
+			((event.endTimer + settings::intshiftEndBias)) > 0)
 		{
 			lg.d("Triggered by a timer value of: " + std::to_string(event.endTimer));
 			lg.p
@@ -355,7 +356,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			}
 		}
 		// Make sure to ignore a negative startTimer, as it will be negative during an entire work shift
-		else if (((event.startTimer > 0) && (event.startTimer <= intwakeTimer)) || (event.endTimer <= intwakeTimer))
+		else if (((event.startTimer > 0) && (event.startTimer <= intwakeTimer)) || (event.endTimer <= intwakeTimer) && (event.endTimer > 0))
 		{
 			lg.d("Triggered by a timer value of: " + std::to_string(event.startTimer) + " for start, or: " + std::to_string(event.endTimer) + " for end.");
 			lg.p
