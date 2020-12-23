@@ -354,7 +354,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			}
 		}
 		// Make sure to ignore a negative startTimer, as it will be negative during an entire work shift
-		else if (((event.startTimer > 0) && (event.startTimer <= intwakeTimer)) || (event.endTimer <= intwakeTimer) && (event.endTimer > 0))
+		else if (event.startTimer > 0 && event.startTimer <= intwakeTimer || event.endTimer <= intwakeTimer && event.endTimer > 0)
 		{
 			lg.d("Triggered by a timer value of: " + std::to_string(event.startTimer) + " for start, or: " + std::to_string(event.endTimer) + " for end.");
 			lg.p
@@ -374,10 +374,12 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 		}
 		else
 		{
-			lg.p("No matching event for wakeTimer: ", intwakeTimer, "mins, triggerTimer: ", inttriggerTimer, "mins.");
-			return "";
+			lg.p("No match for start: " + std::to_string(event.startTimer) + " NOR for end: " + std::to_string(event.endTimer) + ".");
 		}
-	} return "";
+	}
+	// If we're here, no event matched any parameter
+	lg.d("No matching event for wakeTimer: ", intwakeTimer, "mins, triggerTimer: ", inttriggerTimer, "mins.");
+	return "";
 }
 
 void calEvent::updateLastTriggeredEvent()

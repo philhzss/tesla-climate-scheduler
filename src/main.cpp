@@ -288,14 +288,16 @@ int main()
 								"\nDay=", datetime.tm_mday,
 								"\nTime=", datetime.tm_hour, ":", datetime.tm_min, "\n");
 						}
-						// settings::intwakeTimer = 370; // for testing
-						// settings::inttriggerTimer = 339; // for testing
+
+						// settings::intwakeTimer = 1000; // for testing
+						// settings::inttriggerTimer = 69; // for testing
 						lgw.d("Running eventTimeCheck with wakeTimer: ", settings::intwakeTimer,
 							"mins, triggerTimer: ", settings::inttriggerTimer, "mins");
 						actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
 						// actionToDo = "home"; // for testing
 						if (!actionToDo.empty())
 						{
+							lg.i("End of wakeLoop, actionToBeDone is: ", actionToDo);
 							lgw.i("Waiting ", wakeLoopTimer, " seconds and re-running wakeLoop");
 							sleep(wakeLoopTimer);
 						}
