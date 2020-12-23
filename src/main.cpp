@@ -305,8 +305,8 @@ int main()
 					break; // Must exit maxTries loop if no error caught
 				}
 				catch (string e) {
-					lg.en("Critical failure: ", e, "\nFailure #", count, ", waiting and retrying.");
-					sleep(5);
+					lg.en("Critical failure: ", e, "\nFailure #", count, ", waiting 1 min and retrying.");
+					sleep(60);
 					if (++count == maxTries)
 					{
 						lg.en("ERROR ", count, " out of max ", maxTries, "!!! Stopping, reason ->\n", e);
