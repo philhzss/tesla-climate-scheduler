@@ -123,74 +123,91 @@ std::map<string, string> car::getData(bool wakeCar)
 
 json car::teslaPOST(string url, json package, bool noBearerToken)
 {
-	string fullUrl = settings::teslaURL + url;
-	const char* const url_to_use = fullUrl.c_str();
-	// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
-
-	CURL* curl;
-	CURLcode res;
-	// Buffer to store result temporarily:
-	string readBuffer;
-	long response_code;
-
-	/* In windows, this will init the winsock stuff */
-	curl_global_init(CURL_GLOBAL_ALL);
-
-	/* get a curl handle */
-	curl = curl_easy_init();
-
-	if (curl) {
-		/* First set the URL that is about to receive our POST. This URL can
-		   just as well be a https:// URL if that is what should receive the
-		   data. */
-		curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
-		/* Now specify the POST data */
-		struct curl_slist* headers = nullptr;
-		headers = curl_slist_append(headers, "Content-Type: application/json");
-		// This should only be specified false on teslaAuth as we dont have token yet
-		if (!noBearerToken) {
-			const char* token_c = settings::teslaAuthString.c_str();
-			lg.p("Sending auth header: " + settings::teslaAuthString);
-			headers = curl_slist_append(headers, token_c);
-		}
-
-
-		// Serialize the package json to string
-		string data = package.dump();
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
-		curl_easy_setopt(curl, CURLOPT_POST, 1);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-
-		/* Perform the request, res will get the return code */
-		res = curl_easy_perform(curl);
-		/* Check for errors */
-		if (res != CURLE_OK)
-			fprintf(stderr, "curl_easy_perform() failed: %s\n",
-				curl_easy_strerror(res));
-		if (res == CURLE_OK) {
-			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-			lg.i(std::to_string(response_code) + "=response code for " + fullUrl);
-			lg.p("readBuffer (before jsonify): " + readBuffer);
-		}
-
-		/* always cleanup */
-		curl_easy_cleanup(curl);
-	}
-	curl_global_cleanup();
-
-	json jsonReadBuffer = json::parse(readBuffer);
 	json responseObject;
-	// If noBearerToken then it doesnt return "response", returns "access token" so cant do this
-	if (noBearerToken) {
-		responseObject = jsonReadBuffer;
-	}
-	else {
-		// Inside "response" is an array, the first item is what contains the response:
-		responseObject = jsonReadBuffer["response"];
-	}
+	bool response_code_ok;
+	do
+	{
+		string fullUrl = settings::teslaURL + url;
+		const char* const url_to_use = fullUrl.c_str();
+		// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
+
+		CURL* curl;
+		CURLcode res;
+		// Buffer to store result temporarily:
+		string readBuffer;
+		long response_code;
+
+		/* In windows, this will init the winsock stuff */
+		curl_global_init(CURL_GLOBAL_ALL);
+
+		/* get a curl handle */
+		curl = curl_easy_init();
+
+		if (curl) {
+			/* First set the URL that is about to receive our POST. This URL can
+			   just as well be a https:// URL if that is what should receive the
+			   data. */
+			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
+			/* Now specify the POST data */
+			struct curl_slist* headers = nullptr;
+			headers = curl_slist_append(headers, "Content-Type: application/json");
+			// This should only be specified false on teslaAuth as we dont have token yet
+			if (!noBearerToken) {
+				const char* token_c = settings::teslaAuthString.c_str();
+				lg.p("Sending auth header: " + settings::teslaAuthString);
+				headers = curl_slist_append(headers, token_c);
+			}
+
+
+			// Serialize the package json to string
+			string data = package.dump();
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
+			curl_easy_setopt(curl, CURLOPT_POST, 1);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+			/* Perform the request, res will get the return code */
+			res = curl_easy_perform(curl);
+			/* Check for errors */
+			if (res != CURLE_OK)
+				fprintf(stderr, "curl_easy_perform() failed: %s\n",
+					curl_easy_strerror(res));
+			if (res == CURLE_OK) {
+				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+				lg.i(response_code, "=response code for ", fullUrl);
+				lg.p("readBuffer (before jsonify): " + readBuffer);
+
+				if (response_code != 200)
+				{
+					lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
+					lg.d("readBuffer for incorrecte: " + readBuffer);
+					response_code_ok = false;
+					lg.i("Waiting 30 secs and retrying");
+					sleep(30); // wait a little before redoing the curl request
+					continue;
+				}
+				else {
+					response_code_ok = true;
+				}
+			}
+
+			/* always cleanup */
+			curl_easy_cleanup(curl);
+		}
+		curl_global_cleanup();
+		lg.i("DID NOT SKIP");
+		json jsonReadBuffer = json::parse(readBuffer);
+		// If noBearerToken then it doesnt return "response", returns "access token" so cant do this
+		if (noBearerToken) {
+			responseObject = jsonReadBuffer;
+		}
+		else {
+			// Inside "response" is an array, the first item is what contains the response:
+			responseObject = jsonReadBuffer["response"];
+		}
+	} while (!response_code_ok);
 	return responseObject;
 }
 

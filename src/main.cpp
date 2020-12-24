@@ -176,6 +176,7 @@ int main()
 					initiateCal();
 
 
+
 					// Verify if any event matches the event checking parameters (Wake loop)
 					bool carAwokenOnce = false;
 					bool actionDone = false;
