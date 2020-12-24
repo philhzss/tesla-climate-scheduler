@@ -197,7 +197,7 @@ json car::teslaPOST(string url, json package, bool noBearerToken)
 			curl_easy_cleanup(curl);
 		}
 		curl_global_cleanup();
-		lg.i("DID NOT SKIP");
+		lg.d("TeslaPOST readBuffer passed to jsonObject (res should be 200 success)");
 		json jsonReadBuffer = json::parse(readBuffer);
 		// If noBearerToken then it doesnt return "response", returns "access token" so cant do this
 		if (noBearerToken) {
