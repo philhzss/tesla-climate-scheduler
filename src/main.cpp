@@ -152,6 +152,7 @@ int main()
 		"\nunder certain conditions.\n\n");
 	lg.n("TCS app initiated" + tcs_versionInfo);
 
+	int mainLoopCounter = 1;
 
 	// Start of program, Always loop everything
 	while (true) {
@@ -159,6 +160,7 @@ int main()
 		// Everything is based on the time at program start
 		nowTime_secs = time(&nowTime_secs); // update to current time
 		lg.i("Runtime date-time (this loop): " + return_current_time_and_date() + " LOCAL\n");
+		lg.d("Loop run number since program start: ", mainLoopCounter);
 
 		// Verify internet connection on every loop
 		if (InternetConnected()) {
@@ -307,6 +309,7 @@ int main()
 				}
 				catch (string e) {
 					lg.en("Critical failure: ", e, "\nFailure #", count, ", waiting 1 min and retrying.");
+					lg.i("Is internet connected?", InternetConnected());
 					sleep(60);
 					if (++count == maxTries)
 					{
@@ -325,8 +328,9 @@ int main()
 		lg.b("\n<<<<<<<---------------------------PROGRAM TERMINATES HERE--------------------------->>>>>>>\n");
 		calEvent::cleanup(); // to avoid calendar vectors overflowing
 
+		mainLoopCounter++;
 		lg.b("Waiting for " + settings::u_repeatDelay + " seconds... (now -> ", return_current_time_and_date(), " LOCAL)\n\n\n\n\n\n\n\n\n");
-		sleep(settings::intrepeatDelay);
+		// sleep(settings::intrepeatDelay);
 	}
 	return 0;
 }
