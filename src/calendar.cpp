@@ -296,7 +296,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 	{
 		// If event start time is less (sooner) than event trigger time
 		// startTimer - (commute + start bias)
-		if (0 < (event.startTimer - settings::intcommuteTime + settings::intshiftStartBias
+		if (event.startTimer > 0 && (event.startTimer - settings::intcommuteTime + settings::intshiftStartBias
 			<= inttriggerTimer))
 		{
 			lg.d("Triggered by a timer value of: " + std::to_string(event.startTimer));
@@ -325,7 +325,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				return "duplicate";
 			}
 		}
-		else if (0 < ((event.endTimer + settings::intshiftEndBias) <= inttriggerTimer))
+		else if (event.endTimer > 0 && (event.endTimer + settings::intshiftEndBias <= inttriggerTimer))
 		{
 			lg.d("Triggered by a timer value of: " + std::to_string(event.endTimer));
 			lg.p
