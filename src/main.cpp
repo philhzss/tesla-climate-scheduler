@@ -85,7 +85,11 @@ bool InternetConnected() {
 			lg.d("HTTP Error Code (will be 0 if absolutely can't connect): ", response_code);
 			lg.d("See https://curl.haxx.se/libcurl/c/libcurl-errors.html for details.");
 		}
+		/* always cleanup */
+		curl_easy_cleanup(curl);
 	}
+	curl_global_cleanup();
+
 	lg.p("End of internet_connected() function\n");
 	return internet_res;
 }
