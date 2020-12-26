@@ -334,7 +334,7 @@ int main()
 
 		mainLoopCounter++;
 		lg.b("Waiting for " + settings::u_repeatDelay + " seconds... (now -> ", return_current_time_and_date(), " LOCAL)\n\n\n\n\n\n\n\n\n");
-		// sleep(settings::intrepeatDelay);
+		sleep(settings::intrepeatDelay);
 	}
 	return 0;
 }
