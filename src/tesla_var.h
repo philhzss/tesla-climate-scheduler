@@ -19,7 +19,7 @@ using std::string;
 
 
 // Program info
-const string tcs_versionInfo = "\nVersion: _*3.0.3*_\nBuild Date: 2020.12.25 - fixed cURL 1020 loop crash";
+const string tcs_versionInfo = "\nVersion: _*3.0.4*_\nBuild Date: 2020.12.30 - battery level logged";
 
 
 // Declarations
