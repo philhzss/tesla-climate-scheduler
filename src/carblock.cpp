@@ -117,6 +117,10 @@ std::map<string, string> car::getData(bool wakeCar)
 		}
 	}
 
+	datapack = lg.prepareOnly("\nInside Temp: ", Tinside_temp,
+		"C\nOutside Temp: ", Toutside_temp,
+		"C\nBattery %: ", (int)Tbattery_level, " (", (int)Tusable_battery_level, ")");
+
 	return carData_s;
 }
 

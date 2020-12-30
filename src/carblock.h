@@ -22,7 +22,7 @@ public:
 	float Tlat;
 	float Tlong;
 	string location;
-
+	string datapack;
 	
 
 private:

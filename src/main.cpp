@@ -193,7 +193,7 @@ int main()
 					{
 						nowTime_secs = time(&nowTime_secs); // always update to current time!
 						calEvent::updateValidEventTimers(); // always update timers within wakeLoop!
-						
+
 						if (actionToDo != "")
 						{
 							lg.d("actionToDo is: ", actionToDo);
@@ -206,8 +206,7 @@ int main()
 								if (!carAwokenOnce) {
 									lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
 									tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
-									lgw.in("Trigger: ", tempTimeMod, " mins before drive. ",
-										"\nInside Temp: ", Tesla.Tinside_temp, "C\nOutside Temp: ", Tesla.Toutside_temp, "C");
+									lgw.in("Trigger: ", tempTimeMod, " mins before drive. ", Tesla.datapack);
 									lgw.i("Car seems to be located at ", Tesla.location);
 									settings::inttriggerTimer = tempTimeMod;
 									carAwokenOnce = true;
@@ -241,8 +240,7 @@ int main()
 										{
 											// If we're here, it's success
 											lgw.b();
-											lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], "\nInside Temp: ",
-												Tesla.Tinside_temp, "C\nOutside Temp: ", Tesla.Toutside_temp, "C");
+											lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], Tesla.datapack);
 
 
 											// Update the triggered event to prevent it from re-running
