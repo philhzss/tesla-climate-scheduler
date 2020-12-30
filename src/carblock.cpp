@@ -182,7 +182,7 @@ json car::teslaPOST(string url, json package, bool noBearerToken)
 				if (response_code != 200)
 				{
 					lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
-					lg.d("readBuffer for incorrecte: " + readBuffer);
+					lg.d("readBuffer for incorrect: " + readBuffer);
 					response_code_ok = false;
 					lg.i("Waiting 30 secs and retrying");
 					sleep(30); // wait a little before redoing the curl request
@@ -213,63 +213,80 @@ json car::teslaPOST(string url, json package, bool noBearerToken)
 
 json car::teslaGET(string url)
 {
-	string fullUrl = settings::teslaURL + url;
-	const char* const url_to_use = fullUrl.c_str();
-	CURL* curl;
-	CURLcode res;
-	// Buffer to store result temporarily:
-	string readBuffer;
-	long response_code;
-
-	curl_global_init(CURL_GLOBAL_DEFAULT);
-	curl = curl_easy_init();
-	if (curl) {
-
-
-		// Header for auth
-		const char* authHeaderC = settings::teslaAuthString.c_str();
-		struct curl_slist* headers = nullptr;
-		headers = curl_slist_append(headers, authHeaderC);
-		headers = curl_slist_append(headers, "Content-Type: application/json");
-
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-		curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
-
-		/* use a GET to fetch this */
-		//curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-		/* Perform the request, res will get the return code */
-		res = curl_easy_perform(curl);
-		/* Check for errors */
-		if (res != CURLE_OK)
-		{
-			fprintf(stderr, "curl_easy_perform() failed: %s\n",
-				curl_easy_strerror(res));
-			throw "curl_easy_perform() failed: " + std::to_string(res);
-		}
-		if (res == CURLE_OK) {
-			curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-			lg.i(std::to_string(response_code) + "=response code for " + fullUrl);
-			lg.p("readBuffer (before jsonify): " + readBuffer);
-		}
-
-		/* always cleanup */
-		curl_easy_cleanup(curl);
-	}
-	curl_global_cleanup();
-
-	json jsonReadBuffer = json::parse(readBuffer);
 	json responseObject;
-	if (jsonReadBuffer["response"].is_array()) {
-		/* Inside "response" is an array, one item PER VEHICLE. Currently only supports 1 vehicle
-		* But I will ahve to change this code to check for multiple vehicles eventually*/
-		responseObject = (jsonReadBuffer["response"])[0];
-	}
-	else {
-		responseObject = (jsonReadBuffer["response"]);
-	}
+	bool response_code_ok;
+	do
+	{
+		string fullUrl = settings::teslaURL + url;
+		const char* const url_to_use = fullUrl.c_str();
+		CURL* curl;
+		CURLcode res;
+		// Buffer to store result temporarily:
+		string readBuffer;
+		long response_code;
+
+		curl_global_init(CURL_GLOBAL_DEFAULT);
+		curl = curl_easy_init();
+		if (curl) {
+
+
+			// Header for auth
+			const char* authHeaderC = settings::teslaAuthString.c_str();
+			struct curl_slist* headers = nullptr;
+			headers = curl_slist_append(headers, authHeaderC);
+			headers = curl_slist_append(headers, "Content-Type: application/json");
+
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
+
+			/* use a GET to fetch this */
+			//curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			/* Perform the request, res will get the return code */
+			res = curl_easy_perform(curl);
+			/* Check for errors */
+			if (res != CURLE_OK)
+			{
+				fprintf(stderr, "curl_easy_perform() failed: %s\n",
+					curl_easy_strerror(res));
+				throw "curl_easy_perform() failed: " + std::to_string(res);
+			}
+			if (res == CURLE_OK) {
+				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+				lg.i(response_code, "=response code for GET ", fullUrl);
+				lg.p("readBuffer (before jsonify): ", readBuffer);
+
+				if (response_code != 200)
+				{
+					lg.en("Abnormal server response (", response_code, ") for GET ", fullUrl);
+					lg.d("readBuffer for incorrect: " + readBuffer);
+					response_code_ok = false;
+					lg.i("Waiting 30 secs and retrying");
+					sleep(30); // wait a little before redoing the curl request
+					continue;
+				}
+				else {
+					response_code_ok = true;
+				}
+			}
+
+			/* always cleanup */
+			curl_easy_cleanup(curl);
+		}
+		curl_global_cleanup();
+
+		json jsonReadBuffer = json::parse(readBuffer);
+		if (jsonReadBuffer["response"].is_array()) {
+			/* Inside "response" is an array, one item PER VEHICLE. Currently only supports 1 vehicle
+			* But I will ahve to change this code to check for multiple vehicles eventually*/
+			responseObject = (jsonReadBuffer["response"])[0];
+		}
+		else {
+			responseObject = (jsonReadBuffer["response"]);
+		}
+	} while (!response_code_ok);
 	return responseObject;
 }
 
