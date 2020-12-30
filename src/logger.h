@@ -68,7 +68,7 @@ public:
 			write(message, source_file, "Info", true);
 		}
 	}
-	
+
 	template<typename ...Args>
 	void d(Args&&... args)
 	{
@@ -112,6 +112,13 @@ public:
 		write(message, "", "");
 	}
 
+	template<typename ...Args>
+	string prepareOnly(Args&&... args)
+	{
+		string message = Log::prepare(std::forward<Args>(args)...);
+		return message;
+	}
+
 private:
 	// Stores the logging level for the file
 	int fileLogLevel;
@@ -123,7 +130,7 @@ private:
 	inline string getCurrentDateTime(string s);
 	string curl_POST_slack(string url, string message);
 
-	void write(string message, string source_file, string level, bool notification=false);
+	void write(string message, string source_file, string level, bool notification = false);
 
 
 	// Logger preparator
