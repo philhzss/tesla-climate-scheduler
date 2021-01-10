@@ -251,30 +251,35 @@ int main()
 									lgw.i("EVENT & LOCATION VALID: (", actionToDo, ")");
 									if (Tesla.carOnline && Tesla.Tshift_state == "P")
 									{
-										// triggerAllowed() would go here
+										string triggerAllowedRes = Tesla.triggerAllowed();
+										if (triggerAllowedRes == "continue" ) {
 
-										json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
-										bool state_after_hvac = hvac_result["result"]; // should return true
+											json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
+											bool state_after_hvac = hvac_result["result"]; // should return true
 
-										std::vector<string> seats_defrost = Tesla.coldCheckSet();
-										string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
-
-
-										if (state_after_hvac)
-										{
-											// If we're here, it's success
-											lgw.b();
-											lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], Tesla.datapack);
+											std::vector<string> seats_defrost = Tesla.coldCheckSet();
+											string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
 
 
-											// Update the triggered event to prevent it from re-running
-											if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
-											if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
+											if (state_after_hvac)
+											{
+												// If we're here, it's success
+												lgw.b();
+												lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], Tesla.datapack);
 
+
+												// Update the triggered event to prevent it from re-running
+												if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
+												if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
+
+											}
+											else
+											{
+												lgw.en("Could not turn HVAC on??");
+											}
 										}
-										else
-										{
-											lgw.en("Could not turn HVAC on??");
+										else {
+											lgw.in("Tesla didn't match parameters for trigger\n", triggerAllowedRes);
 										}
 										actionDone = true;
 									}

@@ -33,7 +33,6 @@ private:
 	// Verify if at home or work based on lat/lon and tolerance
 	string checkCarLocation();
 
-
 public:
 	// Pull data from car, waking the car if requested
 	std::map<string, string> getData(bool wakeCar=false);
@@ -47,5 +46,7 @@ public:
 	// GET request to "https://owner-api.teslamotors.com/ + url", oAuth token built-in
 	json teslaGET(string url);
 	int calcTempMod(int interior_temp);
-	
+
+	// Verify various car parameters and return reason if failure
+	string triggerAllowed();
 };

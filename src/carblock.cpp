@@ -303,6 +303,7 @@ void car::wake()
 	lg.d("Wake command sent while state was: " + state_after_wake);
 	carOnline = (state_after_wake == "online") ? true : false;
 	if (carOnline) {
+		// add a delay here of X seconds to make sure Tinside_temp is accurate? v3.0.4.1 debug
 		return;
 	}
 	sleep(5);
@@ -397,6 +398,25 @@ string car::checkCarLocation()
 
 	// Verify and return
 	return (latRes == longRes) ? longRes : "unknown";
+}
+
+string car::triggerAllowed()
+{
+	bool batteryGood;
+	bool tempGood;
+	batteryGood = (Tusable_battery_level < 22) ? false : true;
+	tempGood = ((Tinside_temp > 17) && (Tinside_temp < 23)) ? false : true;
+
+	if (batteryGood && tempGood)
+	{
+		return "continue";
+	}
+	else
+	{
+		string resultString = lg.prepareOnly("Temp verification passed: ", tempGood,
+			"\nBattery verification passed: ", batteryGood);
+		return resultString;
+	}
 }
 
 std::vector<string> car::coldCheckSet()
