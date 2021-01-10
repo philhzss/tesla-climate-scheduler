@@ -62,10 +62,17 @@ std::map<string, string> car::getData(bool wakeCar)
 
 	if (wakeCar)
 	{
+		bool initialWakeState = carOnline; // if it was sleeping, must delay Tinside_temp
 		do {
 			// Run wake function until carOnline is true
 			car::wake();
 		} while (!carOnline);
+
+		if (!initialWakeState)
+		{
+			sleep(10);
+			lg.d("Car was not awake, waiting 8 seconds after wake before getting data.");
+		}
 
 		// Now that the car is online, we can get more data
 		json response = teslaGET(settings::teslaVURL + "vehicle_data");

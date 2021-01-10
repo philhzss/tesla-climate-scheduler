@@ -202,44 +202,23 @@ int main()
 
 						if (actionToDo == "wake")
 						{
-							// Temporary debug scope to see how long it takes for the int temp to be accurate
-							{
+							if (!carAwokenOnce) {
 								Tesla.getData(true); // Wake car and pull all data from it
-								lgw.dn("Initial wake, Tinside_temp is: ", Tesla.Tinside_temp);
-								sleep(5);
-								Tesla.getData(true);
-								lgw.dn("2nd wake (+5 sec), Tinside_temp is: ", Tesla.Tinside_temp);
-								sleep(5);
-								Tesla.getData(true);
-								lgw.dn("3rd wake (+10 sec), Tinside_temp is: ", Tesla.Tinside_temp);
-								sleep(5);
-								Tesla.getData(true);
-								lgw.dn("4th wake (+15 sec), Tinside_temp is: ", Tesla.Tinside_temp);
-								sleep(15);
-								Tesla.getData(true);
-								lgw.dn("5th wake (+30 sec), Tinside_temp is: ", Tesla.Tinside_temp);
-								sleep(30);
-								Tesla.getData(true);
-								lgw.dn("6th wake (+60 sec), Tinside_temp is: ", Tesla.Tinside_temp);
-								sleep(60);
-								Tesla.getData(true);
-								lgw.dn("Final wake (+120 sec), Tinside_temp is: ", Tesla.Tinside_temp);
-							}
-							if (Tesla.carOnline) {
-								if (!carAwokenOnce) {
+								if (Tesla.carOnline) {
 									lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
 									tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
 									lgw.in("Trigger: ", tempTimeMod, " mins before drive. ", Tesla.datapack);
 									lgw.i("Car seems to be located at ", Tesla.location);
 									settings::inttriggerTimer = tempTimeMod;
-									carAwokenOnce = true; // to avoid notifying user multiple times
+									carAwokenOnce = true; // to avoid notifying user multiple times & waking car every loop
+
 								}
-								else { lgw.i("waiting"); }
+								else {
+									lgw.e("Could not wake car?? Car still reporting as offline after wakeLoop");
+									// Could print a raw tesla-feed here for debugging if this triggers one day?
+								}
 							}
-							else {
-								lgw.e("Could not wake car?? Car still reporting as offline after wakeLoop");
-								// Could print a raw tesla-feed here for debugging if this triggers one day?
-							}
+							else { lgw.i("car already awoken, waiting"); }
 						}
 						else if ((actionToDo == "home") || (actionToDo == "work"))
 						{
