@@ -150,7 +150,7 @@ int main()
 	lg.b("\n.\n..\n...\n....\n.....\n......\n.......\n........\n.........\n..........\nTCS app initiated" + tcs_versionInfo + "\n");
 
 
-	lg.i("\nTCS  Copyright (C) 2020  Philippe Hewett"
+	lg.i("\nTCS  Copyright (C) 2021  Philippe Hewett"
 		"\nThis program comes with ABSOLUTELY NO WARRANTY;"
 		"\nThis is free software, and you are welcome to redistribute it"
 		"\nunder certain conditions.\n\n");
@@ -250,53 +250,45 @@ int main()
 								if (!actionDone) // only here to retry action if car moved/stopped driving
 								{
 									lgw.i("EVENT & LOCATION VALID: (", actionToDo, ")");
-									if (Tesla.carOnline && Tesla.Tshift_state == "P")
-									{
-										string triggerAllowedRes = Tesla.triggerAllowed();
-										if (triggerAllowedRes == "continue" ) {
+									string triggerAllowedRes = Tesla.triggerAllowed();
+									if (triggerAllowedRes == "continue") {
 
-											json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
-											bool state_after_hvac = hvac_result["result"]; // should return true
+										json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
+										bool state_after_hvac = hvac_result["result"]; // should return true
 
-											std::vector<string> seats_defrost = Tesla.coldCheckSet();
-											string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
+										std::vector<string> seats_defrost = Tesla.coldCheckSet();
+										string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
 
 
-											if (state_after_hvac)
-											{
-												// If we're here, it's success
-												lgw.b();
-												lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], Tesla.datapack);
+										if (state_after_hvac)
+										{
+											// If we're here, it's success
+											lgw.b();
+											lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], Tesla.datapack);
 
 
-												// Update the triggered event to prevent it from re-running
-												if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
-												if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
+											// Update the triggered event to prevent it from re-running
+											if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
+											if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
 
-											}
-											else
-											{
-												lgw.en("Could not turn HVAC on??");
-											}
 										}
-										else {
-											lgw.in("Tesla didn't match parameters for trigger\n", triggerAllowedRes);
+										else
+										{
+											lgw.en("Could not turn HVAC on??");
 										}
-										actionDone = true;
 									}
-									else
-									{
-										lgw.in("Event and location was valid, but carOnline: ", Tesla.carOnline, " and",
-											" shift_state: ", Tesla.Tshift_state);
+									else {
+										lgw.in("Tesla didn't match parameters for trigger\n", triggerAllowedRes);
 									}
+									actionDone = true;
 								}
 							}
-							else
+							else // Here if the location doesnt match the actionToDo:
 							{
 								if (!actionCancelDone)
 								{
 									lgw.in("Event triggered for ", actionToDo, ", but car location is ", Tesla.location,
-										", not activating HVAC.");
+										", location doesn't match action, not activating HVAC.");
 									actionCancelDone = true;
 								}
 							}

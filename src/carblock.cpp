@@ -404,17 +404,23 @@ string car::triggerAllowed()
 {
 	bool batteryGood;
 	bool tempGood;
+	bool carOnlineGood;
+	bool shiftStateGood;
 	batteryGood = (Tusable_battery_level < 22) ? false : true;
 	tempGood = ((Tinside_temp > 17) && (Tinside_temp < 23)) ? false : true;
+	carOnlineGood = carOnline;
+	shiftStateGood = (Tshift_state == "P") ? true : false;
 
-	if (batteryGood && tempGood)
+	if (batteryGood && tempGood && carOnlineGood && shiftStateGood)
 	{
 		return "continue";
 	}
 	else
 	{
 		string resultString = lg.prepareOnly("Temp verification passed: ", tempGood,
-			"\nBattery verification passed: ", batteryGood);
+			"\nBattery verification passed: ", batteryGood,
+			"\nShift State verification passed: ", shiftStateGood,
+			"\nCarOnline verification passed: ", carOnlineGood);
 		return resultString;
 	}
 }
