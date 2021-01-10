@@ -160,7 +160,8 @@ int main()
 
 	// Start of program, Always loop everything
 	while (true) {
-		lg.b("\n>>>>>>>------------------------------PROGRAM STARTS HERE----------------------------<<<<<<<\n\n");
+		lg.b("\n\n>>>>>>>------------------------------PROGRAM STARTS HERE----------------------------<<<<<<<\n");
+		lg.b("TCS Version ", tcs_version);
 		// Everything is based on the time at program start
 		nowTime_secs = time(&nowTime_secs); // update to current time
 		lg.i("Runtime date-time (this loop): " + return_current_time_and_date() + " LOCAL\n");

@@ -19,7 +19,9 @@ using std::string;
 
 
 // Program info
-const string tcs_versionInfo = "\nVersion: _*3.0.4.1s*_\nBuild Date: 2021.01.09 - debug version for wakeTempWait";
+const string tcs_buildInfo = "\nBuild Date : 2021.01.09 - debug version for wakeTempWait";
+const string tcs_version = "3.0.4.1s";
+const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 
 
 // Declarations
