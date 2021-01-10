@@ -19,7 +19,7 @@ using std::string;
 
 
 // Program info
-const string tcs_versionInfo = "\nVersion: _*3.0.4*_\nBuild Date: 2020.12.30 - battery level logged";
+const string tcs_versionInfo = "\nVersion: _*3.0.4.1s*_\nBuild Date: 2021.01.09 - debug version for wakeTempWait";
 
 
 // Declarations

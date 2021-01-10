@@ -201,7 +201,29 @@ int main()
 
 						if (actionToDo == "wake")
 						{
-							Tesla.getData(true); // Wake car and pull all data from it
+							// Temporary debug scope to see how long it takes for the int temp to be accurate
+							{
+								Tesla.getData(true); // Wake car and pull all data from it
+								lgw.dn("Initial wake, Tinside_temp is: ", Tesla.Tinside_temp);
+								sleep(5);
+								Tesla.getData(true);
+								lgw.dn("2nd wake (+5 sec), Tinside_temp is: ", Tesla.Tinside_temp);
+								sleep(5);
+								Tesla.getData(true);
+								lgw.dn("3rd wake (+10 sec), Tinside_temp is: ", Tesla.Tinside_temp);
+								sleep(5);
+								Tesla.getData(true);
+								lgw.dn("4th wake (+15 sec), Tinside_temp is: ", Tesla.Tinside_temp);
+								sleep(15);
+								Tesla.getData(true);
+								lgw.dn("5th wake (+30 sec), Tinside_temp is: ", Tesla.Tinside_temp);
+								sleep(30);
+								Tesla.getData(true);
+								lgw.dn("6th wake (+60 sec), Tinside_temp is: ", Tesla.Tinside_temp);
+								sleep(60);
+								Tesla.getData(true);
+								lgw.dn("Final wake (+120 sec), Tinside_temp is: ", Tesla.Tinside_temp);
+							}
 							if (Tesla.carOnline) {
 								if (!carAwokenOnce) {
 									lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
@@ -209,7 +231,7 @@ int main()
 									lgw.in("Trigger: ", tempTimeMod, " mins before drive. ", Tesla.datapack);
 									lgw.i("Car seems to be located at ", Tesla.location);
 									settings::inttriggerTimer = tempTimeMod;
-									carAwokenOnce = true;
+									carAwokenOnce = true; // to avoid notifying user multiple times
 								}
 								else { lgw.i("waiting"); }
 							}
@@ -229,6 +251,8 @@ int main()
 									lgw.i("EVENT & LOCATION VALID: (", actionToDo, ")");
 									if (Tesla.carOnline && Tesla.Tshift_state == "P")
 									{
+										// triggerAllowed() would go here
+
 										json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
 										bool state_after_hvac = hvac_result["result"]; // should return true
 
