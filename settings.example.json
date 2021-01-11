@@ -18,11 +18,11 @@
     "calendarURL": "link to calendar ics",
     "shiftStartBias": "0",
     "shiftEndBias": "-30",
+    "commuteTime": "30",
     "wordsToIgnore": [ "Leave", "Spare" ]
   },
 
   "Car settings": {
-    "commuteTime": "30",
     "shutoffTimer": "20",
     "default20CMinTime": "5"
   }

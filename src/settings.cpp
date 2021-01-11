@@ -19,8 +19,6 @@ std::vector<string> settings::u_workCoords;
 // Car
 int settings::intwakeTimer;
 int settings::inttriggerTimer;
-string settings::u_commuteTime;
-int settings::intcommuteTime;
 string settings::u_shutoffTimer;
 int settings::intshutoffTimer;
 string settings::u_default20CMinTime;
@@ -33,6 +31,8 @@ string settings::u_shiftStartBias;
 int settings::intshiftStartBias;
 string settings::u_shiftEndBias;
 int settings::intshiftEndBias;
+string settings::u_commuteTime;
+int settings::intcommuteTime;
 std::vector<string> settings::u_wordsToIgnore;
 // Tesla
 string settings::u_teslaEmail;
@@ -71,8 +71,6 @@ void settings::readSettings(string silent)
 
 
 			// CAR SETTINGS
-			u_commuteTime = carSettings["commuteTime"];
-			intcommuteTime = std::stoi(u_commuteTime);
 			u_shutoffTimer = carSettings["shutoffTimer"];
 			intshutoffTimer = std::stoi(u_shutoffTimer);
 			u_default20CMinTime = carSettings["default20CMinTime"];
@@ -80,6 +78,8 @@ void settings::readSettings(string silent)
 
 
 			// CALENDAR SETTINGS
+			u_commuteTime = calendarSettings["commuteTime"];
+			intcommuteTime = std::stoi(u_commuteTime);
 			u_calendarURL = calendarSettings["calendarURL"];
 			u_shiftStartBias = calendarSettings["shiftStartBias"];
 			intshiftStartBias = std::stoi(u_shiftStartBias);
@@ -139,6 +139,7 @@ void settings::readSettings(string silent)
 			lg.b("Cal: Calendar URL: " + u_calendarURL);
 			lg.b("No ignored words were specified.");
 		}
+		lg.b("Cal: Commute time setting: " + u_commuteTime + " minutes.");
 		// Scope for clarity
 		{
 			string startKw;
@@ -146,7 +147,6 @@ void settings::readSettings(string silent)
 			startKw = (intshiftStartTimer < 0) ? "BEFORE" : "AFTER";
 			endKw = (intshiftEndTimer < 0) ? "BEFORE" : "AFTER";
 			lg.b("Car: Tesla Account Email: " + u_teslaEmail +
-				"\nCar: Commute time setting: " + u_commuteTime + " minutes."
 				"\nCar will be ready for driving: \n", abs(intshiftStartTimer), " minutes ", startKw, " calendar event start time."
 				"\n", abs(intshiftEndTimer), " minutes ", endKw, " calendar event end time."
 				"\nHVAC will be shut down if car still home " + u_shutoffTimer + " minutes before shift start."

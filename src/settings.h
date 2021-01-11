@@ -50,10 +50,6 @@ public:
 
 
 	// Car Setting
-	// (Minutes) Drive time between home and work
-	static string u_commuteTime;
-	static int intcommuteTime;
-	// Car Setting
 	// Limiter is to stop climate if you called sick / if still at home X amount of time before shift in MINS
 	static string u_shutoffTimer;
 	static int intshutoffTimer;
@@ -89,6 +85,10 @@ public:
 	// If you leave work early, enter a negative number, if late, positive number.
 	static string u_shiftEndBias;
 	static int intshiftEndBias;
+	// Calendar Setting
+	// (Minutes) Drive time between home and work
+	static string u_commuteTime;
+	static int intcommuteTime;
 	// Calendar Setting
 	// Enter words that will cause the program to IGNORE events containing them
 	static std::vector<string> u_wordsToIgnore;
