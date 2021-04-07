@@ -37,11 +37,10 @@ std::vector<string> settings::u_wordsToIgnore;
 // Tesla
 string settings::u_teslaEmail;
 string settings::u_teslaPassword;
-string settings::teslaURL;
+string settings::teslaOwnerURL;
+string settings::teslaAuthURL;
 string settings::teslaVURL;
 string settings::teslaVID;
-string settings::u_teslaClientID;
-string settings::u_teslaClientSecret;
 json settings::authReqPackage;
 string settings::teslaAuthString;
 
@@ -90,16 +89,12 @@ void settings::readSettings(string silent)
 			// TESLA ACCOUNT SETTINGS
 			u_teslaEmail = teslaSettings["teslaEmail"];
 			u_teslaPassword = teslaSettings["teslaPassword"];
-			u_teslaClientID = teslaSettings["TESLA_CLIENT_ID"];
-			u_teslaClientSecret = teslaSettings["TESLA_CLIENT_SECRET"];
 
 			lg.b();
 			lg.d("Settings file settings.json successfully read.");
 
 			settings::authReqPackage =
 			{ {"grant_type", "password"},
-			{"client_id", settings::u_teslaClientID},
-			{"client_secret", settings::u_teslaClientSecret},
 			{"email", settings::u_teslaEmail},
 			{"password", settings::u_teslaPassword} };
 		}
@@ -168,7 +163,8 @@ void settings::readSettings(string silent)
 		lg.b();
 	}
 
-	teslaURL = "https://owner-api.teslamotors.com/";
+	teslaOwnerURL = "https://owner-api.teslamotors.com/";
+	teslaAuthURL = "https://auth.tesla.com/oauth2/v3/";
 	// Note: Tesla VID and VURL defined in carblock
 
 	// Default to the bare minimum (2mins is tempTimeMod min) to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.

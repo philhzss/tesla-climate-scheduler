@@ -182,7 +182,8 @@ int main()
 					// Get & parse calendar data
 					initiateCal();
 
-
+					// Temporary test for Tesla Auth
+					Tesla.getData(true);
 
 					// Verify if any event matches the event checking parameters (Wake loop)
 					bool carAwokenOnce = false;

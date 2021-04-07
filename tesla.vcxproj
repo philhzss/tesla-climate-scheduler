@@ -79,6 +79,7 @@
     <IncludePath>C:\Users\Phil\Google Drive\dev\Tesla auto-sched climate\Tesla Climate Scheduler cpp\tesla\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="include\base64.cpp" />
     <ClCompile Include="src\calendar.cpp" />
     <ClCompile Include="src\carblock.cpp" />
     <ClCompile Include="src\logger.cpp" />
@@ -86,6 +87,7 @@
     <ClCompile Include="src\settings.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\base64.h" />
     <ClInclude Include="include\nlohmann\adl_serializer.hpp" />
     <ClInclude Include="include\nlohmann\byte_container_with_subtype.hpp" />
     <ClInclude Include="include\nlohmann\detail\conversions\from_json.hpp" />
@@ -123,6 +125,7 @@
     <ClInclude Include="include\nlohmann\ordered_map.hpp" />
     <ClInclude Include="include\nlohmann\thirdparty\hedley\hedley.hpp" />
     <ClInclude Include="include\nlohmann\thirdparty\hedley\hedley_undef.hpp" />
+    <ClInclude Include="include\picosha2.h" />
     <ClInclude Include="src\calendar.h" />
     <ClInclude Include="src\carblock.h" />
     <ClInclude Include="src\logger.h" />

@@ -14,7 +14,8 @@ public:
 
 
 	// Important stuff, Tesla official token, Tesla URL
-	static string teslaURL;
+	static string teslaOwnerURL;
+	static string teslaAuthURL;
 	static string teslaVURL;
 	static string teslaVID;
 	static json authReqPackage;
