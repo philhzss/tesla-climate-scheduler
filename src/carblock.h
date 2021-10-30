@@ -1,10 +1,32 @@
 #include "map"
 #pragma once
 
+// New auth stuff
+class authorizer {
+public:
+	string random_ANstring();
+	string code_verifier;
 
+	const string client_id = "ownerapi";
+	string code_challenge;
+	const string code_challenge_method = "S256";
+	const string redirect_uri = "https://auth.tesla.com/void/callback";
+	const string response_type = "code";
+	const string scope = "openid%20email%20offline_access";
+	const string state = "anyRandomString";
+
+
+	size_t stringCount(const std::string& referenceString,
+		const std::string& subString);
+	std::unordered_map<string, string> step1_forms;
+	string step1_cookie;
+
+	
+};
 
 class car
 {
+	friend class authorizer;
 public:
 	// public vars
 	bool carOnline = false;
@@ -23,6 +45,8 @@ public:
 	float Tlong;
 	string location;
 	string datapack;
+	authorizer auth;
+
 
 
 private:
@@ -30,14 +54,7 @@ private:
 	// Write token to settings::teslaAuthString for Tesla official API usage
 	void teslaAuth();
 
-	// New auth stuff
-	string random_ANstring();
-	string code_verifier;
-	string code_challenge;
-	size_t stringCount(const std::string& referenceString,
-		const std::string& subString);
-	std::unordered_map<string, string> step1_forms;
-	string step_1_cookie;
+
 
 	// Verify if at home or work based on lat/lon and tolerance
 	string checkCarLocation();
@@ -47,14 +64,15 @@ public:
 	std::map<string, string> getData(bool wakeCar = false);
 
 	// POST request to "https://owner-api.teslamotors.com/ + url"
-	json teslaPOST(string url, json package = json(), bool noBearerToken = false);
+	json teslaPOST(string specifiedUrlPage, json bodyPackage = json());
+	string teslaAuthPOST(string URLparams, json bodyPackage, string& headerResponse);
 
 	// Returns confirmed heated seat setting, & if max condition is on
 	std::vector<string> coldCheckSet();
 
 	// GET request to "https://owner-api.teslamotors.com/ + url", oAuth token built-in
 	json teslaGET(string specifiedUrlPage);
-	string teslaGET(string URLparams, string &headerResponse);
+	string teslaAuthGET(string URLparams, string& headerResponse);
 	int calcTempMod(int interior_temp);
 
 	// Verify various car parameters and return reason if failure

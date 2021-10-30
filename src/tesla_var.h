@@ -22,10 +22,12 @@ using std::string;
 const string tcs_buildInfo = "\nBuild Date : 2021.01.10 - inside_temp should be accurate now";
 const string tcs_version = "3.0.5";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
-
+const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 
 // Declarations
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
+size_t header_callback(char* buffer, size_t size,
+	size_t nitems, void* userdata);
 string curl_GET(string url);
 extern time_t nowTime_secs;
 const string string_time_and_date(tm tstruct);

@@ -22,27 +22,34 @@ static Log lg("Carblock", Log::LogLevel::Programming);
 void car::teslaAuth()
 {
 	// ~~STEP 1: Obtain the login page~~
-	car::code_verifier = car::random_ANstring();
+	car::auth.code_verifier = car::auth.random_ANstring();
 	std::vector<unsigned char> hash(picosha2::k_digest_size);
-	picosha2::hash256(code_verifier.begin(), code_verifier.end(), hash.begin(), hash.end());
+	picosha2::hash256(car::auth.code_verifier.begin(), car::auth.code_verifier.end(), hash.begin(), hash.end());
 	string hex_str = picosha2::bytes_to_hex_string(hash.begin(), hash.end());
 	string base64_encode(string const& string, bool url = true);
-	car::code_challenge = base64_encode(hex_str, true);
+	car::auth.code_challenge = base64_encode(hex_str, true);
 
-	lg.d("Code verifier: ", car::code_verifier);
+	lg.d("Code verifier: ", car::auth.code_verifier);
 	lg.d("Code challenge (not encoded): ", hex_str);
-	lg.d("Code challenge (encoded): ", car::code_challenge);
+	lg.d("Code challenge (encoded): ", car::auth.code_challenge);
 
-	string step1URLString = "authorize?client_id=ownerapi&code_challenge=" + car::code_challenge + "&code_challenge_method=S256&redirect_uri=https://auth.tesla.com/void/callback&response_type=code&scope=openid%20email%20offline_access&state=anyRandomString&login_hint=philippe.hewett@gmail.com";
+	string step2URLString = "authorize?client_id=" + car::auth.client_id + "&code_challenge=" +
+		car::auth.code_challenge + "&code_challenge_method=" + car::auth.code_challenge_method +
+		"&redirect_uri=" + car::auth.redirect_uri + "&response_type=" + car::auth.response_type +
+		"&scope=" + car::auth.scope + "&state=" + car::auth.state;	// Define first, more useful to make 1 from 2
+
+	string step1URLString = step2URLString + "&login_hint=" + settings::u_teslaEmail;
 	string auth_1_headerResponse;
-	string auth_1_response = teslaGET(step1URLString, auth_1_headerResponse);
+
+	// Actually do step 1 request
+	string auth_1_response = teslaAuthGET(step1URLString, auth_1_headerResponse);
 	// cout << auth_1_response << endl; // Dont print, too big
 
 	// Parse the step 1 response
 	int start_of_inputs = auth_1_response.find("input type=\"hidden\" name=");
 	string step_1_hidden_inputs_raw = auth_1_response.substr(start_of_inputs, 500); // 500 chars should be enough for all forms for now
 	// lg.p(step_1_hidden_inputs_raw);
-	size_t num_of_forms = stringCount(step_1_hidden_inputs_raw, "input type=\"hidden\" name=");
+	size_t num_of_forms = car::auth.stringCount(step_1_hidden_inputs_raw, "input type=\"hidden\" name=");
 	lg.p("Found ", num_of_forms, " hidden HTML forms");
 
 	// Get the form values
@@ -60,18 +67,35 @@ void car::teslaAuth()
 		step_1_hidden_inputs_raw = step_1_hidden_inputs_raw.substr(value_end);
 
 		lg.p(name, " -> ", value);
-		car::step1_forms[name] = value;
+		car::auth.step1_forms[name] = value;
 	}
 
 	// Get the set-cookie from response header
 	size_t cookie_start = auth_1_headerResponse.find("tesla-auth.sid");
 	size_t cookie_end = auth_1_headerResponse.find(";", cookie_start);
-	car::step_1_cookie = auth_1_headerResponse.substr(cookie_start, cookie_end - cookie_start);
-	lg.i(car::step_1_cookie); // not sure if cookie should include "tesla-auth.sid")
+	car::auth.step1_cookie = auth_1_headerResponse.substr(cookie_start, cookie_end - cookie_start);
+	lg.p("Session cookie: " + car::auth.step1_cookie); // not sure if cookie should include "tesla-auth.sid")
 
 
 	// ~~STEP 2: Obtain an authorization code~~
-	// Todo
+	json 	step2_forms_json(car::auth.step1_forms);
+	step2_forms_json["identity"] = settings::u_teslaEmail;
+	step2_forms_json["credential"] = settings::u_teslaPassword;
+	string auth_2_headerResponse;
+
+	// Actually do step 2 request
+	teslaAuthPOST(step2URLString, step2_forms_json, auth_2_headerResponse); // ??????????????????
+	lg.p("Header response step 2: ", auth_2_headerResponse);
+
+
+	// Parse the step 2 response, getting the location header
+	size_t location_start = auth_2_headerResponse.find("location");
+	// size_t location_end = auth_2_headerResponse.find(";", cookie_start);
+	string newUrl = auth_1_headerResponse.substr(location_start);
+	// car::auth.step1_cookie = auth_1_headerResponse.substr(location_start, location_end - location_start);
+	lg.p("newUrl: " + newUrl); // not sure if cookie should include "tesla-auth.sid")
+
+
 	return;
 }
 
@@ -182,15 +206,13 @@ std::map<string, string> car::getData(bool wakeCar)
 }
 
 
-json car::teslaPOST(string specifiedUrlPage, json bodyPackage, bool useAuthURL)
+json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 {
 	json responseObject;
 	bool response_code_ok;
 	do
 	{
-
-		string fullUrl = !useAuthURL ? settings::teslaOwnerURL : settings::teslaAuthURL;
-		fullUrl = fullUrl + specifiedUrlPage;
+		string fullUrl = settings::teslaOwnerURL + specifiedUrlPage;
 		const char* const url_to_use = fullUrl.c_str();
 		// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
 
@@ -215,13 +237,11 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage, bool useAuthURL)
 			curl_easy_setopt(curl, CURLOPT_USERAGENT, "TCS");
 			/* Now specify the POST data */
 			struct curl_slist* headers = nullptr;
-			headers = curl_slist_append(headers, "Content-Type: application/json");
 			// This should only be specified false on teslaAuth as we dont have token yet
-			if (!useAuthURL) {
-				const char* token_c = settings::teslaAuthString.c_str();
-				lg.p("Sending auth header: " + settings::teslaAuthString);
-				headers = curl_slist_append(headers, token_c);
-			}
+			headers = curl_slist_append(headers, "Content-Type: application/json");
+			const char* token_c = settings::teslaAuthString.c_str();
+			lg.p("Sending auth header: " + settings::teslaAuthString);
+			headers = curl_slist_append(headers, token_c);
 
 
 			// Serialize the body/package json to string
@@ -265,17 +285,101 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage, bool useAuthURL)
 		curl_global_cleanup();
 		lg.d("TeslaPOST readBuffer passed to jsonObject (res should be 200 success)");
 		json jsonReadBuffer = json::parse(readBuffer);
-		// If useAuthURL then it doesnt return "response", returns "access token" so cant do this
-		if (useAuthURL) {
-			responseObject = jsonReadBuffer;
-		}
-		else {
-			// Inside "response" is an array, the first item is what contains the response:
-			responseObject = jsonReadBuffer["response"];
-		}
+		// Inside "response" is an array, the first item is what contains the response:
+		responseObject = jsonReadBuffer["response"];
 	} while (!response_code_ok);
 	return responseObject;
 }
+
+string car::teslaAuthPOST(string URLparams, json bodyPackage, string& headerResponse)
+{
+	// Buffer to store result temporarily:
+	string readBuffer;
+	json responseObject;
+	bool response_code_ok;
+	do
+	{
+		string fullUrl = settings::teslaAuthURL + URLparams;
+		const char* const url_to_use = fullUrl.c_str();
+		// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
+
+		CURL* curl;
+		CURLcode res;
+		long response_code;
+
+		/* In windows, this will init the winsock stuff */
+		curl_global_init(CURL_GLOBAL_ALL);
+
+		/* get a curl handle */
+		curl = curl_easy_init();
+
+		if (curl) {
+			/* First set the URL that is about to receive our POST. This URL can
+			   just as well be a https:// URL if that is what should receive the
+			   data. */
+			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
+			// curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, my_trace); //
+
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, tcs_userAgent.c_str());
+			/* Now specify the POST data */
+			struct curl_slist* headers = nullptr;
+			// This should only be specified false on teslaAuth as we dont have token yet
+			string contentType = "Content-Type: application/x-www-form-urlencoded";
+			headers = curl_slist_append(headers, contentType.c_str());
+
+
+			// Serialize the body/package json to string
+			string data = bodyPackage.dump();
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+			curl_easy_setopt(curl, CURLOPT_COOKIE, car::auth.step1_cookie.c_str());
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
+			lg.d("Postfields sent = ", data);
+			lg.d("Headers sent = ", contentType);
+			lg.d("Cookie sent = ", car::auth.step1_cookie);
+			curl_easy_setopt(curl, CURLOPT_POST, 1);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0);
+
+			/* we want the headers be written to this file handle */
+			curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, header_callback);
+			curl_easy_setopt(curl, CURLOPT_HEADERDATA, &headerResponse);
+
+			/* Perform the request, res will get the return code */
+			res = curl_easy_perform(curl);
+			/* Check for errors */
+			if (res != CURLE_OK)
+				fprintf(stderr, "curl_easy_perform() failed: %s\n",
+					curl_easy_strerror(res));
+			if (res == CURLE_OK) {
+				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+				lg.i(response_code, "=response code for ", fullUrl);
+				lg.p("readBuffer (before jsonify): " + readBuffer);
+
+				// Code should be 302 for step 2
+				if (response_code != 302)
+				{
+					lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
+					lg.d("readBuffer for incorrect: " + readBuffer);
+					response_code_ok = false;
+					lg.i("Waiting 30 secs and retrying");
+					sleep(30); // wait a little before redoing the curl request
+					continue;
+				}
+				else {
+					response_code_ok = true;
+				}
+			}
+
+			/* always cleanup */
+			curl_easy_cleanup(curl);
+		}
+		curl_global_cleanup();
+	} while (!response_code_ok);
+	return readBuffer;
+}
+
 
 json car::teslaGET(string specifiedUrlPage)
 {
@@ -360,7 +464,7 @@ json car::teslaGET(string specifiedUrlPage)
 	return responseObject;
 }
 
-string car::teslaGET(string URLparams, string& headerResponse)
+string car::teslaAuthGET(string URLparams, string& headerResponse)
 {
 	// Buffer to store result temporarily:
 	string readBuffer;
@@ -379,7 +483,7 @@ string car::teslaGET(string URLparams, string& headerResponse)
 		if (curl) {
 
 			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, "Tesla Climate Scheduler/3.0.5"); // add variable v number
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, tcs_userAgent.c_str());
 
 			/* use a GET to fetch this */
 			curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
@@ -395,7 +499,7 @@ string car::teslaGET(string URLparams, string& headerResponse)
 			/* Check for errors */
 			if (res != CURLE_OK)
 			{
-				fprintf(stderr, "curl_easy_perform() failed: %s\n",
+				fprintf(stderr, "curl_easy_perform() teslaAuthGET failed: %s\n",
 					curl_easy_strerror(res));
 				throw "curl_easy_perform() failed: " + std::to_string(res);
 			}
@@ -441,6 +545,80 @@ void car::wake()
 	sleep(5);
 	return;
 }
+
+
+
+static
+void dump(const char* text,
+	FILE* stream, unsigned char* ptr, size_t size)
+{
+	size_t i;
+	size_t c;
+	unsigned int width = 0x10;
+
+	fprintf(stream, "%s, %10.10ld bytes (0x%8.8lx)\n",
+		text, (long)size, (long)size);
+
+	for (i = 0; i < size; i += width) {
+		fprintf(stream, "%4.4lx: ", (long)i);
+
+		/* show hex to the left */
+		for (c = 0; c < width; c++) {
+			if (i + c < size)
+				fprintf(stream, "%02x ", ptr[i + c]);
+			else
+				fputs("   ", stream);
+		}
+
+		/* show data on the right */
+		for (c = 0; (c < width) && (i + c < size); c++) {
+			char x = (ptr[i + c] >= 0x20 && ptr[i + c] < 0x80) ? ptr[i + c] : '.';
+			fputc(x, stream);
+		}
+
+		fputc('\n', stream); /* newline */
+	}
+}
+
+static
+int my_trace(CURL* handle, curl_infotype type,
+	char* data, size_t size,
+	void* userp)
+{
+	const char* text;
+	(void)handle; /* prevent compiler warning */
+	(void)userp;
+
+	switch (type) {
+	case CURLINFO_TEXT:
+		fprintf(stderr, "== Info: %s", data);
+	default: /* in case a new one is introduced to shock us */
+		return 0;
+
+	case CURLINFO_HEADER_OUT:
+		text = "=> Send header";
+		break;
+	case CURLINFO_DATA_OUT:
+		text = "=> Send data";
+		break;
+	case CURLINFO_SSL_DATA_OUT:
+		text = "=> Send SSL data";
+		break;
+	case CURLINFO_HEADER_IN:
+		text = "<= Recv header";
+		break;
+	case CURLINFO_DATA_IN:
+		text = "<= Recv data";
+		break;
+	case CURLINFO_SSL_DATA_IN:
+		text = "<= Recv SSL data";
+		break;
+	}
+
+	dump(text, stderr, (unsigned char*)data, size);
+	return 0;
+}
+
 
 
 // Parabola equation to figure out tempModifier from car's interior temp
@@ -601,8 +779,8 @@ std::vector<string> car::coldCheckSet()
 	return resultVector;
 }
 
-
-string car::random_ANstring() {
+// Could be global util?
+string authorizer::random_ANstring() {
 	srand((unsigned int)time(NULL));
 	auto randchar = []() -> char
 	{
@@ -615,7 +793,8 @@ string car::random_ANstring() {
 	return str;
 }
 
-size_t car::stringCount(const std::string& referenceString,
+// Could be global util?
+size_t authorizer::stringCount(const std::string& referenceString,
 	const std::string& subString) {
 
 	const size_t step = subString.size();

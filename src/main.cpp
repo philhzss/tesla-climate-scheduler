@@ -30,6 +30,16 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp)
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
 }
+
+size_t header_callback(char* buffer, size_t size,
+	size_t nitems, void* userdata)
+{
+	/* received header is nitems * size long in 'buffer' NOT ZERO TERMINATED */
+	/* 'userdata' is set with CURLOPT_HEADERDATA */
+	return nitems * size;
+}
+
+
 string curl_GET(string url)
 {
 	const char* const url_to_use = url.c_str();
