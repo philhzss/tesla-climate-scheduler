@@ -442,6 +442,7 @@ json car::teslaGET(string specifiedUrlPage)
 
 				if (response_code != 200)
 				{
+					lg.in("IS TOKEN EXPIRED???");
 					lg.en("Abnormal server response (", response_code, ") for GET ", fullUrl);
 					lg.d("readBuffer for incorrect: " + readBuffer);
 					response_code_ok = false;
