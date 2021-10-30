@@ -16,87 +16,100 @@ using std::string;
 
 
 // Log file name for console messages
-static Log lg("Carblock", Log::LogLevel::Programming);
+static Log lg("Carblock", Log::LogLevel::Debug);
 
 
 void car::teslaAuth()
 {
-	// ~~STEP 1: Obtain the login page~~
-	car::auth.code_verifier = car::auth.random_ANstring();
-	std::vector<unsigned char> hash(picosha2::k_digest_size);
-	picosha2::hash256(car::auth.code_verifier.begin(), car::auth.code_verifier.end(), hash.begin(), hash.end());
-	string hex_str = picosha2::bytes_to_hex_string(hash.begin(), hash.end());
-	string base64_encode(string const& string, bool url = true);
-	car::auth.code_challenge = base64_encode(hex_str, true);
+	/* This should always be true, but I'm leaving the old auth code
+	*  in here in case I manage to figure out the authorization one day.
+	*  In the meantime, we'll have to use something else to generate the token
+	*  and manually input it in the settings file.
+	*/
+	bool usingExternalAuthToken = true;
 
-	lg.d("Code verifier: ", car::auth.code_verifier);
-	lg.d("Code challenge (not encoded): ", hex_str);
-	lg.d("Code challenge (encoded): ", car::auth.code_challenge);
-
-	string step2URLString = "authorize?client_id=" + car::auth.client_id + "&code_challenge=" +
-		car::auth.code_challenge + "&code_challenge_method=" + car::auth.code_challenge_method +
-		"&redirect_uri=" + car::auth.redirect_uri + "&response_type=" + car::auth.response_type +
-		"&scope=" + car::auth.scope + "&state=" + car::auth.state;	// Define first, more useful to make 1 from 2
-
-	string step1URLString = step2URLString + "&login_hint=" + settings::u_teslaEmail;
-	string auth_1_headerResponse;
-
-	// Actually do step 1 request
-	string auth_1_response = teslaAuthGET(step1URLString, auth_1_headerResponse);
-	// cout << auth_1_response << endl; // Dont print, too big
-
-	// Parse the step 1 response
-	int start_of_inputs = auth_1_response.find("input type=\"hidden\" name=");
-	string step_1_hidden_inputs_raw = auth_1_response.substr(start_of_inputs, 500); // 500 chars should be enough for all forms for now
-	// lg.p(step_1_hidden_inputs_raw);
-	size_t num_of_forms = car::auth.stringCount(step_1_hidden_inputs_raw, "input type=\"hidden\" name=");
-	lg.p("Found ", num_of_forms, " hidden HTML forms");
-
-	// Get the form values
-	for (int i = 0; i < num_of_forms; i++) {
-		string name;
-		string value;
-		lg.p("Form #", i + 1, ":");
-		size_t name_start = 6 + step_1_hidden_inputs_raw.find("name=\"");
-		size_t name_end = step_1_hidden_inputs_raw.find("\"", name_start);
-		name = step_1_hidden_inputs_raw.substr(name_start, name_end - name_start);
-		size_t value_start = 7 + step_1_hidden_inputs_raw.find("value=\"");
-		size_t value_end = step_1_hidden_inputs_raw.find("\"", value_start);
-		value = step_1_hidden_inputs_raw.substr(value_start, value_end - value_start);
-		// Then, cut off the form you just got from string
-		step_1_hidden_inputs_raw = step_1_hidden_inputs_raw.substr(value_end);
-
-		lg.p(name, " -> ", value);
-		car::auth.step1_forms[name] = value;
+	if (usingExternalAuthToken) {
+		return;
 	}
+	else
+	{
+		// ~~STEP 1: Obtain the login page~~
+		car::auth.code_verifier = car::auth.random_ANstring();
+		std::vector<unsigned char> hash(picosha2::k_digest_size);
+		picosha2::hash256(car::auth.code_verifier.begin(), car::auth.code_verifier.end(), hash.begin(), hash.end());
+		string hex_str = picosha2::bytes_to_hex_string(hash.begin(), hash.end());
+		string base64_encode(string const& string, bool url = true);
+		car::auth.code_challenge = base64_encode(hex_str, true);
 
-	// Get the set-cookie from response header
-	size_t cookie_start = auth_1_headerResponse.find("tesla-auth.sid");
-	size_t cookie_end = auth_1_headerResponse.find(";", cookie_start);
-	car::auth.step1_cookie = auth_1_headerResponse.substr(cookie_start, cookie_end - cookie_start);
-	lg.p("Session cookie: " + car::auth.step1_cookie); // not sure if cookie should include "tesla-auth.sid")
+		lg.d("Code verifier: ", car::auth.code_verifier);
+		lg.d("Code challenge (not encoded): ", hex_str);
+		lg.d("Code challenge (encoded): ", car::auth.code_challenge);
+
+		string step2URLString = "authorize?client_id=" + car::auth.client_id + "&code_challenge=" +
+			car::auth.code_challenge + "&code_challenge_method=" + car::auth.code_challenge_method +
+			"&redirect_uri=" + car::auth.redirect_uri + "&response_type=" + car::auth.response_type +
+			"&scope=" + car::auth.scope + "&state=" + car::auth.state;	// Define first, more useful to make 1 from 2
+
+		string step1URLString = step2URLString + "&login_hint=" + settings::u_teslaEmail;
+		string auth_1_headerResponse;
+
+		// Actually do step 1 request
+		string auth_1_response = teslaAuthGET(step1URLString, auth_1_headerResponse);
+		// cout << auth_1_response << endl; // Dont print, too big
+
+		// Parse the step 1 response
+		int start_of_inputs = auth_1_response.find("input type=\"hidden\" name=");
+		string step_1_hidden_inputs_raw = auth_1_response.substr(start_of_inputs, 500); // 500 chars should be enough for all forms for now
+		// lg.p(step_1_hidden_inputs_raw);
+		size_t num_of_forms = car::auth.stringCount(step_1_hidden_inputs_raw, "input type=\"hidden\" name=");
+		lg.p("Found ", num_of_forms, " hidden HTML forms");
+
+		// Get the form values
+		for (int i = 0; i < num_of_forms; i++) {
+			string name;
+			string value;
+			lg.p("Form #", i + 1, ":");
+			size_t name_start = 6 + step_1_hidden_inputs_raw.find("name=\"");
+			size_t name_end = step_1_hidden_inputs_raw.find("\"", name_start);
+			name = step_1_hidden_inputs_raw.substr(name_start, name_end - name_start);
+			size_t value_start = 7 + step_1_hidden_inputs_raw.find("value=\"");
+			size_t value_end = step_1_hidden_inputs_raw.find("\"", value_start);
+			value = step_1_hidden_inputs_raw.substr(value_start, value_end - value_start);
+			// Then, cut off the form you just got from string
+			step_1_hidden_inputs_raw = step_1_hidden_inputs_raw.substr(value_end);
+
+			lg.p(name, " -> ", value);
+			car::auth.step1_forms[name] = value;
+		}
+
+		// Get the set-cookie from response header
+		size_t cookie_start = auth_1_headerResponse.find("tesla-auth.sid");
+		size_t cookie_end = auth_1_headerResponse.find(";", cookie_start);
+		car::auth.step1_cookie = auth_1_headerResponse.substr(cookie_start, cookie_end - cookie_start);
+		lg.p("Session cookie: " + car::auth.step1_cookie); // not sure if cookie should include "tesla-auth.sid")
 
 
-	// ~~STEP 2: Obtain an authorization code~~
-	json 	step2_forms_json(car::auth.step1_forms);
-	step2_forms_json["identity"] = settings::u_teslaEmail;
-	step2_forms_json["credential"] = settings::u_teslaPassword;
-	string auth_2_headerResponse;
+		// ~~STEP 2: Obtain an authorization code~~
+		json 	step2_forms_json(car::auth.step1_forms);
+		step2_forms_json["identity"] = settings::u_teslaEmail;
+		step2_forms_json["credential"] = settings::u_teslaPassword;
+		string auth_2_headerResponse;
 
-	// Actually do step 2 request
-	teslaAuthPOST(step2URLString, step2_forms_json, auth_2_headerResponse); // ??????????????????
-	lg.p("Header response step 2: ", auth_2_headerResponse);
-
-
-	// Parse the step 2 response, getting the location header
-	size_t location_start = auth_2_headerResponse.find("location");
-	// size_t location_end = auth_2_headerResponse.find(";", cookie_start);
-	string newUrl = auth_1_headerResponse.substr(location_start);
-	// car::auth.step1_cookie = auth_1_headerResponse.substr(location_start, location_end - location_start);
-	lg.p("newUrl: " + newUrl); // not sure if cookie should include "tesla-auth.sid")
+		// Actually do step 2 request
+		teslaAuthPOST(step2URLString, step2_forms_json, auth_2_headerResponse); // ??????????????????
+		lg.p("Header response step 2: ", auth_2_headerResponse);
 
 
-	return;
+		// Parse the step 2 response, getting the location header
+		size_t location_start = auth_2_headerResponse.find("location");
+		// size_t location_end = auth_2_headerResponse.find(";", cookie_start);
+		string newUrl = auth_1_headerResponse.substr(location_start);
+		// car::auth.step1_cookie = auth_1_headerResponse.substr(location_start, location_end - location_start);
+		lg.p("newUrl: " + newUrl); // not sure if cookie should include "tesla-auth.sid")
+
+
+		return;
+	}
 }
 
 
@@ -105,9 +118,6 @@ std::map<string, string> car::getData(bool wakeCar)
 	// Get token from Tesla servers and store it in settings cpp
 	// This must be run before everything else
 	car::teslaAuth();
-
-	lg.d("TEMPORARY STOP ~~ Working on Tesla Auth");
-	lg.d("This line should not print");
 
 	// Get Tesla vehicleS state and vID
 	try

@@ -104,9 +104,6 @@ public:
 	// Tesla official API password
 	static string u_teslaPassword;
 	// Tesla Setting
-	// CLIENT_ID
-	static string u_teslaClientID;
-	// Tesla Setting
-	// CLIENT_SECRET
-	static string u_teslaClientSecret;
+	// Owner API Access Token
+	static string u_teslaAccessToken; // not declared!!!
 };

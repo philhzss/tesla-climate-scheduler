@@ -43,6 +43,7 @@ string settings::teslaVURL;
 string settings::teslaVID;
 json settings::authReqPackage;
 string settings::teslaAuthString;
+string settings::u_teslaAccessToken;
 
 
 void settings::readSettings(string silent)
@@ -89,6 +90,10 @@ void settings::readSettings(string silent)
 			// TESLA ACCOUNT SETTINGS
 			u_teslaEmail = teslaSettings["teslaEmail"];
 			u_teslaPassword = teslaSettings["teslaPassword"];
+			u_teslaAccessToken = teslaSettings["teslaAccessToken"];
+
+			// Get and set the auth string directly from settings
+			settings::teslaAuthString = "Authorization: Bearer " + u_teslaAccessToken;
 
 			lg.b();
 			lg.d("Settings file settings.json successfully read.");
