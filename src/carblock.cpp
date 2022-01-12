@@ -448,6 +448,7 @@ json car::teslaGET(string specifiedUrlPage)
 					response_code_ok = false;
 					lg.i("Waiting 30 secs and retrying");
 					sleep(30); // wait a little before redoing the curl request
+					settings::readSettings("silent"); // to allow updating the token without restarting app
 					continue;
 				}
 				else {
