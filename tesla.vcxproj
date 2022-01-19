@@ -148,7 +148,7 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <Link>
-      <AdditionalOptions>-lcurl %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-lcurl -pthread -lboost_system %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <ClCompile />
     <PostBuildEvent>

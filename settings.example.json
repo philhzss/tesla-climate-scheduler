@@ -4,7 +4,8 @@
     "logToFile": "true",
     "repeatDelay": "7",
     "homeCoords": [ "lat", "long" ],
-    "workCoords": [ "lat", "long" ]
+    "workCoords": [ "lat", "long" ],
+    "apiPort": "20512"
   },
 
   "Tesla & TeslaFi account settings": {

@@ -4,12 +4,16 @@
 #include "calendar.h"
 #include <iomanip>
 
+#define CROW_MAIN
+#include <crow.h>
+
 
 using std::string;
 
 static Log lg("Main", Log::LogLevel::Debug);
 static Log lgw("WakeLoop", Log::LogLevel::Debug);
 
+std::mutex settings::settingsMutex;
 
 
 time_t nowTime_secs = time(&nowTime_secs);
@@ -140,6 +144,29 @@ const string string_time_and_date(tm tstruct)
 	return buf;
 }
 
+void DoCrowAPI() {
+	crow::SimpleApp app; //define your crow application
+
+	//define your endpoint at the root directory
+	CROW_ROUTE(app, "/api")([]() {
+		while (!settings::settingsMutex.try_lock()) {
+			lg.d("Crow; Mutex locked waiting for unlock...");
+			sleep(0.2);
+		}
+
+		crow::json::wvalue json;
+		lg.d("Crow HTTP request");
+		json["app"]["tesla"] = lg.prepareOnly("test");
+		settings::settingsMutex.unlock();
+
+		return json;
+		});
+
+	//set the port, set the app to run on multiple threads, and run the app
+	app.port(settings::u_apiPort).multithreaded().run();
+	// 20512 main port, 30512 test port to not interfere with running version
+}
+
 
 
 
@@ -155,6 +182,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
+	std::thread worker(DoCrowAPI);
 
 	// Empty lines to make logging file more clear
 	lg.b("\n.\n..\n...\n....\n.....\n......\n.......\n........\n.........\n..........\nTCS app initiated" + tcs_versionInfo + "\n");

@@ -1,6 +1,7 @@
 #pragma once
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <mutex>
 
 using std::string;
 using json = nlohmann::json;
@@ -106,4 +107,11 @@ public:
 	// Tesla Setting
 	// Owner API Access Token
 	static string u_teslaAccessToken; // not declared!!!
+
+	// API
+	// Mutex lock for reading and clearing the settings file
+	static std::mutex settingsMutex;
+	// API
+	// API Port for webserver, must restart app to change
+	static int u_apiPort;
 };

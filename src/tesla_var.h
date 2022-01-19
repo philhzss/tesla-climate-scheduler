@@ -19,8 +19,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2021.10.30 - Authenticates w/external token";
-const string tcs_version = "3.1.0";
+const string tcs_buildInfo = "\nBuild Date : 2022.--.-- - HTTP API";
+const string tcs_version = "3.2.0dev";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 

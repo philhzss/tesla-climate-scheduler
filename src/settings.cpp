@@ -16,6 +16,7 @@ string settings::u_repeatDelay;
 int settings::intrepeatDelay;
 std::vector<string> settings::u_homeCoords;
 std::vector<string> settings::u_workCoords;
+int settings::u_apiPort;
 // Car
 int settings::intwakeTimer;
 int settings::inttriggerTimer;
@@ -68,6 +69,8 @@ void settings::readSettings(string silent)
 			intrepeatDelay = std::stoi(u_repeatDelay);
 			generalSettings["homeCoords"].get_to(u_homeCoords);
 			generalSettings["workCoords"].get_to(u_workCoords);
+			string api = generalSettings["apiPort"];
+			u_apiPort = std::stoi(api);
 
 
 			// CAR SETTINGS
