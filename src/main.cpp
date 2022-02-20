@@ -144,20 +144,35 @@ const string string_time_and_date(tm tstruct)
 	return buf;
 }
 
-void DoCrowAPI() {
+void DoCrowAPI(car* carPointer) {
 	crow::SimpleApp app; //define your crow application
 
 	//define your endpoint at the root directory
-	CROW_ROUTE(app, "/api")([]() {
-		while (!settings::settingsMutex.try_lock()) {
-			lg.d("Crow; Mutex locked waiting for unlock...");
-			sleep(0.2);
-		}
-
+	CROW_ROUTE(app, "/api")([carPointer]() {
 		crow::json::wvalue json;
 		lg.d("Crow HTTP request");
-		json["app"]["tesla"] = lg.prepareOnly("test");
+		if (!settings::settingsMutexLockSuccess("crow request")) {
+			return json["app"] = "ERROR";
+		}
+		lg.d("Mutex LOCKED by crow");
+
+		string carName = lg.prepareOnly(carPointer->Tdisplay_name);
+		json["app"] = "app data here";
+
+		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);
+		json[carName]["state_connection"] = lg.prepareOnly(carPointer->Tconnection_state);
+		json[carName]["climate_temp_inside"] = lg.prepareOnly(carPointer->Tinside_temp);
+		json[carName]["climate_temp_outside"] = lg.prepareOnly(carPointer->Toutside_temp);
+		json[carName]["climate_driver_temp_setting"] = lg.prepareOnly(carPointer->Tdriver_temp_setting);
+		json[carName]["climate_is_on"] = lg.prepareOnly(carPointer->Tis_climate_on);
+		json[carName]["battery_level_usable"] = lg.prepareOnly(carPointer->Tusable_battery_level);
+		json[carName]["battery_level"] = lg.prepareOnly(carPointer->Tbattery_level);
+
+
+
 		settings::settingsMutex.unlock();
+		lg.d("Mutex UNLOCKED by crow");
+
 
 		return json;
 		});
@@ -174,7 +189,7 @@ int main()
 {
 	try
 	{
-		// Read settings initially for Slack Channel (without output results)
+		// Read settings initially for Slack Channel & API (without output results)
 		settings::readSettings("silent");
 	}
 	catch (string e) {
@@ -182,7 +197,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	std::thread worker(DoCrowAPI);
+	std::thread worker(DoCrowAPI,&Tesla);
 
 	// Empty lines to make logging file more clear
 	lg.b("\n.\n..\n...\n....\n.....\n......\n.......\n........\n.........\n..........\nTCS app initiated" + tcs_versionInfo + "\n");
@@ -195,6 +210,8 @@ int main()
 	lg.n("TCS app initiated" + tcs_versionInfo);
 
 	int mainLoopCounter = 1;
+
+	Tesla.getData(true); // Wake car and pull all data from it initially for API
 
 	// Start of program, Always loop everything
 	while (true) {
