@@ -115,6 +115,12 @@ void car::teslaAuth()
 
 std::map<string, string> car::getData(bool wakeCar)
 {
+	// Get the mutex before writing to any car variable
+	if (!settings::settingsMutexLockSuccess("before first teslaGET in getData")) {
+		throw "Mutex timeout in main thread (before first teslaGET in getData)";
+	}
+	lg.d("!!!MAIN: MUTEX LOCKED (before first teslaGET in getData)!!!");
+
 	// Get token from Tesla servers and store it in settings cpp
 	// This must be run before everything else
 	car::teslaAuth();
@@ -144,6 +150,9 @@ std::map<string, string> car::getData(bool wakeCar)
 	carData_s["state"] = Tconnection_state;
 	carData_s["Car awake"] = std::to_string(carOnline);
 
+	settings::settingsMutex.unlock();
+	lg.d("Mutex UNLOCKED before waking car");
+
 	if (wakeCar)
 	{
 		bool initialWakeState = carOnline; // if it was sleeping, must delay Tinside_temp
@@ -157,6 +166,13 @@ std::map<string, string> car::getData(bool wakeCar)
 			sleep(10);
 			lg.d("Car was not awake, waiting 8 seconds after wake before getting data.");
 		}
+
+		// Get the mutex before getting more data
+		if (!settings::settingsMutexLockSuccess("before teslaGET CAR AWOKEN in getData")) {
+			throw "Mutex timeout in main thread (before teslaGET CAR AWOKEN in getData)";
+		}
+		lg.d("!!!MAIN: MUTEX LOCKED (before teslaGET CAR AWOKEN in getData)!!!");
+
 
 		// Now that the car is online, we can get more data
 		json response = teslaGET(settings::teslaVURL + "vehicle_data");
@@ -195,6 +211,10 @@ std::map<string, string> car::getData(bool wakeCar)
 		carData_s["usable_battery_level"] = std::to_string(Tusable_battery_level);
 		carData_s["battery_level"] = std::to_string(Tbattery_level);
 		carData_s["location_home_or_work"] = location;
+
+		settings::settingsMutex.unlock();
+		lg.d("Mutex UNLOCKED after waking car");
+
 	}
 
 	// Print map contents if LogLevelDebug
