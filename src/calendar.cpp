@@ -233,6 +233,11 @@ void calEvent::initEventTimers()
 
 void calEvent::updateValidEventTimers()
 {
+	// Get the mutex before writing to calendar vars
+	if (!settings::settingsMutexLockSuccess("before updateValidEventTimers")) {
+		throw "Mutex timeout in main thread (before updateValidEventTimers)";
+	}
+	lg.d("!!!MAIN: MUTEX LOCKED (before updateValidEventTimers)!!!");
 	for (calEvent& event : calEvent::myValidEvents) // applies to valid (non-past) events only
 	{
 		// Make a temporary tm struct to not let the mktime function overwrite my event struct
@@ -247,6 +252,8 @@ void calEvent::updateValidEventTimers()
 		event.startTimer = (difftime(startTime_secs, nowTime_secs)) / 60;
 		event.endTimer = (difftime(endTime_secs, nowTime_secs)) / 60;
 	}
+	settings::settingsMutex.unlock();
+	lg.d("Mutex UNLOCKED by main updateValidEventTimers");
 }
 
 void calEvent::removePastEvents()

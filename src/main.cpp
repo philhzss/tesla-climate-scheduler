@@ -154,7 +154,7 @@ void DoCrowAPI(car* carPointer) {
 		if (!settings::settingsMutexLockSuccess("crow request")) {
 			return json["app"] = "ERROR";
 		}
-		lg.d("Mutex LOCKED by crow");
+		lg.d("!!!CROW: Mutex LOCKED!!!");
 
 		string carName = lg.prepareOnly(carPointer->Tdisplay_name);
 		json["app"] = "app data here";
@@ -353,7 +353,18 @@ int main()
 						// settings::inttriggerTimer = 69; // for testing
 						lgw.d("Running eventTimeCheck with wakeTimer: ", settings::intwakeTimer,
 							"mins, triggerTimer: ", settings::inttriggerTimer, "mins");
+
+						// Get the mutex before writing to calendar vars
+						if (!settings::settingsMutexLockSuccess("before eventTimeCheck")) {
+							throw "Mutex timeout in main thread (before eventTimeCheck)";
+						}
+						lg.d("!!!MAIN: MUTEX LOCKED (before eventTimeCheck)!!!");
+
 						actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
+
+						settings::settingsMutex.unlock();
+						lg.d("Mutex UNLOCKED by main after eventTimeCheck");
+
 						// actionToDo = "home"; // for testing
 						if (!actionToDo.empty())
 						{
