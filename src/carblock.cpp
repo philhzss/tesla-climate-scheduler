@@ -115,12 +115,7 @@ void car::teslaAuth()
 
 std::map<string, string> car::getData(bool wakeCar)
 {
-	// Get the mutex before writing to any car variable
-	if (!settings::settingsMutexLockSuccess("before first teslaGET in getData")) {
-		throw "Mutex timeout in main thread (before first teslaGET in getData)";
-	}
-	lg.d("!!!MAIN: MUTEX LOCKED (before first teslaGET in getData)!!!");
-
+	json teslaGetData;
 	// Get token from Tesla servers and store it in settings cpp
 	// This must be run before everything else
 	car::teslaAuth();
@@ -128,12 +123,8 @@ std::map<string, string> car::getData(bool wakeCar)
 	// Get Tesla vehicleS state and vID
 	try
 	{
-		json teslaGetData = car::teslaGET("api/1/vehicles");
-		Tconnection_state = teslaGetData["state"];
-		carOnline = (Tconnection_state == "online") ? true : false;
-		// Store VID and VURL in settings
-		settings::teslaVID = teslaGetData["id_s"];
-		settings::teslaVURL = "api/1/vehicles/" + settings::teslaVID + "/";
+		teslaGetData = car::teslaGET("api/1/vehicles");
+		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
 	}
 	catch (string e)
 	{
@@ -142,8 +133,22 @@ std::map<string, string> car::getData(bool wakeCar)
 	}
 	catch (nlohmann::detail::type_error e)
 	{
-		lg.e("Problem getting data from Tesla API. Car updating? Tesla API down? nlohmann::detail::type_error");
+		string errorString = "Problem getting data from Tesla API. Car updating? Tesla API down? nlohmann::detail::type_error";
+		lg.e(errorString);
+		throw string(errorString);
 	}
+
+	// Get the mutex before writing to any car variable
+	if (!settings::settingsMutexLockSuccess("after succesful teslaGET in getData")) {
+		throw "Mutex timeout in main thread (after succesful teslaGET in getData)";
+	}
+	lg.d("!!!MAIN: MUTEX LOCKED (before first teslaGET in getData)!!!");
+
+	Tconnection_state = teslaGetData["state"];
+	carOnline = (Tconnection_state == "online") ? true : false;
+	// Store VID and VURL in settings
+	settings::teslaVID = teslaGetData["id_s"];
+	settings::teslaVURL = "api/1/vehicles/" + settings::teslaVID + "/";
 
 	// State and vehicle ID always obtained, even if wakeCar false
 	carData_s["vehicle_id"] = settings::teslaVID;
