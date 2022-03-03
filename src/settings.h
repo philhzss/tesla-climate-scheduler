@@ -117,4 +117,10 @@ public:
 	// API
 	// API Port for webserver, must restart app to change
 	static int u_apiPort;
+	// API
+	// Manually activate HVAC upon request
+	static bool doManualActivateHVAC();
+	// API
+	// If not 0, will activate HVAC for (1,2) ppl next loop. Auto-resets
+	static int numberOfSeatsActivateNow;
 };

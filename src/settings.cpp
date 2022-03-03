@@ -18,6 +18,7 @@ int settings::intrepeatDelay;
 std::vector<string> settings::u_homeCoords;
 std::vector<string> settings::u_workCoords;
 int settings::u_apiPort;
+int settings::numberOfSeatsActivateNow;
 // Car
 int settings::intwakeTimer;
 int settings::inttriggerTimer;
@@ -223,4 +224,24 @@ bool settings::settingsMutexLockSuccess(string reason) {
 		}
 	}
 	return true;
+}
+
+
+bool settings::doManualActivateHVAC() {
+	// Get the mutex before reading settings value
+	if (!settings::settingsMutexLockSuccess("before checking doManualActivateHVAC?")) {
+		throw "Mutex timeout in main thread (before checking doManualActivateHVAC?)";
+	}
+	lg.d("!!!MAIN: MUTEX LOCKED (before checking doManualActivateHVAC?)!!!");
+
+	bool triggerHVAC = false;
+
+	if (settings::numberOfSeatsActivateNow != 0) {
+		triggerHVAC = true;
+	}
+
+	settings::settingsMutex.unlock();
+	lg.d("Mutex UNLOCKED by main after checking doManualActivateHVAC?");
+
+	return triggerHVAC;
 }
