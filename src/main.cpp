@@ -315,7 +315,8 @@ int main()
 						do
 						{
 							// Break out of loop if manual HVAC
-							if (!settings::doManualActivateHVAC()) {
+							if (settings::doManualActivateHVAC()) {
+								lg.d("Breaking out of wake loop, manual HVAC activation requested");
 								break;
 							}
 
@@ -451,7 +452,7 @@ int main()
 					if (settings::doManualActivateHVAC()) //-> DO a manual HVAC activation now
 					{
 						// Activate the car's HVAC
-						// PROBLEM: Cannot activate if stuck in wake loop. add check?
+						
 
 						json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
 						bool state_after_hvac = hvac_result["result"]; // should return true
