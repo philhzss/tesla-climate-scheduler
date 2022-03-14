@@ -232,7 +232,7 @@ bool settings::doManualActivateHVAC() {
 	if (!settings::settingsMutexLockSuccess("before checking doManualActivateHVAC?")) {
 		throw "Mutex timeout in main thread (before checking doManualActivateHVAC?)";
 	}
-	lg.d("!!!MAIN: MUTEX LOCKED (before checking doManualActivateHVAC?)!!!");
+	lg.p("!!!MAIN: MUTEX LOCKED (before checking doManualActivateHVAC?)!!!");
 
 	bool triggerHVAC = false;
 
@@ -241,7 +241,7 @@ bool settings::doManualActivateHVAC() {
 	}
 
 	settings::settingsMutex.unlock();
-	lg.d("Mutex UNLOCKED by main after checking doManualActivateHVAC?");
+	lg.p("Mutex UNLOCKED by main after checking doManualActivateHVAC?");
 
 	return triggerHVAC;
 }

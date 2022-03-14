@@ -180,6 +180,7 @@ void DoCrowAPI(car* carPointer) {
 		string carName = lg.prepareOnly(carPointer->Tdisplay_name);
 		json["app"] = "app data here";
 
+		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->teslaDataUpdateTime);
 		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);
 		json[carName]["state_connection"] = lg.prepareOnly(carPointer->Tconnection_state);
 		json[carName]["climate_temp_inside"] = lg.prepareOnly(carPointer->Tinside_temp);
@@ -243,7 +244,8 @@ void DoCrowAPI(car* carPointer) {
 
 
 	//set the port, set the app to run on multiple threads, and run the app
-	app.port(settings::u_apiPort).multithreaded().run();
+	//app.port(settings::u_apiPort).multithreaded().run();
+	app.port(30512).multithreaded().run();
 	// 20512 main port, 30512 test port to not interfere with running version
 }
 
@@ -451,9 +453,10 @@ int main()
 					}
 					if (settings::doManualActivateHVAC()) //-> DO a manual HVAC activation now
 					{
-						// Activate the car's HVAC
-						
+						Tesla.getData(true); // Make sure you have most up to date data with car awake
+						// This is important for coldCheckSet to work properly for the seats
 
+						// Activate the car's HVAC
 						json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
 						bool state_after_hvac = hvac_result["result"]; // should return true
 

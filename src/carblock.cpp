@@ -205,6 +205,9 @@ std::map<string, string> car::getData(bool wakeCar)
 		Tlong = drive_state["longitude"];
 		location = checkCarLocation();
 
+		// Save the time at which data was obtained for the API
+		teslaDataUpdateTime = return_current_time_and_date() + " LOCAL";
+
 		// remove trailing 0s?
 		carData_s["display_name"] = Tdisplay_name;
 		carData_s["shift_state"] = Tshift_state;

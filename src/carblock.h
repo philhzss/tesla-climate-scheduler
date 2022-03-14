@@ -32,6 +32,7 @@ public:
 	bool carOnline = false;
 	std::map<string, string> carData_s;
 
+	string teslaDataUpdateTime = "";
 	string Tdisplay_name = "";
 	string Tshift_state = "";
 	string Tconnection_state = "";
