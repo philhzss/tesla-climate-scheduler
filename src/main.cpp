@@ -243,9 +243,9 @@ void DoCrowAPI(car* carPointer) {
 			});
 
 
-	//set the port, set the app to run on multiple threads, and run the app
-	//app.port(settings::u_apiPort).multithreaded().run();
-	app.port(30512).multithreaded().run();
+	// set the port, set the app to run on multiple threads, and run the app
+	app.port(settings::u_apiPort).multithreaded().run();
+	// app.port(30512).multithreaded().run();
 	// 20512 main port, 30512 test port to not interfere with running version
 }
 
@@ -312,13 +312,14 @@ int main()
 						bool carAwokenOnce = false;
 						bool actionDone = false;
 						bool actionCancelDone = false;
+						bool shutoffHasBeenCheckedOnce = false;
 						int tempTimeMod;
 						int wakeLoopTimer = settings::intrepeatDelay / 2; // by default repeat-delay/2
 						do
 						{
 							// Break out of loop if manual HVAC
 							if (settings::doManualActivateHVAC()) {
-								lg.d("Breaking out of wake loop, manual HVAC activation requested");
+								lgw.d("Breaking out of wake loop, manual HVAC activation requested");
 								break;
 							}
 
@@ -404,7 +405,6 @@ int main()
 							}
 							else if (actionToDo == "duplicate")
 							{
-								wakeLoopTimer = 180; // wait a bit longer to avoid cluttering log file
 								string kindOfEvent;
 								tm datetime;
 								if (calEvent::lastTriggeredEvent->homeDone)
@@ -417,12 +417,33 @@ int main()
 									kindOfEvent = "work (shift end)";
 									datetime = calEvent::lastTriggeredEvent->end;
 								}
-								lg.d("This event trigger for ", kindOfEvent, " has already ran.");
-								lg.d("The event trigger datetime is:"
+								lgw.d("This event trigger for ", kindOfEvent, " has already ran.");
+								lgw.d("The event trigger datetime is:"
 									"\nYear=", datetime.tm_year,
 									"\nMonth=", datetime.tm_mon,
 									"\nDay=", datetime.tm_mday,
 									"\nTime=", datetime.tm_hour, ":", datetime.tm_min, "\n");
+							}
+							else if (actionToDo == "checkShutoff")
+							{
+								// Only check once, if the car is no longer home at shutOffTimer,
+								// we can assume you're gone thus you didn't call sick
+								if (!shutoffHasBeenCheckedOnce)
+								{
+									Tesla.getData(true); // We must have accurate location for this
+									if (Tesla.location == "home") {
+										// If we're here, car is still home within the set buffer for shutoffTimer
+										// Either you called sick or you're gonna be fucking late. Turn HVAC off
+										Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_stop");
+										lgw.in("HVAC SHUTOFF, car still home!", Tesla.datapack);
+									}
+									// Wether HVAC was shutoff or not, we don't need to check for shutoff anymore:
+									shutoffHasBeenCheckedOnce = true;
+								} else {
+									// If here, a previous loop shutdown the HVAC for this event
+									// This should only print if the HVAC was shutdown for this event.
+									lgw.d("checkShutoff has already verified for this event.");
+								}
 							}
 
 							// settings::intwakeTimer = 1000; // for testing
@@ -434,17 +455,17 @@ int main()
 							if (!settings::settingsMutexLockSuccess("before eventTimeCheck")) {
 								throw "Mutex timeout in main thread (before eventTimeCheck)";
 							}
-							lg.d("!!!MAIN: MUTEX LOCKED (before eventTimeCheck)!!!");
+							lgw.d("!!!MAIN: MUTEX LOCKED (before eventTimeCheck)!!!");
 
 							actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
 
 							settings::settingsMutex.unlock();
-							lg.d("Mutex UNLOCKED by main after eventTimeCheck");
+							lgw.d("Mutex UNLOCKED by main after eventTimeCheck");
 
 							// actionToDo = "home"; // for testing
 							if (!actionToDo.empty())
 							{
-								lg.i("End of wakeLoop, actionToBeDone is: ", actionToDo);
+								lgw.i("End of wakeLoop, actionToBeDone is: ", actionToDo);
 								lgw.i("Waiting ", wakeLoopTimer, " seconds and re-running wakeLoop");
 								sleepWithAPIcheck(wakeLoopTimer);
 							}

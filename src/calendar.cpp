@@ -326,8 +326,24 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				event.updateLastTriggeredEvent();
 				return "home";
 			}
-			else
+			else // (duplicate)
 			{
+				/* This will return duplicate between the moment the HVAC was first turned on,
+				* until the moment that the amount of mins til event start is lower than
+				* the shutoffTimer limit. Ex. with shutOff of 20 mins, assuming HVAC turned on
+				* 30 mins before shift. For 10 mins we'll get duplicate, then when theres 20
+				* mins left before event we'll get checkShutoff. Then with main functions in
+				* wake loop, if car is still home we'll shutoff. It's essentially the same
+				* as duplicate but it allows the main to shutoff HVAC if car still home
+				* 
+				* This is handled here simply because main does not deal with timers and 
+				* time checking is a calendar thing
+				*/
+				if (event.startTimer <= settings::intshutoffTimer) 
+				{
+					lg.i("EVENT HAD ALREADY TRIGGERED FOR HOME AND HVAC SHUTOFF POSSIBLE, verifying.");
+					return "checkShutoff";
+				}
 				lg.i("EVENT HAD ALREADY TRIGGERED FOR HOME, ignoring.");
 				return "duplicate";
 			}
