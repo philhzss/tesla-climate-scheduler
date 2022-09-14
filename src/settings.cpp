@@ -39,14 +39,13 @@ int settings::intcommuteTime;
 std::vector<string> settings::u_wordsToIgnore;
 // Tesla
 string settings::u_teslaEmail;
-string settings::u_teslaPassword;
 string settings::teslaOwnerURL;
 string settings::teslaAuthURL;
 string settings::teslaVURL;
 string settings::teslaVID;
-json settings::authReqPackage;
 string settings::teslaAuthString;
 string settings::u_teslaAccessToken;
+string settings::u_teslaRefreshToken;
 
 
 void settings::readSettings(string silent)
@@ -94,8 +93,8 @@ void settings::readSettings(string silent)
 
 			// TESLA ACCOUNT SETTINGS
 			u_teslaEmail = teslaSettings["teslaEmail"];
-			u_teslaPassword = teslaSettings["teslaPassword"];
 			u_teslaAccessToken = teslaSettings["teslaAccessToken"];
+			u_teslaRefreshToken = teslaSettings["teslaRefreshToken"];
 
 			// Get and set the auth string directly from settings
 			settings::teslaAuthString = "Authorization: Bearer " + u_teslaAccessToken;
@@ -103,10 +102,6 @@ void settings::readSettings(string silent)
 			lg.b();
 			lg.d("Settings file settings.json successfully read.");
 
-			settings::authReqPackage =
-			{ {"grant_type", "password"},
-			{"email", settings::u_teslaEmail},
-			{"password", settings::u_teslaPassword} };
 		}
 	}
 	catch (nlohmann::detail::parse_error)

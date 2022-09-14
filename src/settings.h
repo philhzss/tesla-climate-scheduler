@@ -19,7 +19,6 @@ public:
 	static string teslaAuthURL;
 	static string teslaVURL;
 	static string teslaVID;
-	static json authReqPackage;
 	static string teslaAuthString;
 
 
@@ -102,11 +101,11 @@ public:
 	// Tesla official API email
 	static string u_teslaEmail;
 	// Tesla Setting
-	// Tesla official API password
-	static string u_teslaPassword;
+	// Tesla Refresh Token for generating access tokens
+	static string u_teslaRefreshToken;
 	// Tesla Setting
 	// Owner API Access Token
-	static string u_teslaAccessToken; // not declared!!!
+	static string u_teslaAccessToken;
 
 	// API
 	// Mutex lock for reading and clearing the settings file

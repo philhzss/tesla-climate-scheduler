@@ -144,6 +144,7 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
+    <None Include="auth.py" />
     <None Include="include\nlohmann\LICENSE.MIT" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
@@ -160,7 +161,7 @@
       </Command>
     </RemotePostBuildEvent>
     <PreBuildEvent>
-      <AdditionalSourcesToCopyMapping>$(ProjectDir)settings.json:=/home/pi/projects/tesla/bin/ARM/Debug/settings.json</AdditionalSourcesToCopyMapping>
+      <AdditionalSourcesToCopyMapping>$(ProjectDir)settings.json:=/home/pi/projects/tesla/bin/ARM/Debug/settings.json;$(ProjectDir)auth.py:=/home/pi/projects/tesla/bin/ARM/Debug/auth.py</AdditionalSourcesToCopyMapping>
     </PreBuildEvent>
     <ClCompile>
       <AdditionalIncludeDirectories />
