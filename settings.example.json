@@ -2,26 +2,32 @@
   "General Settings": {
     "slackChannel": "slack channel URL, or blank if no slack",
     "logToFile": "true",
-    "repeatDelay": "7",
-    "homeCoords": [ "lat", "long" ],
-    "workCoords": [ "lat", "long" ],
+    "repeatDelay": "60",
+    "homeCoords": [
+      "lat",
+      "long"
+    ],
+    "workCoords": [
+      "lat",
+      "long"
+    ],
     "apiPort": "20512"
   },
-
   "Tesla & TeslaFi account settings": {
     "teslaEmail": "your tesla email",
-    "teslaPassword": "your tesla password",
-    "teslaAccessToken": "Paste Here, Generated From External Source"
+    "teslaRefreshToken": "Paste Here, Generated From External Source",
+    "teslaAccessToken": "init Value - do not modify unless using external authenticator (not yet implemented) for now don't touch this line'"
   },
-
   "Calendar Settings": {
     "calendarURL": "link to calendar ics",
     "shiftStartBias": "0",
     "shiftEndBias": "-30",
     "commuteTime": "30",
-    "wordsToIgnore": [ "Leave", "Spare" ]
+    "wordsToIgnore": [
+      "Leave",
+      "Spare"
+    ]
   },
-
   "Car settings": {
     "shutoffTimer": "20",
     "default20CMinTime": "5"

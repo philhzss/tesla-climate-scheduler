@@ -19,8 +19,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2022.03.19 - Shutoff Timer Implemented";
-const string tcs_version = "3.3.1";
+const string tcs_buildInfo = "\nBuild Date : 2022.09.13 - Authorization via TeslaPy";
+const string tcs_version = "3.4";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 
