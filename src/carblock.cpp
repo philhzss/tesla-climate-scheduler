@@ -391,7 +391,6 @@ json car::teslaGET(string specifiedUrlPage)
 			if (res == CURLE_OK) {
 				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
 				lg.i(response_code, "=response code for GET ", fullUrl);
-				lg.i("auth string: ", settings::teslaAuthString);
 				lg.p("readBuffer (before jsonify): ", readBuffer);
 
 				if (response_code != 200)

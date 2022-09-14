@@ -388,7 +388,7 @@ int main()
 											}
 										}
 										else {
-											lgw.in("Tesla didn't match parameters for trigger\n", triggerAllowedRes);
+											lgw.in("Event & location valid but parameter mismatch, will keep trying\n", triggerAllowedRes);
 										}
 										actionDone = true;
 									}
