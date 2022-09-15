@@ -23,18 +23,22 @@ Once again this is my first program and is probably useless for most people. You
 	+ There is a way to ignore events containig certain keywords (I use it to ignore sick leave days) but it's not super polished. I wouldn't advise feeding your entire calendar into this program unless you just use it to store events to which you must drive to.
 + A Tesla (model 3 tested, other models might or might not work);
 + A constant internet connection;
++ (Optional) A way to obtain an access token for your Tesla account;
++ (Required if you don't provide your own access token) A way to obtain a refresh token for your Tesla account;
++ (Required if you don't provide your own access token) Python3 (2 might work, don't know) and [TeslaPy](https://github.com/tdorssers/TeslaPy) for authentication
 + (Optional) A Slack account to receive push notifications to your phone;
 + Some patience and understanding to set up.
 
 
 
 ## Usage
-1. Assuming you're running this on Linux like I am, download the binary to your Linux machine.
-2. Download/open settings.example.json, and fill it up with your desired settings.
+1. Make sure you have Python 3 + TeslaPy on your machine, unless you manually provide your access token (not yet implemented...).
+2. Assuming you're running this on Linux like I am, download the binary to your Linux machine.
+3. Download/open settings.example.json, and fill it up with your desired settings.
 	+ I will add wiki pages with more details eventually, in the meantime look at the file *tesla_var.h* for details on settings.
 	+ These don't seem to change often, but you might need to update the tesla-api client ID and client secret values in the settings file. The latest values [can be found here](https://pastebin.com/pS7Z6yyP), I will try to keep the settings file up to date.
-3. Rename the file to settings.json and place in the same folder as tcs binary file. The binary file needs to have a settings.json file in the same folder in order to run.
-4. Launch the binary, verify your settings have been applied and let it run 24/7 for it to control your vehicle.
+4. Rename the file to settings.json and place in the same folder as tcs binary file. The binary file needs to have a settings.json file in the same folder in order to run.
+5. Launch the binary, verify your settings have been applied and let it run 24/7 for it to control your vehicle.
 
 
 ## Building requirements
