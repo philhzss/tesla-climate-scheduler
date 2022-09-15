@@ -10,6 +10,7 @@ static Log lg("Calendar", Log::LogLevel::Debug);
 std::vector<calEvent> calEvent::myCalEvents;
 std::vector<calEvent> calEvent::myValidEvents;
 calEvent* calEvent::lastTriggeredEvent;
+calEvent* calEvent::lastWakeEvent;
 
 
 // Get long string of raw calendar data from URL
@@ -210,14 +211,14 @@ void calEvent::initEventTimers()
 		tm tempEventStart = event.start;
 		tm tempEventEnd = event.end;
 		// Using the temp tm structs, convert tm to time_t epoch seconds
-		time_t startTime_secs = mktime(&tempEventStart) - timezone;
-		time_t endTime_secs = mktime(&tempEventEnd) - timezone;
+		event.startTime_secs = mktime(&tempEventStart) - timezone;
+		event.endTime_secs = mktime(&tempEventEnd) - timezone;
 		lg.p("Now time in secs: " + std::to_string(nowTime_secs));
-		lg.p("Start time in secs: " + std::to_string(startTime_secs));
-		lg.p("End time in secs: " + std::to_string(endTime_secs));
+		lg.p("Start time in secs: " + std::to_string(event.startTime_secs));
+		lg.p("End time in secs: " + std::to_string(event.endTime_secs));
 		// Calculate diff between now and event start/stop times, store value in minutes in object timers
-		event.startTimer = (difftime(startTime_secs, nowTime_secs)) / 60;
-		event.endTimer = (difftime(endTime_secs, nowTime_secs)) / 60;
+		event.startTimer = (difftime(event.startTime_secs, nowTime_secs)) / 60;
+		event.endTimer = (difftime(event.endTime_secs, nowTime_secs)) / 60;
 		lg.p
 		(
 			"::AFTER modifications by initEventTimers, based on shift END TIME::"
@@ -318,7 +319,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 			);
 			lg.i("Shift starting at " + string_time_and_date(event.start) + " is valid from home.");
-			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL");
+			lg.i("Shift was determined valid and triggered at: " + date_time_str_from_time_t() + " LOCAL");
 
 			if (!event.homeDone) // make sure this event hasn't be triggered before for home
 			{
@@ -362,7 +363,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 			);
 			lg.i("Shift starting at " + string_time_and_date(event.end) + " is valid from work.");
-			lg.i("Shift was determined valid and triggered at: " + return_current_time_and_date() + " LOCAL\n");
+			lg.i("Shift was determined valid and triggered at: " + date_time_str_from_time_t() + " LOCAL\n");
 
 			if (!event.workDone) // make sure this event hasn't be triggered before for work
 			{
@@ -391,8 +392,9 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				"\nEndTimer=" + (std::to_string(event.endTimer)) + "\n"
 			);
 			// Notification for wake action now in main.cpp
-			lg.i("Wake event triggered at: " + return_current_time_and_date() + " LOCAL\n");
+			lg.i("Wake event triggered at: " + date_time_str_from_time_t() + " LOCAL\n");
 			// Return wake since this shift is upcoming but not close enough to start the car yet
+			event.updateLastWakeEvent(); // To be able to push the event data to Slack in main.cpp
 			return "wake";
 		}
 		else
@@ -409,6 +411,22 @@ void calEvent::updateLastTriggeredEvent()
 {
 	lg.d("lastTriggeredEvent has been updated");
 	lastTriggeredEvent = this;
+}
+
+void calEvent::updateLastWakeEvent()
+{
+	lg.d("lastWakeEvent has been updated");
+	lastWakeEvent = this;
+}
+
+int calEvent::getNextWakeTimer(calEvent* event)
+{
+	if (event->startTimer > 0) {
+		return event->startTime_secs - 60*settings::intcommuteTime + 60*settings::intshiftStartBias;
+	}
+	else {
+		return event->endTime_secs + 60*settings::intshiftEndBias;
+	}
 }
 
 void calEvent::cleanup()

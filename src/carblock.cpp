@@ -131,7 +131,7 @@ std::map<string, string> car::getData(bool wakeCar)
 		location = checkCarLocation();
 
 		// Save the time at which data was obtained for the API
-		teslaDataUpdateTime = return_current_time_and_date() + " LOCAL";
+		teslaDataUpdateTime = date_time_str_from_time_t() + " LOCAL";
 
 		// remove trailing 0s?
 		carData_s["display_name"] = Tdisplay_name;

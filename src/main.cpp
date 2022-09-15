@@ -130,11 +130,17 @@ bool InternetConnected() {
 }
 
 // Time functions
-const string return_current_time_and_date()
+const string date_time_str_from_time_t(const char * format, time_t * time_t_secs)
 {
 	struct tm tstruct;
 	char buf[80];
-	tstruct = *localtime(&nowTime_secs);
+	if (time_t_secs == nullptr) {
+		tstruct = *localtime(&nowTime_secs);
+	}
+	else {
+		tstruct = *localtime(time_t_secs);
+	}
+	
 	// VERIFY LOGGER HERE
 	if (lg.ReadLevel() == Log::Programming)
 	{
@@ -153,9 +159,10 @@ const string return_current_time_and_date()
 		cout << "nowTime in seconds:" << endl;
 		cout << time_since_epoch << endl << endl;
 	}
-	strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
+	strftime(buf, sizeof(buf), format, &tstruct);
 	return buf;
 }
+
 const string string_time_and_date(tm tstruct)
 {
 	time_t tempSeconds = mktime(&tstruct) - timezone;
@@ -270,7 +277,7 @@ int main()
 	lg.b("\n.\n..\n...\n....\n.....\n......\n.......\n........\n.........\n..........\nTCS app initiated" + tcs_versionInfo + "\n");
 
 
-	lg.i("\nTCS  Copyright (C) 2021  Philippe Hewett"
+	lg.i("\nTCS  Copyright (C) 2022  Philippe Hewett"
 		"\nThis program comes with ABSOLUTELY NO WARRANTY;"
 		"\nThis is free software, and you are welcome to redistribute it"
 		"\nunder certain conditions.\n\n");
@@ -286,7 +293,7 @@ int main()
 		lg.b("TCS Version ", tcs_version);
 		// Everything is based on the time at program start
 		nowTime_secs = time(&nowTime_secs); // update to current time
-		lg.i("Runtime date-time (this loop): " + return_current_time_and_date() + " LOCAL\n");
+		lg.i("Runtime date-time (this loop): " + date_time_str_from_time_t() + " LOCAL\n");
 		lg.d("Loop run number since program start: ", mainLoopCounter);
 
 		// Verify internet connection on every loop
@@ -315,6 +322,7 @@ int main()
 						bool shutoffHasBeenCheckedOnce = false;
 						int tempTimeMod;
 						int wakeLoopTimer = settings::intrepeatDelay / 2; // by default repeat-delay/2
+						// wakeLoopTimer = 5; // For Testing
 						do
 						{
 							// Break out of loop if manual HVAC
@@ -338,9 +346,14 @@ int main()
 									if (Tesla.carOnline) {
 										lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
 										tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
-										lgw.in("Trigger: ", tempTimeMod, " mins before drive. ", Tesla.datapack);
-										lgw.i("Car seems to be located at ", Tesla.location);
 										settings::inttriggerTimer = tempTimeMod;
+
+										time_t driveInTimer_secs = calEvent::getNextWakeTimer(calEvent::lastWakeEvent);
+										time_t triggerTimer_secs = driveInTimer_secs - 60*tempTimeMod;
+										string triggerTimeString = date_time_str_from_time_t("%R", &triggerTimer_secs);
+
+										lgw.in("Triggers at: ", triggerTimeString," (", tempTimeMod, " mins before drive)", Tesla.datapack);
+										lgw.i("Car seems to be located at ", Tesla.location);
 										carAwokenOnce = true; // to avoid notifying user multiple times & waking car every loop
 
 									}
@@ -446,7 +459,7 @@ int main()
 								}
 							}
 
-							// settings::intwakeTimer = 1000; // for testing
+							//settings::intwakeTimer = 100000; // for testing
 							// settings::inttriggerTimer = 69; // for testing
 							lgw.d("Running eventTimeCheck with wakeTimer: ", settings::intwakeTimer,
 								"mins, triggerTimer: ", settings::inttriggerTimer, "mins");
@@ -539,7 +552,7 @@ int main()
 		calEvent::cleanup(); // to avoid calendar vectors overflowing
 
 		mainLoopCounter++;
-		lg.b("Waiting for " + settings::u_repeatDelay + " seconds... (now -> ", return_current_time_and_date(), " LOCAL)\n\n\n\n\n\n\n\n\n");
+		lg.b("Waiting for " + settings::u_repeatDelay + " seconds... (now -> ", date_time_str_from_time_t(), " LOCAL)\n\n\n\n\n\n\n\n\n");
 		sleepWithAPIcheck(settings::intrepeatDelay);
 	}
 	return 0;

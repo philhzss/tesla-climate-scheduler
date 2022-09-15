@@ -20,6 +20,10 @@ class calEvent
 private:
 	string DTSTART, DTEND, DESCRIPTION;
 
+	// Event start & end time in secs
+	time_t startTime_secs;
+	time_t endTime_secs;
+
 public:
 	// Function to convert string DTSTARTs into tm objects
 	void setEventParams(calEvent &event);
@@ -36,6 +40,7 @@ public:
 	static std::vector<calEvent> myCalEvents;
 	static std::vector<calEvent> myValidEvents;
 	static calEvent* lastTriggeredEvent;
+	static calEvent* lastWakeEvent;
 
 	// Static methods
 	static string eventTimeCheck(int wakeTimer, int triggerTimer);
@@ -51,6 +56,8 @@ public:
 	bool homeDone;
 	bool workDone;
 	void updateLastTriggeredEvent();
+	void updateLastWakeEvent();
+	static int getNextWakeTimer(calEvent * event);
 
 	// Custom constructor
 	calEvent(string singleEvent_str);

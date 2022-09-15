@@ -19,8 +19,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2022.09.13 - Authorization via TeslaPy";
-const string tcs_version = "3.4";
+const string tcs_buildInfo = "\nBuild Date : 2022.09.15 - Wake notif shows next trigger time";
+const string tcs_version = "3.4.1";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 
@@ -31,5 +31,5 @@ size_t header_callback(char* buffer, size_t size,
 string curl_GET(string url);
 extern time_t nowTime_secs;
 const string string_time_and_date(tm tstruct);
-const string return_current_time_and_date();
+const string date_time_str_from_time_t(const char * format = "%Y-%m-%d %X", time_t * time_t_secs = nullptr);
 
