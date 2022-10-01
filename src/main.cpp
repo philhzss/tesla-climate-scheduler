@@ -400,6 +400,12 @@ int main()
 												lgw.en("Could not turn HVAC on??");
 											}
 										}
+										else if (triggerAllowedRes == "tempNotGood") {
+											// If here, the only parameter mismatched is temperature
+											// We'll not keep trying because at this point the temp won't incrase or decrease enough to matter
+											lg.in("Trigger skipped, temperature within no-activate range (to save power).");
+											actionDone = true;
+										}
 										else {
 											lgw.in("Event & location valid but parameter mismatch, will keep trying\n", triggerAllowedRes);
 										}

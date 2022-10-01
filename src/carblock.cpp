@@ -31,7 +31,9 @@ void car::teslaAuth()
 	}
 	else
 	{
-		system("python3 auth.py"); // Use the refresh token to get an access token
+		lg.d("Running python3 auth.py to update tokens");
+		int systemResult = system("python3 auth.py"); // Use the refresh token to get an access token
+		lg.d("Result of python3 auth.py: ", systemResult);
 		settings::readSettings("silent"); // Read the new access token from settings.json
 		return;
 	}
@@ -395,14 +397,26 @@ json car::teslaGET(string specifiedUrlPage)
 
 				if (response_code != 200)
 				{
-					lg.in("IS TOKEN EXPIRED???");
 					lg.en("Abnormal server response (", response_code, ") for GET ", fullUrl);
+					if (response_code == 408) {
+						lg.in("TIMEOUT");
+					}
+					else if (response_code == 401) {
+						lg.in("UNAUTHORIZED");
+					}
+					else if (response_code == 503) {
+						lg.in("SERVICE UNAVAILABLE");
+					}
+					else {
+						lg.in("IS TOKEN EXPIRED???");
+					}
 					lg.d("readBuffer for incorrect: " + readBuffer);
 					response_code_ok = false;
 					lg.i("Waiting 30 secs and retrying");
 					sleep(30); // wait a little before redoing the curl request
 					settings::readSettings("silent"); // to allow updating the token without restarting app
 					continue;
+
 				}
 				else {
 					response_code_ok = true;
@@ -689,6 +703,10 @@ string car::triggerAllowed()
 	if (batteryGood && tempGood && carOnlineGood && shiftStateGood)
 	{
 		return "continue";
+	}
+	else if (batteryGood && carOnlineGood && shiftStateGood) {
+		// If the only reason it failed is temp, do not keep trying
+		return "tempNotGood";
 	}
 	else
 	{
