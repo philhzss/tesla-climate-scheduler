@@ -19,8 +19,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2022.09.15 - Wake notif shows next trigger time";
-const string tcs_version = "3.4.1";
+const string tcs_buildInfo = "\nBuild Date : 2022.10.02 - Stops trying if temp param mismatch";
+const string tcs_version = "3.4.2";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 
