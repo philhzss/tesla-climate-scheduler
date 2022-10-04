@@ -66,14 +66,12 @@ public:
 
 	// POST request to "https://owner-api.teslamotors.com/ + url"
 	json teslaPOST(string specifiedUrlPage, json bodyPackage = json());
-	string teslaAuthPOST(string URLparams, json bodyPackage, string& headerResponse);
 
 	// Returns confirmed heated seat setting, & if max condition is on
 	std::vector<string> coldCheckSet();
 
 	// GET request to "https://owner-api.teslamotors.com/ + url", oAuth token built-in
 	json teslaGET(string specifiedUrlPage);
-	string teslaAuthGET(string URLparams, string& headerResponse);
 	int calcTempMod(int interior_temp);
 
 	// Verify various car parameters and return reason if failure
