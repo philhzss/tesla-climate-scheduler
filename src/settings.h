@@ -112,7 +112,7 @@ public:
 	static std::mutex settingsMutex;
 	// API
 	// Returns true if can lock for this thread, false if timeout
-	static bool settingsMutexLockSuccess(string reason);
+	static bool settingsMutexLockSuccess(string reason, int customTimeSeconds=5);
 	// API
 	// API Port for webserver, must restart app to change
 	static int u_apiPort;

@@ -206,15 +206,15 @@ string settings::ignoredWordsPrint()
 	return stream.str();
 }
 
-bool settings::settingsMutexLockSuccess(string reason) {
+bool settings::settingsMutexLockSuccess(string reason, int customTimeSeconds) {
 	int counter = 0;
 	while (!settings::settingsMutex.try_lock()) {
 		lg.d("Mutex locked (", reason, "), WAITING FOR UNLOCK, have looped ", counter, " times.");
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		counter++;
-		// Enter seconds*5
-		if (counter > 5 * 5) {
-			lg.e("Mutex timer (", reason, ") overlimit, settingsMutexLockSuccess returning FALSE");
+		// Enter seconds*5 (it waits for 200ms per loop, 5*200ms = 1s)
+		if (counter > customTimeSeconds * 5) {
+			lg.e("Mutex timer (", reason, ") overlimit, settingsMutexLockSuccess returning LockSuccess=FALSE");
 			return false;
 		}
 	}

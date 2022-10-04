@@ -32,7 +32,7 @@ void car::teslaAuth()
 	else
 	{
 		// Get the mutex before touching settings.json
-		if (!settings::settingsMutexLockSuccess("before running python3 auth.py")) {
+		if (!settings::settingsMutexLockSuccess("before running python3 auth.py", 10)) {
 			throw "Mutex timeout in main thread (before running python3 auth.py)";
 		}
 		lg.d("!!!MAIN: MUTEX LOCKED (before running python3 auth.py)!!!");
