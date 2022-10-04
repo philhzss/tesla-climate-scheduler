@@ -31,10 +31,24 @@ void car::teslaAuth()
 	}
 	else
 	{
+		// Get the mutex before touching settings.json
+		if (!settings::settingsMutexLockSuccess("before running python3 auth.py")) {
+			throw "Mutex timeout in main thread (before running python3 auth.py)";
+		}
+		lg.d("!!!MAIN: MUTEX LOCKED (before running python3 auth.py)!!!");
+
+
+		// Actually RUN the auth script
 		lg.d("Running python3 auth.py to update tokens");
 		int systemResult = system("python3 auth.py"); // Use the refresh token to get an access token
 		lg.d("Result of python3 auth.py: ", systemResult);
 		settings::readSettings("silent"); // Read the new access token from settings.json
+
+
+		// Release the mutex
+		settings::settingsMutex.unlock();
+		lg.d("Mutex UNLOCKED after python3 updated auth data");
+
 		return;
 	}
 }
