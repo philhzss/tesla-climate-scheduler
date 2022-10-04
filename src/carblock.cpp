@@ -26,31 +26,32 @@ void car::teslaAuth()
 	*/
 	bool usingExternalAuthToken = false;
 
+
+	// Get the mutex before touching settings.json
+	if (!settings::settingsMutexLockSuccess("before running python3 auth.py", 10)) {
+		throw "Mutex timeout in main thread (before running python3 auth.py)";
+	}
+	lg.d("!!!MAIN: MUTEX LOCKED (before running python3 auth.py)!!!");
+
+
 	if (usingExternalAuthToken) {
-		return;
+		// Do nothing
 	}
 	else
 	{
-		// Get the mutex before touching settings.json
-		if (!settings::settingsMutexLockSuccess("before running python3 auth.py", 10)) {
-			throw "Mutex timeout in main thread (before running python3 auth.py)";
-		}
-		lg.d("!!!MAIN: MUTEX LOCKED (before running python3 auth.py)!!!");
-
-
 		// Actually RUN the auth script
 		lg.d("Running python3 auth.py to update tokens");
 		int systemResult = system("python3 auth.py"); // Use the refresh token to get an access token
 		lg.d("Result of python3 auth.py: ", systemResult);
 		settings::readSettings("silent"); // Read the new access token from settings.json
-
-
-		// Release the mutex
-		settings::settingsMutex.unlock();
-		lg.d("Mutex UNLOCKED after python3 updated auth data");
-
-		return;
 	}
+
+	// Release the mutex
+	settings::settingsMutex.unlock();
+	lg.d("Mutex UNLOCKED after python3 updated auth data");
+
+	return;
+
 }
 
 
@@ -251,6 +252,7 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 					response_code_ok = false;
 					lg.i("Waiting 30 secs and retrying");
 					sleep(30); // wait a little before redoing the curl request
+					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
 					continue;
 				}
 				else {
@@ -339,7 +341,7 @@ json car::teslaGET(string specifiedUrlPage)
 					response_code_ok = false;
 					lg.i("Waiting 30 secs and retrying");
 					sleep(30); // wait a little before redoing the curl request
-					settings::readSettings("silent"); // to allow updating the token without restarting app
+					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
 					continue;
 
 				}
