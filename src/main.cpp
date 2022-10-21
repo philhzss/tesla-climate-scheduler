@@ -187,6 +187,7 @@ void DoCrowAPI(car* carPointer) {
 		string carName = lg.prepareOnly(carPointer->Tdisplay_name);
 		json["app"]["car_name"] = carName;
 		json["app"]["TCS_version"] = tcs_version;
+		json["app"]["TCS_buildinfo"] = tcs_buildInfo;
 
 		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->teslaDataUpdateTime);
 		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);

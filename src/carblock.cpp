@@ -40,6 +40,7 @@ void car::teslaAuth()
 	else
 	{
 		// Actually RUN the auth script
+		// Requires teslaEmail in tesla.json!!!
 		lg.d("Running python3 auth.py to update tokens");
 		int systemResult = system("python3 auth.py"); // Use the refresh token to get an access token
 		lg.d("Result of python3 auth.py: ", systemResult);
