@@ -185,7 +185,8 @@ void DoCrowAPI(car* carPointer) {
 		lg.d("!!!CROW: Mutex LOCKED!!!");
 
 		string carName = lg.prepareOnly(carPointer->Tdisplay_name);
-		json["app"] = "app data here";
+		json["app"]["car_name"] = carName;
+		json["app"]["TCS_version"] = tcs_version;
 
 		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->teslaDataUpdateTime);
 		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);
