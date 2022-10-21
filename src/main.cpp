@@ -560,7 +560,7 @@ int main()
 		calEvent::cleanup(); // to avoid calendar vectors overflowing
 
 		mainLoopCounter++;
-		lg.b("Waiting for " + settings::u_repeatDelay + " seconds... (now -> ", date_time_str_from_time_t(), " LOCAL)\n\n\n\n\n\n\n\n\n");
+		lg.b("Waiting for ", settings::intrepeatDelay, " seconds... (now -> ", date_time_str_from_time_t(), " LOCAL)\n\n\n\n\n\n\n\n\n");
 		sleepWithAPIcheck(settings::intrepeatDelay);
 	}
 	return 0;

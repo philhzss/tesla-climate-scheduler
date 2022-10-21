@@ -39,7 +39,6 @@ public:
 	static string u_logToFile;
 	// General Setting
 	// (Seconds) How long to wait before the program loops entirely
-	static string u_repeatDelay;
 	static int intrepeatDelay;
 	// General Setting
 	// [lat, long] Home coordinates
