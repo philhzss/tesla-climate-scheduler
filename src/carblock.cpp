@@ -557,7 +557,7 @@ string car::triggerAllowed()
 	bool carOnlineGood;
 	bool shiftStateGood;
 	batteryGood = (Tusable_battery_level < 22) ? false : true;
-	tempGood = ((Tinside_temp > 17) && (Tinside_temp < 23)) ? false : true;
+	tempGood = ((Tinside_temp > settings::intnoActivateLowerLimitTemp) && (Tinside_temp < settings::intnoActivateUpperLimitTemp)) ? false : true;
 	carOnlineGood = carOnline;
 	shiftStateGood = (Tshift_state == "P") ? true : false;
 
@@ -584,15 +584,15 @@ std::vector<string> car::coldCheckSet()
 	int requestedSeatHeat; // power, 0-1-2-3
 	bool max_defrost_on = false; // if if triggers it gets set to true
 	std::vector<string> resultVector;
-	if (Tinside_temp <= -10)
+	if (Tinside_temp <= settings::intheatseat3temp)
 	{
 		requestedSeatHeat = 3;
 	}
-	else if (Tinside_temp <= 5)
+	else if (Tinside_temp <= settings::intheatseat2temp)
 	{
 		requestedSeatHeat = 2;
 	}
-	else if (Tinside_temp < 14)
+	else if (Tinside_temp < settings::intheatseat1temp)
 	{
 		requestedSeatHeat = 1;
 	}

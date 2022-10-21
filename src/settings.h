@@ -59,6 +59,26 @@ public:
 	static string u_default20CMinTime;
 	static int intdefault20CMinTime;
 	// Car Setting
+	// If inside car temperature is above this number and below noActivateUpperLimitTemp, HVAC won't activate
+	static string u_noActivateLowerLimitTemp;
+	static int intnoActivateLowerLimitTemp;
+	// Car Setting
+	// If inside car temperature is above noActivateLowerLimitTemp and below this number, HVAC won't activate
+	static string u_noActivateUpperLimitTemp;
+	static int intnoActivateUpperLimitTemp;	
+	// Car Setting
+	// The hottest temperature that will trigger heated seats level 3
+	static string u_heatseat3temp;
+	static int intheatseat3temp;
+	// Car Setting
+	// The hottest temperature that will trigger heated seats level 2
+	static string u_heatseat2temp;
+	static int intheatseat2temp;
+	// Car Setting
+	// The hottest temperature that will trigger heated seats level 1. Above this, no heated seats.
+	static string u_heatseat1temp;
+	static int intheatseat1temp;
+	// Car Setting
 	// (commute + max HVAC preheat time + buffer) How long before shift start to wake car to check car temps
 	static int intwakeTimer;
 	// Car Setting

@@ -26,6 +26,16 @@ string settings::u_shutoffTimer;
 int settings::intshutoffTimer;
 string settings::u_default20CMinTime;
 int settings::intdefault20CMinTime;
+string settings::u_noActivateLowerLimitTemp;
+int settings::intnoActivateLowerLimitTemp;
+string settings::u_noActivateUpperLimitTemp;
+int settings::intnoActivateUpperLimitTemp;
+string settings::u_heatseat3temp;
+int settings::intheatseat3temp;
+string settings::u_heatseat2temp;
+int settings::intheatseat2temp;
+string settings::u_heatseat1temp;
+int settings::intheatseat1temp;
 int settings::intshiftStartTimer;
 int settings::intshiftEndTimer;
 // Cal
@@ -79,6 +89,16 @@ void settings::readSettings(string silent)
 			intshutoffTimer = std::stoi(u_shutoffTimer);
 			u_default20CMinTime = carSettings["default20CMinTime"];
 			intdefault20CMinTime = std::stoi(u_default20CMinTime);
+			u_noActivateLowerLimitTemp = carSettings["noActivateLowerLimitTemp"];
+			intnoActivateLowerLimitTemp = std::stoi(u_noActivateLowerLimitTemp);
+			u_noActivateUpperLimitTemp = carSettings["noActivateUpperLimitTemp"];
+			intnoActivateUpperLimitTemp = std::stoi(u_noActivateUpperLimitTemp);
+			u_heatseat3temp = carSettings["heatseat3IfColderThan"];
+			intheatseat3temp = std::stoi(u_heatseat3temp);
+			u_heatseat2temp = carSettings["heatseat2IfColderThan"];
+			intheatseat2temp = std::stoi(u_heatseat2temp);
+			u_heatseat1temp = carSettings["heatseat1IfColderThan"];
+			intheatseat1temp = std::stoi(u_heatseat1temp);
 
 
 			// CALENDAR SETTINGS

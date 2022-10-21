@@ -30,6 +30,11 @@
   },
   "Car settings": {
     "shutoffTimer": "20",
-    "default20CMinTime": "5"
+    "default20CMinTime": "2",
+    "noActivateLowerLimitTemp": "18",
+    "noActivateUpperLimitTemp": "23",
+    "heatseat3IfColderThan": "-10",
+    "heatseat2IfColderThan": "5",
+    "heatseat1IfColderThan": "14"
   }
 }
