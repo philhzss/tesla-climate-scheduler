@@ -36,10 +36,10 @@ public:
 	static bool slackEnabled;
 	// General Setting
 	// (Bool) If true, logs all logger message to file
-	static string u_logToFile;
+	static bool u_logToFile;
 	// General Setting
 	// (Seconds) How long to wait before the program loops entirely
-	static int intrepeatDelay;
+	static int u_repeatDelay;
 	// General Setting
 	// [lat, long] Home coordinates
 	static std::vector<string> u_homeCoords;
@@ -51,44 +51,37 @@ public:
 
 	// Car Setting
 	// Limiter is to stop climate if you called sick / if still at home X amount of time before shift in MINS
-	static string u_shutoffTimer;
-	static int intshutoffTimer;
+	static int u_shutoffTimer;
 	// Car Setting
 	// (default=5) (Minutes) The higher this is, the more time your car's HVAC will run. More details in docs
-	static string u_default20CMinTime;
-	static int intdefault20CMinTime;
+	static int u_default20CMinTime;
 	// Car Setting
 	// If inside car temperature is above this number and below noActivateUpperLimitTemp, HVAC won't activate
-	static string u_noActivateLowerLimitTemp;
-	static int intnoActivateLowerLimitTemp;
+	static int u_noActivateLowerLimitTemp;
 	// Car Setting
 	// If inside car temperature is above noActivateLowerLimitTemp and below this number, HVAC won't activate
-	static string u_noActivateUpperLimitTemp;
-	static int intnoActivateUpperLimitTemp;	
+	static int u_noActivateUpperLimitTemp;	
 	// Car Setting
 	// The hottest temperature that will trigger heated seats level 3
-	static string u_heatseat3temp;
-	static int intheatseat3temp;
+	static int u_heatseat3temp;
 	// Car Setting
 	// The hottest temperature that will trigger heated seats level 2
-	static string u_heatseat2temp;
-	static int intheatseat2temp;
+	static int u_heatseat2temp;
 	// Car Setting
 	// The hottest temperature that will trigger heated seats level 1. Above this, no heated seats.
-	static string u_heatseat1temp;
-	static int intheatseat1temp;
+	static int u_heatseat1temp;
 	// Car Setting
 	// (commute + max HVAC preheat time + buffer) How long before shift start to wake car to check car temps
-	static int intwakeTimer;
+	static int wakeTimer;
 	// Car Setting
 	// (commute + HVAC preheat time) Determined based on temperature, settings.
-	static int inttriggerTimer;
+	static int triggerTimer;
 	// Car Setting
 	// Real amount of time BEFORE shift (event) you leave from home
-	static int intshiftStartTimer;
+	static int shiftStartTimer;
 	// Car Setting
 	// Real amount of time AFTER shift (event) end you leave from work
-	static int intshiftEndTimer;
+	static int shiftEndTimer;
 
 
 	// Calendar Setting
@@ -98,17 +91,14 @@ public:
 	// (Minutes) If you leave home to target arriving at work earlier than event start, enter a NEGATIVE number.
 	// Ex: Want to arrive at work 15 mins before event start? Enter -15. EXCLUDES commute time. 
 	// The car will be ready at (commuteTime - shiftStartBias) mins before event start.
-	static string u_shiftStartBias;
-	static int intshiftStartBias;
+	static int u_shiftStartBias;
 	// Calendar Setting
 	// (Minutes), if you leave work when you calendar event ends, this should be 0.
 	// If you leave work early, enter a negative number, if late, positive number.
-	static string u_shiftEndBias;
-	static int intshiftEndBias;
+	static int u_shiftEndBias;
 	// Calendar Setting
 	// (Minutes) Drive time between home and work
-	static string u_commuteTime;
-	static int intcommuteTime;
+	static int u_commuteTime;
 	// Calendar Setting
 	// Enter words that will cause the program to IGNORE events containing them
 	static std::vector<string> u_wordsToIgnore;
@@ -116,9 +106,6 @@ public:
 	static string ignoredWordsPrint();
 
 
-	// Tesla Setting
-	// Tesla official API email
-	static string u_teslaEmail;
 	// Tesla Setting
 	// Tesla Refresh Token for generating access tokens
 	static string u_teslaRefreshToken;

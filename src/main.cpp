@@ -322,7 +322,7 @@ int main()
 						bool actionCancelDone = false;
 						bool shutoffHasBeenCheckedOnce = false;
 						int tempTimeMod;
-						int wakeLoopTimer = settings::intrepeatDelay / 2; // by default repeat-delay/2
+						int wakeLoopTimer = settings::u_repeatDelay / 2; // by default repeat-delay/2
 						// wakeLoopTimer = 5; // For Testing
 						do
 						{
@@ -347,7 +347,7 @@ int main()
 									if (Tesla.carOnline) {
 										lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
 										tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
-										settings::inttriggerTimer = tempTimeMod;
+										settings::triggerTimer = tempTimeMod;
 
 										time_t driveInTimer_secs = calEvent::getNextWakeTimer(calEvent::lastWakeEvent);
 										time_t triggerTimer_secs = driveInTimer_secs - 60*tempTimeMod;
@@ -467,10 +467,10 @@ int main()
 								}
 							}
 
-							//settings::intwakeTimer = 100000; // for testing
-							// settings::inttriggerTimer = 69; // for testing
-							lgw.d("Running eventTimeCheck with wakeTimer: ", settings::intwakeTimer,
-								"mins, triggerTimer: ", settings::inttriggerTimer, "mins");
+							// settings::wakeTimer = 100000; // for testing
+							// settings::triggerTimer = 69; // for testing
+							lgw.d("Running eventTimeCheck with wakeTimer: ", settings::wakeTimer,
+								"mins, triggerTimer: ", settings::triggerTimer, "mins");
 
 							// Get the mutex before writing to calendar vars
 							if (!settings::settingsMutexLockSuccess("before eventTimeCheck")) {
@@ -478,7 +478,7 @@ int main()
 							}
 							lgw.d("!!!MAIN: MUTEX LOCKED (before eventTimeCheck)!!!");
 
-							actionToDo = calEvent::eventTimeCheck(settings::intwakeTimer, settings::inttriggerTimer);
+							actionToDo = calEvent::eventTimeCheck();
 
 							settings::settingsMutex.unlock();
 							lgw.d("Mutex UNLOCKED by main after eventTimeCheck");
@@ -560,8 +560,8 @@ int main()
 		calEvent::cleanup(); // to avoid calendar vectors overflowing
 
 		mainLoopCounter++;
-		lg.b("Waiting for ", settings::intrepeatDelay, " seconds... (now -> ", date_time_str_from_time_t(), " LOCAL)\n\n\n\n\n\n\n\n\n");
-		sleepWithAPIcheck(settings::intrepeatDelay);
+		lg.b("Waiting for ", settings::u_repeatDelay, " seconds... (now -> ", date_time_str_from_time_t(), " LOCAL)\n\n\n\n\n\n\n\n\n");
+		sleepWithAPIcheck(settings::u_repeatDelay);
 	}
 	return 0;
 }

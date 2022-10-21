@@ -1,7 +1,7 @@
 {
   "General Settings": {
     "slackChannel": "slack channel URL, or blank if no slack",
-    "logToFile": "true",
+    "logToFile": true,
     "repeatDelay": 60,
     "homeCoords": [
       "lat",
@@ -11,30 +11,30 @@
       "lat",
       "long"
     ],
-    "apiPort": "20512"
+    "apiPort": 20512
   },
   "Tesla & TeslaFi account settings": {
-    "teslaEmail": "your tesla email",
+    "teslaEmail": "your tesla email, required for auth.py",
     "teslaRefreshToken": "Paste Here, Generated From External Source",
     "teslaAccessToken": "init Value - do not modify unless using external authenticator (not yet implemented) for now don't touch this line'"
   },
   "Calendar Settings": {
     "calendarURL": "link to calendar ics",
-    "shiftStartBias": "0",
-    "shiftEndBias": "-30",
-    "commuteTime": "30",
+    "shiftStartBias": -7,
+    "shiftEndBias": -25,
+    "commuteTime": 25,
     "wordsToIgnore": [
       "Leave",
       "Spare"
     ]
   },
   "Car settings": {
-    "shutoffTimer": "20",
-    "default20CMinTime": "2",
-    "noActivateLowerLimitTemp": "18",
-    "noActivateUpperLimitTemp": "23",
-    "heatseat3IfColderThan": "-10",
-    "heatseat2IfColderThan": "5",
-    "heatseat1IfColderThan": "14"
+    "shutoffTimer": 20,
+    "default20CMinTime": 2,
+    "noActivateLowerLimitTemp": 18,
+    "noActivateUpperLimitTemp": 23,
+    "heatseat3IfColderThan": -10,
+    "heatseat2IfColderThan": 5,
+    "heatseat1IfColderThan": 14
   }
 }

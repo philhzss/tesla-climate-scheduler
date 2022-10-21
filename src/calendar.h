@@ -43,7 +43,7 @@ public:
 	static calEvent* lastWakeEvent;
 
 	// Static methods
-	static string eventTimeCheck(int wakeTimer, int triggerTimer);
+	static string eventTimeCheck();
 
 	// public start and end times as timeobjects
 	tm start{0};

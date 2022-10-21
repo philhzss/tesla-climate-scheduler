@@ -114,7 +114,7 @@ void Log::write(string message, string sourceFileWrite, string levelPrint, bool 
 	cout << toWrite << endl;
 	if (notification)
 		b(notify(message)); // Notify without levelPrint
-	if (settings::u_logToFile == "true")
+	if (settings::u_logToFile)
 		toFile(toWrite);
 }
 

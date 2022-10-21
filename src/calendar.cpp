@@ -297,15 +297,15 @@ void calEvent::removePastEvents()
 }
 
 // Check if any start-end event is valid, and return appropriate string based on timers
-string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
+string calEvent::eventTimeCheck()
 {
 	// Verify if any event timer is coming up soon (within the defined timer parameter) and return location-validity
 	for (calEvent& event : calEvent::myValidEvents)
 	{
 		// If event start time is less (sooner) than event trigger time
 		// startTimer - (commute + start bias)
-		if (event.startTimer > 0 && (event.startTimer - settings::intcommuteTime + settings::intshiftStartBias
-			<= inttriggerTimer))
+		if (event.startTimer > 0 && (event.startTimer - settings::u_commuteTime + settings::u_shiftStartBias
+			<= settings::triggerTimer))
 		{
 			lg.d("Triggered by a timer value of: " + std::to_string(event.startTimer));
 			lg.p
@@ -340,7 +340,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				* This is handled here simply because main does not deal with timers and 
 				* time checking is a calendar thing
 				*/
-				if (event.startTimer <= settings::intshutoffTimer) 
+				if (event.startTimer <= settings::u_shutoffTimer) 
 				{
 					lg.i("EVENT HAD ALREADY TRIGGERED FOR HOME AND HVAC SHUTOFF POSSIBLE, verifying.");
 					return "checkShutoff";
@@ -349,7 +349,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 				return "duplicate";
 			}
 		}
-		else if (event.endTimer > 0 && (event.endTimer + settings::intshiftEndBias <= inttriggerTimer))
+		else if (event.endTimer > 0 && (event.endTimer + settings::u_shiftEndBias <= settings::triggerTimer))
 		{
 			lg.d("Triggered by a timer value of: " + std::to_string(event.endTimer));
 			lg.p
@@ -378,7 +378,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 			}
 		}
 		// Make sure to ignore a negative startTimer, as it will be negative during an entire work shift
-		else if (event.startTimer > 0 && event.startTimer <= intwakeTimer || event.endTimer <= intwakeTimer && event.endTimer > 0)
+		else if (event.startTimer > 0 && event.startTimer <= settings::wakeTimer || event.endTimer <= settings::wakeTimer && event.endTimer > 0)
 		{
 			lg.d("Triggered by a timer value of: " + std::to_string(event.startTimer) + " for start, or: " + std::to_string(event.endTimer) + " for end.");
 			lg.p
@@ -403,7 +403,7 @@ string calEvent::eventTimeCheck(int intwakeTimer, int inttriggerTimer)
 		}
 	}
 	// If we're here, no event matched any parameter
-	lg.d("No matching event for wakeTimer: ", intwakeTimer, "mins, triggerTimer: ", inttriggerTimer, "mins.");
+	lg.d("No matching event for wakeTimer: ", settings::wakeTimer , "mins, triggerTimer: ", settings::triggerTimer, "mins.");
 	return "";
 }
 
@@ -422,10 +422,10 @@ void calEvent::updateLastWakeEvent()
 int calEvent::getNextWakeTimer(calEvent* event)
 {
 	if (event->startTimer > 0) {
-		return event->startTime_secs - 60*settings::intcommuteTime + 60*settings::intshiftStartBias;
+		return event->startTime_secs - 60*settings::u_commuteTime + 60*settings::u_shiftStartBias;
 	}
 	else {
-		return event->endTime_secs + 60*settings::intshiftEndBias;
+		return event->endTime_secs + 60*settings::u_shiftEndBias;
 	}
 }
 
