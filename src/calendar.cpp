@@ -15,13 +15,15 @@ calEvent* calEvent::lastWakeEvent;
 
 // Get long string of raw calendar data from URL
 string GetCalRawData() {
+	string rawCalContent;
 	try
 	{
-		string rawCalContent = curl_GET(settings::u_calendarURL);
+		rawCalContent = curl_GET(settings::u_calendarURL);
 		return rawCalContent;
 	}
 	catch (string e)
 	{
+		lg.d("rawCalContent for debugging:", rawCalContent);
 		throw "initiateCal error: " + e + "\nCheck calendar URL??? Internet connection?";
 	};
 }

@@ -408,6 +408,10 @@ int main()
 											lg.in("Trigger skipped, temperature within no-activate range (to save power).");
 											actionDone = true;
 											actionCancelDone = true;
+
+											// Update the triggered event to prevent it from re-running
+											if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
+											if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
 										}
 										else {
 											lgw.in("Event & location valid but parameter mismatch, will keep trying\n", triggerAllowedRes);
@@ -469,7 +473,7 @@ int main()
 							}
 
 							// settings::wakeTimer = 100000; // for testing
-							// settings::triggerTimer = 69; // for testing
+							// settings::triggerTimer = 69000; // for testing
 							lgw.d("Running eventTimeCheck with wakeTimer: ", settings::wakeTimer,
 								"mins, triggerTimer: ", settings::triggerTimer, "mins");
 
