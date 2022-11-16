@@ -111,7 +111,7 @@ std::map<string, string> car::getData(bool wakeCar)
 
 		if (!initialWakeState)
 		{
-			sleep(10);
+			sleepWithAPIcheck(10);
 			lg.d("Car was not awake, waiting 8 seconds after wake before getting data.");
 		}
 
@@ -251,8 +251,8 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 					lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
 					lg.d("readBuffer for incorrect: " + readBuffer);
 					response_code_ok = false;
-					lg.i("Waiting 30 secs and retrying");
-					sleep(30); // wait a little before redoing the curl request
+					lg.i("Waiting 30 secs and retrying (teslaPOST)");
+					sleepWithAPIcheck(30); // wait a little before redoing the curl request
 					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
 					continue;
 				}
@@ -340,8 +340,8 @@ json car::teslaGET(string specifiedUrlPage)
 					}
 					lg.d("readBuffer for incorrect: " + readBuffer);
 					response_code_ok = false;
-					lg.i("Waiting 30 secs and retrying");
-					sleep(30); // wait a little before redoing the curl request
+					lg.i("Waiting 30 secs and retrying (teslaGET)");
+					sleepWithAPIcheck(30); // wait a little before redoing the curl request
 					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
 					continue;
 
@@ -383,7 +383,7 @@ void car::wake()
 		// add a delay here of X seconds to make sure Tinside_temp is accurate? v3.0.4.1 debug
 		return;
 	}
-	sleep(5);
+	sleep(5); // No API checking during this sleep
 	return;
 }
 

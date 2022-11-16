@@ -546,7 +546,7 @@ int main()
 				catch (string e) {
 					lg.en("Critical failure: ", e, "\nFailure #", count, ", waiting 1 min and retrying.");
 					lg.i("Is internet connected?", InternetConnected());
-					sleep(60);
+					sleepWithAPIcheck(60);
 					if (++count == maxTries)
 					{
 						lg.en("ERROR ", count, " out of max ", maxTries, "!!! Stopping, reason ->\n", e);

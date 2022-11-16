@@ -19,8 +19,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2022.11.08 - Configurable heatseat + noActivate temps";
-const string tcs_version = "3.4.6";
+const string tcs_buildInfo = "\nBuild Date : 2022.11.16 - Most sleeps now check the API during sleep";
+const string tcs_version = "3.4.7";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 
@@ -33,3 +33,5 @@ extern time_t nowTime_secs;
 const string string_time_and_date(tm tstruct);
 const string date_time_str_from_time_t(const char * format = "%Y-%m-%d %X", time_t * time_t_secs = nullptr);
 
+// Wait for X number of time, checking the API for a request every second. Silent (no log)
+void sleepWithAPIcheck(int totalSleepTime);
