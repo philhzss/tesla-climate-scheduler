@@ -115,6 +115,11 @@ std::map<string, string> car::getData(bool wakeCar)
 			lg.d("Car was not awake, waiting 8 seconds after wake before getting data.");
 		}
 
+		// Now that the car is online, we can get more data
+		json response = teslaGET(settings::teslaVURL + "vehicle_data");
+		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
+
+
 		// Get the mutex before getting more data
 		if (!settings::settingsMutexLockSuccess("before teslaGET CAR AWOKEN in getData")) {
 			throw "Mutex timeout in main thread (before teslaGET CAR AWOKEN in getData)";
@@ -122,8 +127,6 @@ std::map<string, string> car::getData(bool wakeCar)
 		lg.d("!!!MAIN: MUTEX LOCKED (before teslaGET CAR AWOKEN in getData)!!!");
 
 
-		// Now that the car is online, we can get more data
-		json response = teslaGET(settings::teslaVURL + "vehicle_data");
 		Tdisplay_name = response["display_name"];
 
 		json climate_state = response["climate_state"];
@@ -342,6 +345,7 @@ json car::teslaGET(string specifiedUrlPage)
 					response_code_ok = false;
 					lg.i("Waiting 30 secs and retrying (teslaGET)");
 					sleepWithAPIcheck(30); // wait a little before redoing the curl request
+					// Are we sleeping with API check while having mutex LOCKED?
 					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
 					continue;
 
