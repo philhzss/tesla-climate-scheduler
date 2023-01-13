@@ -189,6 +189,7 @@ void DoCrowAPI(car* carPointer) {
 		json["app"]["TCS_version"] = tcs_version;
 		json["app"]["TCS_buildinfo"] = tcs_buildInfo;
 		json["app"]["config"]["allow_scheduled_triggers"] = lg.prepareOnly(settings::u_allowTriggers);
+		json["app"]["config"]["force_defrost"] = lg.prepareOnly(settings::u_forceDefrost);
 
 		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->teslaDataUpdateTime);
 		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);
@@ -253,7 +254,7 @@ void DoCrowAPI(car* carPointer) {
 			});
 
 
-	CROW_ROUTE(app, "/allowTriggers")
+	CROW_ROUTE(app, "/modifyConfig")
 		([](const crow::request& req) {
 
 		lg.d("Crow HTTP request");
@@ -266,12 +267,11 @@ void DoCrowAPI(car* carPointer) {
 		bool configValue = true; // Default to true
 		// To get a simple string from the url params
 		// To see it in action /params?foo='blabla'
-		if (req.url_params.get("triggers") != nullptr) {
-			string inputClientValue = req.url_params.get("triggers");
+		if (req.url_params.get("allowTriggers") != nullptr) {
+			string inputClientValue = req.url_params.get("allowTriggers");
 
-			apiReturn = lg.prepareOnly("Received value triggers = ", inputClientValue, ". Processing request.");
+			apiReturn = lg.prepareOnly("Received value allowTriggers = ", inputClientValue, ". Processing request.");
 
-			// Verify validity (if ppl was sent from client)
 			if (inputClientValue == "true") {
 				configValue = true;
 				if (!settings::u_allowTriggers)
@@ -285,14 +285,37 @@ void DoCrowAPI(car* carPointer) {
 			else {
 				apiReturn = lg.prepareOnly("Trigger value specified was invalid, expected true/false but got ", inputClientValue);
 				configValue = true; // Default to true
-				lg.in("Incorrect params; TCS Triggers allowed");
+				lg.in("Incorrect params for allowTriggers; TCS Triggers allowed");
 			}
+			settings::writeSettings("allowTriggers", configValue);
+		}
+		else if (req.url_params.get("forceDefrost") != nullptr) {
+			string inputClientValue = req.url_params.get("forceDefrost");
+
+			apiReturn = lg.prepareOnly("Received value forceDefrost = ", inputClientValue, ". Processing request.");
+
+			if (inputClientValue == "true") {
+				configValue = true;
+				if (!settings::u_forceDefrost)
+					lg.in("TCS Forcing max defrost on every trigger");
+			}
+			else if (inputClientValue == "false") {
+				configValue = false;
+				if (settings::u_forceDefrost)
+					lg.in("TCS Normal HVAC temperature triggers");
+			}
+			else {
+				apiReturn = lg.prepareOnly("forceDefrost value specified was invalid, expected true/false but got ", inputClientValue);
+				configValue = true; // Default to true
+				lg.in("Incorrect params for forceDefrost; TCS Normal HVAC temperature triggers");
+			}
+			settings::writeSettings("forceDefrost", configValue);
 		}
 		else {
-			apiReturn = "Incorrect or missing params";
+			apiReturn = "Completely incorrect or missing params";
 		}
 		lg.d(apiReturn);
-		settings::writeSettings("allowTriggers", configValue);
+		
 
 		settings::settingsMutex.unlock();
 		lg.d("Mutex UNLOCKED by crow");

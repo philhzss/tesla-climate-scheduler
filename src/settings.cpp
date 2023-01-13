@@ -19,6 +19,7 @@ std::vector<string> settings::u_homeCoords;
 std::vector<string> settings::u_workCoords;
 int settings::u_apiPort;
 bool settings::u_allowTriggers;
+bool settings::u_forceDefrost;
 int settings::numberOfSeatsActivateNow;
 // Car
 int settings::wakeTimer;
@@ -95,6 +96,7 @@ void settings::readSettings(string silent)
 
 			// TEMP CONFIG SETTINGS
 			u_allowTriggers = tempConfigs["allowTriggers"];
+			u_forceDefrost = tempConfigs["forceDefrost"];
 
 			// Get and set the auth string directly from settings
 			settings::teslaAuthString = "Authorization: Bearer " + u_teslaAccessToken;

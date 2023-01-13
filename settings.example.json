@@ -33,7 +33,8 @@
     "slackChannel": "slack channel URL, or blank if no slack"
   },
   "Temporary Configurables": {
-    "allowTriggers": true
+    "allowTriggers": true,
+    "force_defrost": false
   },
   "Tesla account settings": {
     "teslaAccessToken": "init Value - do not modify unless using external authenticator (not yet implemented) for now don't touch this line'",

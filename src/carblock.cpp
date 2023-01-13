@@ -616,11 +616,12 @@ std::vector<string> car::coldCheckSet()
 		resultVector.push_back("heated seats error");
 	}
 
-	if (Tinside_temp <= -1)
+	if (Tinside_temp <= -10 || settings::u_forceDefrost)
 	{
 		json jdefrost_result = teslaPOST(settings::teslaVURL + "command/set_preconditioning_max", json{ {"on", true } });
 		max_defrost_on = jdefrost_result["result"];
 	}
+	lg.d("Tinside_temp: ", Tinside_temp, ", forceDefrost: ", settings::u_forceDefrost);
 	lg.d("max_defrost_on: ", max_defrost_on);
 
 	resultVector.push_back(std::to_string(max_defrost_on));
