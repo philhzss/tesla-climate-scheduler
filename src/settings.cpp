@@ -67,8 +67,8 @@ void settings::readSettings(string silent)
 			u_slackChannel = generalSettings["slackChannel"];
 			u_logToFile = generalSettings["logToFile"];
 			u_repeatDelay = generalSettings["repeatDelay"];
-			generalSettings["homeCoords"].get_to(u_homeCoords);
-			generalSettings["workCoords"].get_to(u_workCoords);
+			generalSettings["coordsHome"].get_to(u_homeCoords);
+			generalSettings["coordsWork"].get_to(u_workCoords);
 			u_apiPort = generalSettings["apiPort"];
 
 

@@ -1,44 +1,43 @@
-// TO BE UPDATED WITH NEW FORMAT
 {
-  "General Settings": {
-    "slackChannel": "slack channel URL, or blank if no slack",
-    "logToFile": true,
-    "repeatDelay": 60,
-    "homeCoords": [
-      "lat",
-      "long"
-    ],
-    "workCoords": [
-      "lat",
-      "long"
-    ],
-    "apiPort": 20512
-  },
-  "Tesla account settings": {
-    "teslaEmail": "your tesla email, required for auth.py",
-    "teslaRefreshToken": "Paste Here, Generated From External Source",
-    "teslaAccessToken": "init Value - do not modify unless using external authenticator (not yet implemented) for now don't touch this line'"
-  },
   "Calendar Settings": {
     "calendarURL": "link to calendar ics",
-    "shiftStartBias": -7,
-    "shiftEndBias": -25,
     "commuteTime": 25,
+    "shiftEndBias": -25,
+    "shiftStartBias": -7,
     "wordsToIgnore": [
       "Leave",
       "Spare"
     ]
   },
   "Car settings": {
-    "shutoffTimer": 20,
     "default20CMinTime": 2,
+    "heatseat1IfColderThan": 14,
+    "heatseat2IfColderThan": 5,
+    "heatseat3IfColderThan": -10,
     "noActivateLowerLimitTemp": 18,
     "noActivateUpperLimitTemp": 23,
-    "heatseat3IfColderThan": -10,
-    "heatseat2IfColderThan": 5,
-    "heatseat1IfColderThan": 14
+    "shutoffTimer": 20
+  },
+  "General Settings": {
+    "apiPort": 20512,
+    "coordsHome": [
+      "lat",
+      "long"
+    ],
+    "coordsWork": [
+      "lat",
+      "long"
+    ],
+    "logToFile": true,
+    "repeatDelay": 60,
+    "slackChannel": "slack channel URL, or blank if no slack"
   },
   "Temporary Configurables": {
     "allowTriggers": true
+  },
+  "Tesla account settings": {
+    "teslaAccessToken": "init Value - do not modify unless using external authenticator (not yet implemented) for now don't touch this line'",
+    "teslaEmail": "your tesla email, required for auth.py",
+    "teslaRefreshToken": "Paste Here, Generated From External Source"
   }
 }
