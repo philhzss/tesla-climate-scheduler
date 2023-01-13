@@ -7,7 +7,8 @@ static Log lg("Settings", Log::LogLevel::Debug);
 
 
 // Settings definitions
-json settings::teslaSettings, settings::calendarSettings, settings::generalSettings, settings::carSettings;
+json settings::settingsForm;
+json settings::teslaSettings, settings::calendarSettings, settings::generalSettings, settings::carSettings, settings::tempConfigs;
 
 // General
 string settings::u_slackChannel;
@@ -17,6 +18,7 @@ int settings::u_repeatDelay;
 std::vector<string> settings::u_homeCoords;
 std::vector<string> settings::u_workCoords;
 int settings::u_apiPort;
+bool settings::u_allowTriggers;
 int settings::numberOfSeatsActivateNow;
 // Car
 int settings::wakeTimer;
@@ -48,7 +50,6 @@ string settings::u_teslaRefreshToken;
 
 void settings::readSettings(string silent)
 {
-	json settingsForm;
 	try {
 		std::ifstream stream("settings.json");
 		stream >> settingsForm;
@@ -58,6 +59,7 @@ void settings::readSettings(string silent)
 		calendarSettings = settingsForm["Calendar Settings"];
 		generalSettings = settingsForm["General Settings"];
 		carSettings = settingsForm["Car settings"];
+		tempConfigs = settingsForm["Temporary Configurables"];
 
 		//Save the data from settings in the program variables
 		{
@@ -90,6 +92,9 @@ void settings::readSettings(string silent)
 			// TESLA ACCOUNT SETTINGS
 			u_teslaAccessToken = teslaSettings["teslaAccessToken"];
 			u_teslaRefreshToken = teslaSettings["teslaRefreshToken"];
+
+			// TEMP CONFIG SETTINGS
+			u_allowTriggers = tempConfigs["allowTriggers"];
 
 			// Get and set the auth string directly from settings
 			settings::teslaAuthString = "Authorization: Bearer " + u_teslaAccessToken;
@@ -234,4 +239,20 @@ bool settings::doManualActivateHVAC() {
 	lg.p("Mutex UNLOCKED by main after checking doManualActivateHVAC?");
 
 	return triggerHVAC;
+}
+
+
+void settings::writeSettings(string key, bool value)
+{
+	readSettings("silent"); // Make sure it's up to date
+
+	settingsForm["Temporary Configurables"][key] = value;
+
+	std::ofstream file("settings.json");
+	file << std::setw(4) << settingsForm;
+	file.close();
+
+	lg.d("Wrote ",key, ":",value, " to Temporary Configurables");
+
+	readSettings("silent"); // Re-update the settings in program from file
 }

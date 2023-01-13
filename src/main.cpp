@@ -130,7 +130,7 @@ bool InternetConnected() {
 }
 
 // Time functions
-const string date_time_str_from_time_t(const char * format, time_t * time_t_secs)
+const string date_time_str_from_time_t(const char* format, time_t* time_t_secs)
 {
 	struct tm tstruct;
 	char buf[80];
@@ -140,7 +140,7 @@ const string date_time_str_from_time_t(const char * format, time_t * time_t_secs
 	else {
 		tstruct = *localtime(time_t_secs);
 	}
-	
+
 	// VERIFY LOGGER HERE
 	if (lg.ReadLevel() == Log::Programming)
 	{
@@ -252,6 +252,54 @@ void DoCrowAPI(car* carPointer) {
 			});
 
 
+	CROW_ROUTE(app, "/allowTriggers")
+		([](const crow::request& req) {
+
+		lg.d("Crow HTTP request");
+		if (!settings::settingsMutexLockSuccess("crow TOGGLE TRIGGER request")) {
+			return crow::response{ "ERROR MUTEX TIMEOUT" };
+		}
+		lg.d("!!!CROW: Mutex LOCKED!!!");
+
+		string apiReturn;
+		bool configValue = true; // Default to true
+		// To get a simple string from the url params
+		// To see it in action /params?foo='blabla'
+		if (req.url_params.get("triggers") != nullptr) {
+			string inputClientValue = req.url_params.get("triggers");
+
+			apiReturn = lg.prepareOnly("Received value triggers = ", inputClientValue, ". Processing request.");
+
+			// Verify validity (if ppl was sent from client)
+			if (inputClientValue == "true") {
+				configValue = true;
+				if (!settings::u_allowTriggers)
+					lg.in("TCS Triggers allowed");
+			}
+			else if (inputClientValue == "false") {
+				configValue = false;
+				if (settings::u_allowTriggers)
+					lg.in("TCS Triggers inhibited");
+			}
+			else {
+				apiReturn = lg.prepareOnly("Trigger value specified was invalid, expected true/false but got ", inputClientValue);
+				configValue = true; // Default to true
+				lg.in("Incorrect params; TCS Triggers allowed");
+			}
+		}
+		else {
+			apiReturn = "Incorrect or missing params";
+		}
+		lg.d(apiReturn);
+		settings::writeSettings("allowTriggers", configValue);
+
+		settings::settingsMutex.unlock();
+		lg.d("Mutex UNLOCKED by crow");
+
+		return crow::response{ apiReturn };
+			});
+
+
 	// set the port, set the app to run on multiple threads, and run the app
 	app.port(settings::u_apiPort).multithreaded().run();
 	// app.port(30512).multithreaded().run();
@@ -315,7 +363,7 @@ int main()
 
 
 					// Only run the wake loop if no manual activation is to be done
-					if (!settings::doManualActivateHVAC())
+					if (!settings::doManualActivateHVAC() && settings::u_allowTriggers)
 					{
 						// Verify if any event matches the event checking parameters (Wake loop)
 						bool carAwokenOnce = false;
@@ -351,10 +399,10 @@ int main()
 										settings::triggerTimer = tempTimeMod;
 
 										time_t driveInTimer_secs = calEvent::getNextWakeTimer(calEvent::lastWakeEvent);
-										time_t triggerTimer_secs = driveInTimer_secs - 60*tempTimeMod;
+										time_t triggerTimer_secs = driveInTimer_secs - 60 * tempTimeMod;
 										string triggerTimeString = date_time_str_from_time_t("%R", &triggerTimer_secs);
 
-										lgw.in("Triggers at: ", triggerTimeString," (", tempTimeMod, " mins before drive)", Tesla.datapack);
+										lgw.in("Triggers at: ", triggerTimeString, " (", tempTimeMod, " mins before drive)", Tesla.datapack);
 										lgw.i("Car seems to be located at ", Tesla.location);
 										carAwokenOnce = true; // to avoid notifying user multiple times & waking car every loop
 
@@ -465,7 +513,8 @@ int main()
 									}
 									// Wether HVAC was shutoff or not, we don't need to check for shutoff anymore:
 									shutoffHasBeenCheckedOnce = true;
-								} else {
+								}
+								else {
 									// If here, a previous loop shutdown the HVAC for this event
 									// This should only print if the HVAC was shutdown for this event.
 									lgw.d("checkShutoff has already verified for this event.");
@@ -497,6 +546,10 @@ int main()
 							}
 						} while (!actionToDo.empty());
 						break; // Must exit maxTries loop if no error caught
+					}
+					else if (!settings::u_allowTriggers)
+					{
+						lg.i("Allow triggers is false, not checking for events.");
 					}
 					if (settings::doManualActivateHVAC()) //-> DO a manual HVAC activation now
 					{

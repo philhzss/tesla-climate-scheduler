@@ -19,8 +19,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2022.12.04 - Mutex shouldn't get stuck in teslaGET";
-const string tcs_version = "3.4.8";
+const string tcs_buildInfo = "\nBuild Date : 2023.01.12 - Scheduled triggers can be inhibited";
+const string tcs_version = "3.5.0";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 

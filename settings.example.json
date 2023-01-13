@@ -1,3 +1,4 @@
+// TO BE UPDATED WITH NEW FORMAT
 {
   "General Settings": {
     "slackChannel": "slack channel URL, or blank if no slack",
@@ -13,7 +14,7 @@
     ],
     "apiPort": 20512
   },
-  "Tesla & TeslaFi account settings": {
+  "Tesla account settings": {
     "teslaEmail": "your tesla email, required for auth.py",
     "teslaRefreshToken": "Paste Here, Generated From External Source",
     "teslaAccessToken": "init Value - do not modify unless using external authenticator (not yet implemented) for now don't touch this line'"
@@ -36,5 +37,8 @@
     "heatseat3IfColderThan": -10,
     "heatseat2IfColderThan": 5,
     "heatseat1IfColderThan": 14
+  },
+  "Temporary Configurables": {
+    "allowTriggers": true
   }
 }

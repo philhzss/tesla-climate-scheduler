@@ -10,8 +10,9 @@ using json = nlohmann::json;
 class settings
 {
 public:
+	static json settingsForm;
 	// Initial breakdown into separate json objects
-	static json teslaSettings, calendarSettings, generalSettings, carSettings;
+	static json teslaSettings, calendarSettings, generalSettings, carSettings, tempConfigs;
 
 
 	// Important stuff, Tesla official token, Tesla URL
@@ -25,7 +26,8 @@ public:
 	// Parse settings.json and save its contents in the program's memory
 	static void readSettings(string silent = "");
 
-
+	// Write settings to file
+	static void writeSettings(string key, bool value);
 
 
 	// u_ser defined settings (from settings.json):
@@ -113,6 +115,7 @@ public:
 	// Owner API Access Token
 	static string u_teslaAccessToken;
 
+
 	// API
 	// Mutex lock for reading and clearing the settings file
 	static std::mutex settingsMutex;
@@ -128,4 +131,9 @@ public:
 	// API
 	// If not 0, will activate HVAC for (1,2) ppl next loop. Auto-resets
 	static int numberOfSeatsActivateNow;
+
+
+	// Temp configs
+	// If false, all triggers will not activate HVAC (except manual requests)
+	static bool u_allowTriggers;
 };
