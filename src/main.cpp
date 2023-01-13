@@ -188,8 +188,7 @@ void DoCrowAPI(car* carPointer) {
 		json["app"]["car_name"] = carName;
 		json["app"]["TCS_version"] = tcs_version;
 		json["app"]["TCS_buildinfo"] = tcs_buildInfo;
-		
-		json["config"]["allow_scheduled_triggers"] = lg.prepareOnly(settings::u_allowTriggers);
+		json["app"]["config"]["allow_scheduled_triggers"] = lg.prepareOnly(settings::u_allowTriggers);
 
 		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->teslaDataUpdateTime);
 		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);
