@@ -331,7 +331,7 @@ int main()
 		"\nThis program comes with ABSOLUTELY NO WARRANTY;"
 		"\nThis is free software, and you are welcome to redistribute it"
 		"\nunder certain conditions.\n\n");
-	lg.n("TCS app initiated" + tcs_versionInfo);
+	lg.n("TCS app initiated", tcs_versionInfo, "\nAPI Port : ", settings::u_apiPort);
 
 	int mainLoopCounter = 1;
 

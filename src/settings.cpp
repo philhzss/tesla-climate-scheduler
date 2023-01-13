@@ -147,11 +147,18 @@ void settings::readSettings(string silent)
 			string endKw;
 			startKw = (shiftStartTimer < 0) ? "BEFORE" : "AFTER";
 			endKw = (shiftEndTimer < 0) ? "BEFORE" : "AFTER";
-			lg.b("\nCar will be ready for driving: \n", abs(shiftStartTimer), " minutes ", startKw, " calendar event start time."
-				"\n", abs(shiftEndTimer), " minutes ", endKw, " calendar event end time."
-				"\nHVAC will be shut down if car still home ", u_shutoffTimer, " minutes before shift start."
-				"\nCar: Default time value @ 20C interior temp: ", u_default20CMinTime, " minutes."
-			);
+			
+			if (u_allowTriggers) {
+				lg.b("\nCar will be ready for driving: \n", abs(shiftStartTimer), " minutes ", startKw, " calendar event start time."
+					"\n", abs(shiftEndTimer), " minutes ", endKw, " calendar event end time."
+					"\nHVAC will be shut down if car still home ", u_shutoffTimer, " minutes before shift start."
+				);
+			}
+			else {
+				lg.b("Scheduled triggers are currently BLOCKED, only manual HVAC requests will trigger!!!"
+				);
+			}
+			lg.b("Car: Default time value @ 20C interior temp: ", u_default20CMinTime, " minutes.");
 		}
 	}
 
