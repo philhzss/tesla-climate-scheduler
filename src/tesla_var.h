@@ -19,8 +19,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2023.03.08 - Forced defrost has upper limit";
-const string tcs_version = "3.5.2";
+const string tcs_buildInfo = "\nBuild Date : 2023.03.09 - Turn off all heated seats if not required this activation";
+const string tcs_version = "3.5.3";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 

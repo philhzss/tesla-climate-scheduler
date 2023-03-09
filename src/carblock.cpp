@@ -608,6 +608,15 @@ std::vector<string> car::coldCheckSet()
 
 	// Send the heat-seat request, turning the heated seat off if it's hot enough
 	json seat_result = teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", 0}, {"level", requestedSeatHeat } });
+	
+	// If seats should be 0, turn off ALL heated seats in car
+	if (requestedSeatHeat == 0) {
+		for (int seatNumber =1 ; seatNumber <= 4; seatNumber++) {
+			teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", seatNumber}, {"level", requestedSeatHeat } });
+		}	
+	}
+	
+	
 	if (seat_result["result"]) {
 		resultVector.push_back(std::to_string(requestedSeatHeat));
 		lg.d("seat_result: ", seat_result["result"]);
