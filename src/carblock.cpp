@@ -621,7 +621,7 @@ std::vector<string> car::coldCheckSet()
 		json jdefrost_result = teslaPOST(settings::teslaVURL + "command/set_preconditioning_max", json{ {"on", true } });
 		max_defrost_on = jdefrost_result["result"];
 	}
-	lg.d("Tinside_temp: ", Tinside_temp, ", forceDefrost: ", settings::u_encourageDefrost);
+	lg.d("Tinside_temp: ", Tinside_temp, ", encourageDefrost: ", settings::u_encourageDefrost);
 	lg.d("max_defrost_on: ", max_defrost_on);
 
 	resultVector.push_back(std::to_string(max_defrost_on));

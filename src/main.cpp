@@ -189,7 +189,8 @@ void DoCrowAPI(car* carPointer) {
 		json["app"]["TCS_version"] = tcs_version;
 		json["app"]["TCS_buildinfo"] = tcs_buildInfo;
 		json["app"]["config"]["allow_scheduled_triggers"] = lg.prepareOnly(settings::u_allowTriggers);
-		json["app"]["config"]["force_defrost"] = lg.prepareOnly(settings::u_encourageDefrost);
+		json["app"]["config"]["encourage_defrost"] = lg.prepareOnly(settings::u_encourageDefrost);
+		json["app"]["config"]["no_defrost_above"] = lg.prepareOnly(settings::u_noDefrostAbove);
 
 		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->teslaDataUpdateTime);
 		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);
@@ -289,15 +290,15 @@ void DoCrowAPI(car* carPointer) {
 			}
 			settings::writeSettings("allowTriggers", configValue);
 		}
-		else if (req.url_params.get("forceDefrost") != nullptr) {
-			string inputClientValue = req.url_params.get("forceDefrost");
+		else if (req.url_params.get("encourageDefrost") != nullptr) {
+			string inputClientValue = req.url_params.get("encourageDefrost");
 
-			apiReturn = lg.prepareOnly("Received value forceDefrost = ", inputClientValue, ". Processing request.");
+			apiReturn = lg.prepareOnly("Received value encourageDefrost = ", inputClientValue, ". Processing request.");
 
 			if (inputClientValue == "true") {
 				configValue = true;
 				if (!settings::u_encourageDefrost)
-					lg.in("TCS Forcing max defrost on every trigger");
+					lg.in("TCS Forcing max defrost on every trigger unless inside temp > ", settings::u_noDefrostAbove);
 			}
 			else if (inputClientValue == "false") {
 				configValue = false;
@@ -305,9 +306,9 @@ void DoCrowAPI(car* carPointer) {
 					lg.in("TCS Normal HVAC temperature triggers");
 			}
 			else {
-				apiReturn = lg.prepareOnly("forceDefrost value specified was invalid, expected true/false but got ", inputClientValue);
+				apiReturn = lg.prepareOnly("encourageDefrost value specified was invalid, expected true/false but got ", inputClientValue);
 				configValue = true; // Default to true
-				lg.in("Incorrect params for forceDefrost; TCS Normal HVAC temperature triggers");
+				lg.in("Incorrect params for encourageDefrost; TCS Normal HVAC temperature triggers");
 			}
 			settings::writeSettings("encourageDefrost", configValue);
 		}
