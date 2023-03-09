@@ -34,7 +34,8 @@
   },
   "Temporary Configurables": {
     "allowTriggers": true,
-    "force_defrost": false
+    "encourageDefrost": false,
+    "noDefrostAbove": 3
   },
   "Tesla account settings": {
     "teslaAccessToken": "init Value - do not modify unless using external authenticator (not yet implemented) for now don't touch this line'",

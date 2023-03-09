@@ -189,7 +189,7 @@ void DoCrowAPI(car* carPointer) {
 		json["app"]["TCS_version"] = tcs_version;
 		json["app"]["TCS_buildinfo"] = tcs_buildInfo;
 		json["app"]["config"]["allow_scheduled_triggers"] = lg.prepareOnly(settings::u_allowTriggers);
-		json["app"]["config"]["force_defrost"] = lg.prepareOnly(settings::u_forceDefrost);
+		json["app"]["config"]["force_defrost"] = lg.prepareOnly(settings::u_encourageDefrost);
 
 		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->teslaDataUpdateTime);
 		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);
@@ -296,12 +296,12 @@ void DoCrowAPI(car* carPointer) {
 
 			if (inputClientValue == "true") {
 				configValue = true;
-				if (!settings::u_forceDefrost)
+				if (!settings::u_encourageDefrost)
 					lg.in("TCS Forcing max defrost on every trigger");
 			}
 			else if (inputClientValue == "false") {
 				configValue = false;
-				if (settings::u_forceDefrost)
+				if (settings::u_encourageDefrost)
 					lg.in("TCS Normal HVAC temperature triggers");
 			}
 			else {
@@ -309,7 +309,7 @@ void DoCrowAPI(car* carPointer) {
 				configValue = true; // Default to true
 				lg.in("Incorrect params for forceDefrost; TCS Normal HVAC temperature triggers");
 			}
-			settings::writeSettings("forceDefrost", configValue);
+			settings::writeSettings("encourageDefrost", configValue);
 		}
 		else {
 			apiReturn = "Completely incorrect or missing params";

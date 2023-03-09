@@ -137,6 +137,9 @@ public:
 	// If false, all triggers will not activate HVAC (except manual requests)
 	static bool u_allowTriggers;
 	// Temp configs
-	// If true, all triggers will force max defrost
-	static bool u_forceDefrost;
+	// If true, all triggers will force max defrost unless temp is above noDefrostAbove
+	static bool u_encourageDefrost;
+	// Temp configs
+	// If true, all triggers will force max defrost unless temp is above noDefrostAbove
+	static int u_noDefrostAbove;
 };
