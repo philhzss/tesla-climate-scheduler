@@ -406,6 +406,12 @@ int main()
 								break;
 							}
 
+							// Break out of loop if TCS triggers now blocked
+							if (!settings::u_allowTriggers) {
+								lgw.dn("Breaking out of wake loop, TCS triggers blocked");
+								break;
+							}
+
 							nowTime_secs = time(&nowTime_secs); // always update to current time!
 							calEvent::updateValidEventTimers(); // always update timers within wakeLoop!
 
