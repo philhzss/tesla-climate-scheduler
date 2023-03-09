@@ -191,6 +191,14 @@ void DoCrowAPI(car* carPointer) {
 		json["app"]["config"]["allow_scheduled_triggers"] = lg.prepareOnly(settings::u_allowTriggers);
 		json["app"]["config"]["encourage_defrost"] = lg.prepareOnly(settings::u_encourageDefrost);
 		json["app"]["config"]["no_defrost_above"] = lg.prepareOnly(settings::u_noDefrostAbove);
+		json["app"]["config"]["car_default20CMinTime"] = lg.prepareOnly(settings::u_default20CMinTime);
+		json["app"]["config"]["car_heatseat1IfColderThan"] = lg.prepareOnly(settings::u_heatseat1temp);
+		json["app"]["config"]["car_heatseat2IfColderThan"] = lg.prepareOnly(settings::u_heatseat2temp);
+		json["app"]["config"]["car_heatseat3IfColderThan"] = lg.prepareOnly(settings::u_heatseat3temp);
+		json["app"]["config"]["car_noActivateLowerLimitTemp"] = lg.prepareOnly(settings::u_noActivateLowerLimitTemp);
+		json["app"]["config"]["car_noActivateUpperLimitTemp"] = lg.prepareOnly(settings::u_noActivateUpperLimitTemp);
+		json["app"]["config"]["car_shutoffTimer"] = lg.prepareOnly(settings::u_shutoffTimer);
+
 
 		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->teslaDataUpdateTime);
 		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);
