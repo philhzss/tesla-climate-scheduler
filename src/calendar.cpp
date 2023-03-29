@@ -101,7 +101,19 @@ void initiateCal()
 	string calRawData = GetCalRawData();
 
 	// Cut out the "header" data from the raw cal string
-	int	calHeadEndPos = calRawData.find("END:VTIMEZONE");
+	int	calHeadEndPos;
+	size_t endPos = calRawData.find("END:VTIMEZONE");
+	calHeadEndPos;
+	if (endPos != string::npos)
+	{
+		calHeadEndPos = endPos;
+	}
+	else {
+		calHeadEndPos = calRawData.find("X-WR-TIMEZONE:UTC");
+	};
+
+
+
 	calRawData = calRawData.substr(calHeadEndPos);
 
 	// Create custom calEvents and stick them in a vector (code by Carl!!!!)
@@ -338,11 +350,11 @@ string calEvent::eventTimeCheck()
 				* mins left before event we'll get checkShutoff. Then with main functions in
 				* wake loop, if car is still home we'll shutoff. It's essentially the same
 				* as duplicate but it allows the main to shutoff HVAC if car still home
-				* 
-				* This is handled here simply because main does not deal with timers and 
+				*
+				* This is handled here simply because main does not deal with timers and
 				* time checking is a calendar thing
 				*/
-				if (event.startTimer <= settings::u_shutoffTimer) 
+				if (event.startTimer <= settings::u_shutoffTimer)
 				{
 					lg.i("EVENT HAD ALREADY TRIGGERED FOR HOME AND HVAC SHUTOFF POSSIBLE, verifying.");
 					return "checkShutoff";
@@ -405,7 +417,7 @@ string calEvent::eventTimeCheck()
 		}
 	}
 	// If we're here, no event matched any parameter
-	lg.d("No matching event for wakeTimer: ", settings::wakeTimer , "mins, triggerTimer: ", settings::triggerTimer, "mins.");
+	lg.d("No matching event for wakeTimer: ", settings::wakeTimer, "mins, triggerTimer: ", settings::triggerTimer, "mins.");
 	return "";
 }
 
@@ -424,10 +436,10 @@ void calEvent::updateLastWakeEvent()
 int calEvent::getNextWakeTimer(calEvent* event)
 {
 	if (event->startTimer > 0) {
-		return event->startTime_secs - 60*settings::u_commuteTime + 60*settings::u_shiftStartBias;
+		return event->startTime_secs - 60 * settings::u_commuteTime + 60 * settings::u_shiftStartBias;
 	}
 	else {
-		return event->endTime_secs + 60*settings::u_shiftEndBias;
+		return event->endTime_secs + 60 * settings::u_shiftEndBias;
 	}
 }
 
