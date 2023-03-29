@@ -109,6 +109,7 @@ void initiateCal()
 		calHeadEndPos = endPos;
 	}
 	else {
+		// If the calendar is in UTC there is no END:VTIMEZONE so we need this:
 		calHeadEndPos = calRawData.find("X-WR-TIMEZONE:UTC");
 	};
 
