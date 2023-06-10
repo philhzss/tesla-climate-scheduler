@@ -33,7 +33,7 @@ public:
 	std::map<string, string> carData_s;
 
 	string teslaDataUpdateTime = "";
-	string Tdisplay_name = "";
+	string Tvehicle_name = "";
 	string Tshift_state = "";
 	string Tconnection_state = "";
 	float Tinside_temp;

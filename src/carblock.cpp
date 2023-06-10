@@ -126,8 +126,10 @@ std::map<string, string> car::getData(bool wakeCar)
 		}
 		lg.d("!!!MAIN: MUTEX LOCKED (before teslaGET CAR AWOKEN in getData)!!!");
 
+		// lg.d(response.dump()); // Debug
 
-		Tdisplay_name = response["display_name"];
+		json vehicle_state = response["vehicle_state"];
+		Tvehicle_name = vehicle_state["vehicle_name"];
 
 		json climate_state = response["climate_state"];
 		Tinside_temp = climate_state["inside_temp"];
@@ -155,7 +157,7 @@ std::map<string, string> car::getData(bool wakeCar)
 		teslaDataUpdateTime = date_time_str_from_time_t() + " LOCAL";
 
 		// remove trailing 0s?
-		carData_s["display_name"] = Tdisplay_name;
+		carData_s["vehicle_name"] = Tvehicle_name;
 		carData_s["shift_state"] = Tshift_state;
 		// not good
 		carData_s["inside_temp"] = std::to_string(Tinside_temp);

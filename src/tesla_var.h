@@ -19,8 +19,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2023.03.28 - Turn off all heated seats if not required this activation";
-const string tcs_version = "3.5.4";
+const string tcs_buildInfo = "\nBuild Date : 2023.06.10 - Bug fix";
+const string tcs_version = "3.5.5";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 
