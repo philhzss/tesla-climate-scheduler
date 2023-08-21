@@ -76,7 +76,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <TargetName>tcs</TargetName>
-    <IncludePath>C:\Users\Phil\Google Drive\dev\Tesla auto-sched climate\Tesla Climate Scheduler cpp\tesla\include;$(IncludePath)</IncludePath>
+    <IncludePath>G:\My Drive\dev\Tesla auto-sched climate\Tesla Climate Scheduler cpp\tesla\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="include\base64.cpp" />

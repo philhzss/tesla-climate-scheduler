@@ -347,7 +347,17 @@ int main()
 	try
 	{
 		// Read settings initially for Slack Channel & API (without output results)
+
+		// Get the mutex before touching settings
+		if (!settings::settingsMutexLockSuccess("before init readSettings")) {
+			throw "Mutex timeout in main thread (before init readSettings)";
+		}
+		lg.d("!!!MAIN: MUTEX LOCKED (before init readSettings)!!!");
+
 		settings::readSettings("silent");
+
+		settings::settingsMutex.unlock();
+		lg.d("Mutex UNLOCKED by main");
 	}
 	catch (string e) {
 		lg.en("Critical failure (before start), program stopping: " + e);
@@ -360,7 +370,7 @@ int main()
 	lg.b("\n.\n..\n...\n....\n.....\n......\n.......\n........\n.........\n..........\nTCS app initiated" + tcs_versionInfo + "\n");
 
 
-	lg.i("\nTCS  Copyright (C) 2022  Philippe Hewett"
+	lg.i("\nTCS  Copyright (C) 2023  Philippe Hewett"
 		"\nThis program comes with ABSOLUTELY NO WARRANTY;"
 		"\nThis is free software, and you are welcome to redistribute it"
 		"\nunder certain conditions.\n\n");
@@ -389,7 +399,16 @@ int main()
 				try
 				{
 					// Only run the program if the settings file is readable, will throw exception if its not
+					// Get the mutex before touching settings
+					if (!settings::settingsMutexLockSuccess("before loop readSettings")) {
+						throw "Mutex timeout in main thread (before loop readSettings)";
+					}
+					lg.d("!!!MAIN: MUTEX LOCKED (before loop readSettings)!!!");
+					
 					settings::readSettings();
+
+					settings::settingsMutex.unlock();
+					lg.d("Mutex UNLOCKED by main");
 
 					// Get & parse calendar data
 					initiateCal();
