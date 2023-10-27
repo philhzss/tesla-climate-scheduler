@@ -149,8 +149,8 @@ std::map<string, string> car::getData(bool wakeCar)
 			Tshift_state = drive_state["shift_state"];
 			lg.i("Shift state is not null, is: " + Tshift_state);
 		}
-		Tlat = drive_state["latitude"];
-		Tlong = drive_state["longitude"];
+		Tlat = drive_state["active_route_latitude"];
+		Tlong = drive_state["active_route_longitude"];
 		location = checkCarLocation();
 
 		// Save the time at which data was obtained for the API
