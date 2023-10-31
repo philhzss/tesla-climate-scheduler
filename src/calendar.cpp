@@ -14,6 +14,7 @@ calEvent* calEvent::lastWakeEvent;
 
 
 // Get long string of raw calendar data from URL
+// settingsMutex MUST BE LOCKED before calling this function!!!!
 string GetCalRawData() {
 	string rawCalContent;
 	try
@@ -24,7 +25,12 @@ string GetCalRawData() {
 	catch (string e)
 	{
 		lg.d("rawCalContent for debugging:", rawCalContent);
-		throw "initiateCal error: " + e + "\nCheck calendar URL??? Internet connection?";
+		lg.e("Main thread releasing settingsMutex before throwing error");
+
+		settings::settingsMutex.unlock();
+		lg.d("settingsMutex UNLOCKED by main (curl_GET error)");
+
+		throw string("initiateCal error: " + e + "\nCheck calendar URL??? Internet connection?");
 	};
 }
 
@@ -119,7 +125,6 @@ void initiateCal()
 
 	// Create custom calEvents and stick them in a vector (code by Carl!!!!)
 	std::vector<string> calEventsVector = calStringSep(calRawData);
-
 
 	for (string s : calEventsVector)
 	{
@@ -251,9 +256,9 @@ void calEvent::updateValidEventTimers()
 {
 	// Get the mutex before writing to calendar vars
 	if (!settings::settingsMutexLockSuccess("before updateValidEventTimers")) {
-		throw "Mutex timeout in main thread (before updateValidEventTimers)";
+		throw string("settingsMutex timeout in main thread (before updateValidEventTimers)");
 	}
-	lg.d("!!!MAIN: MUTEX LOCKED (before updateValidEventTimers)!!!");
+	lg.d("!!!MAIN: settingsMutex LOCKED (before updateValidEventTimers)!!!");
 	for (calEvent& event : calEvent::myValidEvents) // applies to valid (non-past) events only
 	{
 		// Make a temporary tm struct to not let the mktime function overwrite my event struct
@@ -269,7 +274,7 @@ void calEvent::updateValidEventTimers()
 		event.endTimer = (difftime(endTime_secs, nowTime_secs)) / 60;
 	}
 	settings::settingsMutex.unlock();
-	lg.d("Mutex UNLOCKED by main updateValidEventTimers");
+	lg.d("settingsMutex UNLOCKED by main updateValidEventTimers");
 }
 
 void calEvent::removePastEvents()

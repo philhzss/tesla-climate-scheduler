@@ -8,6 +8,7 @@
 #include "logger.h"
 #include "carblock.h"
 #include <fstream>
+#include <thread>
 
 
 using json = nlohmann::json;
@@ -19,8 +20,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2023.10.27 - active_route_lat-lon fix";
-const string tcs_version = "3.5.7";
+const string tcs_buildInfo = "\nBuild Date : 2023.10.30 - curl_timeout fix";
+const string tcs_version = "3.6.0";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 

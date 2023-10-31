@@ -29,9 +29,9 @@ void car::teslaAuth()
 
 	// Get the mutex before touching settings.json
 	if (!settings::settingsMutexLockSuccess("before running python3 auth.py", 10)) {
-		throw "Mutex timeout in main thread (before running python3 auth.py)";
+		throw string("settingsMutex timeout in main thread (before running python3 auth.py)");
 	}
-	lg.d("!!!MAIN: MUTEX LOCKED (before running python3 auth.py)!!!");
+	lg.d("!!!MAIN: settingsMutex LOCKED (before running python3 auth.py)!!!");
 
 
 	if (usingExternalAuthToken) {
@@ -49,7 +49,7 @@ void car::teslaAuth()
 
 	// Release the mutex
 	settings::settingsMutex.unlock();
-	lg.d("Mutex UNLOCKED after python3 updated auth data");
+	lg.d("settingsMutex UNLOCKED after python3 updated auth data");
 
 	return;
 
@@ -83,9 +83,9 @@ std::map<string, string> car::getData(bool wakeCar)
 
 	// Get the mutex before writing to any car variable
 	if (!settings::settingsMutexLockSuccess("after succesful teslaGET in getData")) {
-		throw "Mutex timeout in main thread (after succesful teslaGET in getData)";
+		throw string("settingsMutex timeout in main thread (after succesful teslaGET in getData)");
 	}
-	lg.d("!!!MAIN: MUTEX LOCKED (before first teslaGET in getData)!!!");
+	lg.d("!!!MAIN: settingsMutex LOCKED (before first teslaGET in getData)!!!");
 
 	Tconnection_state = teslaGetData["state"];
 	carOnline = (Tconnection_state == "online") ? true : false;
@@ -99,7 +99,7 @@ std::map<string, string> car::getData(bool wakeCar)
 	carData_s["Car awake"] = std::to_string(carOnline);
 
 	settings::settingsMutex.unlock();
-	lg.d("Mutex UNLOCKED before waking car");
+	lg.d("settingsMutex UNLOCKED before waking car");
 
 	if (wakeCar)
 	{
@@ -122,9 +122,9 @@ std::map<string, string> car::getData(bool wakeCar)
 
 		// Get the mutex before getting more data
 		if (!settings::settingsMutexLockSuccess("before teslaGET CAR AWOKEN in getData")) {
-			throw "Mutex timeout in main thread (before teslaGET CAR AWOKEN in getData)";
+			throw string("settingsMutex timeout in main thread (before teslaGET CAR AWOKEN in getData)");
 		}
-		lg.d("!!!MAIN: MUTEX LOCKED (before teslaGET CAR AWOKEN in getData)!!!");
+		lg.d("!!!MAIN: settingsMutex LOCKED (before teslaGET CAR AWOKEN in getData)!!!");
 
 		// lg.d(response.dump()); // Debug
 
@@ -169,7 +169,7 @@ std::map<string, string> car::getData(bool wakeCar)
 		carData_s["location_home_or_work"] = location;
 
 		settings::settingsMutex.unlock();
-		lg.d("Mutex UNLOCKED after waking car");
+		lg.d("settingsMutex UNLOCKED after waking car");
 
 	}
 
@@ -238,6 +238,7 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 			curl_easy_setopt(curl, CURLOPT_POST, 1);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
 
 
 			/* Perform the request, res will get the return code */
@@ -293,7 +294,7 @@ json car::teslaGET(string specifiedUrlPage)
 		string readBuffer;
 		long response_code;
 
-		curl_global_init(CURL_GLOBAL_DEFAULT);
+		curl_global_init(CURL_GLOBAL_ALL);
 		curl = curl_easy_init();
 		if (curl) {
 
@@ -314,6 +315,8 @@ json car::teslaGET(string specifiedUrlPage)
 
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+			curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
+
 			/* Perform the request, res will get the return code */
 			res = curl_easy_perform(curl);
 			/* Check for errors */
@@ -321,7 +324,7 @@ json car::teslaGET(string specifiedUrlPage)
 			{
 				fprintf(stderr, "curl_easy_perform() failed: %s\n",
 					curl_easy_strerror(res));
-				throw "curl_easy_perform() failed: " + std::to_string(res);
+				throw string("curl_easy_perform() failed: " + std::to_string(res));
 			}
 			if (res == CURLE_OK) {
 				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
@@ -330,23 +333,23 @@ json car::teslaGET(string specifiedUrlPage)
 
 				if (response_code != 200)
 				{
-					lg.en("Abnormal server response (", response_code, ") for GET ", fullUrl);
+					lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
 					if (response_code == 408) {
-						lg.in("TIMEOUT");
+						lg.i("TIMEOUT");
 					}
 					else if (response_code == 401) {
-						lg.in("UNAUTHORIZED");
+						lg.i("UNAUTHORIZED");
 					}
 					else if (response_code == 503) {
-						lg.in("SERVICE UNAVAILABLE");
+						lg.i("SERVICE UNAVAILABLE");
 					}
 					else {
 						lg.in("IS TOKEN EXPIRED???");
 					}
 					lg.d("readBuffer for incorrect: " + readBuffer);
 					response_code_ok = false;
-					lg.i("Waiting 30 secs and retrying (teslaGET)");
-					sleepWithAPIcheck(30); // wait a little before redoing the curl request
+					lg.i("Waiting 5 secs and retrying (teslaGET)");
+					sleepWithAPIcheck(5); // wait a little before redoing the curl request
 					// Are we sleeping with API check while having mutex LOCKED?
 					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
 					continue;
@@ -427,44 +430,7 @@ void dump(const char* text,
 	}
 }
 
-static
-int my_trace(CURL* handle, curl_infotype type,
-	char* data, size_t size,
-	void* userp)
-{
-	const char* text;
-	(void)handle; /* prevent compiler warning */
-	(void)userp;
 
-	switch (type) {
-	case CURLINFO_TEXT:
-		fprintf(stderr, "== Info: %s", data);
-	default: /* in case a new one is introduced to shock us */
-		return 0;
-
-	case CURLINFO_HEADER_OUT:
-		text = "=> Send header";
-		break;
-	case CURLINFO_DATA_OUT:
-		text = "=> Send data";
-		break;
-	case CURLINFO_SSL_DATA_OUT:
-		text = "=> Send SSL data";
-		break;
-	case CURLINFO_HEADER_IN:
-		text = "<= Recv header";
-		break;
-	case CURLINFO_DATA_IN:
-		text = "<= Recv data";
-		break;
-	case CURLINFO_SSL_DATA_IN:
-		text = "<= Recv SSL data";
-		break;
-	}
-
-	dump(text, stderr, (unsigned char*)data, size);
-	return 0;
-}
 
 
 

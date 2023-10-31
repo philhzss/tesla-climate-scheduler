@@ -8,6 +8,7 @@ using std::endl;
 using std::cin;
 using std::string;
 
+static Log lg("Logger", Log::LogLevel::Debug);
 
 /* Constructor that'll take a string for parameter,
 	will be inserted before each log message to make sure we know what file its from
@@ -67,6 +68,8 @@ string Log::curl_POST_slack(string url, string message)
 		curl_easy_setopt(curl, CURLOPT_POST, 1);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
+
 
 		/* Perform the request, res will get the return code */
 		res = curl_easy_perform(curl);

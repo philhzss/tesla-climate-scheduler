@@ -31,7 +31,7 @@ void sleepWithAPIcheck(int totalSleepTime) {
 	for (int i = 1; i < totalSleepTime; ++i) {
 		// Get the mutex before reading the numberOfSeatsActivateNow value
 		if (!settings::settingsMutexLockSuccess("before checking numberOfSeatsActivateNow")) {
-			throw "Mutex timeout in main thread (before checking numberOfSeatsActivateNow)";
+			throw string("settingsMutex timeout in main thread (before checking numberOfSeatsActivateNow)");
 		}
 		if (settings::numberOfSeatsActivateNow) {
 			settings::settingsMutex.unlock(); // Always release
@@ -72,12 +72,13 @@ string curl_GET(string url)
 	CURLcode res;
 	// Buffer to store result temporarily:
 	string readBuffer;
-	curl_global_init(CURL_GLOBAL_DEFAULT);
+	curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
 	if (curl) {
 		curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
 		/* Perform the request, res will get the return code */
 		res = curl_easy_perform(curl);
 		/* Check for errors */
@@ -85,13 +86,20 @@ string curl_GET(string url)
 		{
 			fprintf(stderr, "curl_easy_perform() failed: %s\n",
 				curl_easy_strerror(res));
-			throw "curl_easy_perform() failed: " + std::to_string(res);
-		}
+			lg.d("Before error throw, curl error code: ", res);
+			lg.d(curl_easy_strerror(res));
 
+			/* always cleanup */
+			curl_easy_cleanup(curl);
+			curl_global_cleanup();
+
+			throw string("curl_easy_perform() failed: " + std::to_string(res));
+		}
 		/* always cleanup */
 		curl_easy_cleanup(curl);
 	}
 	curl_global_cleanup();
+
 	return readBuffer;
 }
 
@@ -104,6 +112,7 @@ bool InternetConnected() {
 		curl_easy_setopt(curl, CURLOPT_URL, "http://www.google.com/");
 		/* Disable the console output of the HTTP request data as we don't care: */
 		curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
 		int curlRes = curl_easy_perform(curl);
 		if (curlRes == 0) {
 			internet_res = true;
@@ -173,6 +182,7 @@ const string string_time_and_date(tm tstruct)
 }
 
 void DoCrowAPI(car* carPointer) {
+	lg.d("Crow Thread ID: ", std::this_thread::get_id());
 	crow::SimpleApp app; //define your crow application
 
 	//define your endpoint at the root directory
@@ -182,7 +192,7 @@ void DoCrowAPI(car* carPointer) {
 		if (!settings::settingsMutexLockSuccess("crow request")) {
 			return json["app"] = "ERROR";
 		}
-		lg.d("!!!CROW: Mutex LOCKED!!!");
+		lg.d("!!!CROW: settingsMutex LOCKED!!!");
 
 		string carName = lg.prepareOnly(carPointer->Tvehicle_name);
 		json["app"]["car_name"] = carName;
@@ -213,7 +223,7 @@ void DoCrowAPI(car* carPointer) {
 
 
 		settings::settingsMutex.unlock();
-		lg.d("Mutex UNLOCKED by crow");
+		lg.d("settingsMutex UNLOCKED by crow");
 
 
 		return json;
@@ -225,9 +235,9 @@ void DoCrowAPI(car* carPointer) {
 
 		lg.d("Crow HTTP request");
 		if (!settings::settingsMutexLockSuccess("crow ACTIVATION request")) {
-			return crow::response{ "ERROR MUTEX TIMEOUT" };
+			return crow::response{ "ERROR settingsMutex TIMEOUT" };
 		}
-		lg.d("!!!CROW: Mutex LOCKED!!!");
+		lg.d("!!!CROW: settingsMutex LOCKED!!!");
 
 		string apiReturn;
 		int configValue = 0;
@@ -257,7 +267,7 @@ void DoCrowAPI(car* carPointer) {
 		settings::numberOfSeatsActivateNow = configValue;
 
 		settings::settingsMutex.unlock();
-		lg.d("Mutex UNLOCKED by crow");
+		lg.d("settingsMutex UNLOCKED by crow");
 
 		return crow::response{ apiReturn };
 			});
@@ -268,9 +278,9 @@ void DoCrowAPI(car* carPointer) {
 
 		lg.d("Crow HTTP request");
 		if (!settings::settingsMutexLockSuccess("crow TOGGLE TRIGGER request")) {
-			return crow::response{ "ERROR MUTEX TIMEOUT" };
+			return crow::response{ "ERROR settingsMutex TIMEOUT" };
 		}
-		lg.d("!!!CROW: Mutex LOCKED!!!");
+		lg.d("!!!CROW: settingsMutex LOCKED!!!");
 
 		string apiReturn;
 		bool configValue = true; // Default to true
@@ -327,7 +337,7 @@ void DoCrowAPI(car* carPointer) {
 		
 
 		settings::settingsMutex.unlock();
-		lg.d("Mutex UNLOCKED by crow");
+		lg.d("settingsMutex UNLOCKED by crow");
 
 		return crow::response{ apiReturn };
 			});
@@ -350,14 +360,14 @@ int main()
 
 		// Get the mutex before touching settings
 		if (!settings::settingsMutexLockSuccess("before init readSettings")) {
-			throw "Mutex timeout in main thread (before init readSettings)";
+			throw string("settingsMutex timeout in main thread (before init readSettings)");
 		}
-		lg.d("!!!MAIN: MUTEX LOCKED (before init readSettings)!!!");
+		lg.d("!!!MAIN: settingsMutex LOCKED (before init readSettings)!!!");
 
 		settings::readSettings("silent");
 
 		settings::settingsMutex.unlock();
-		lg.d("Mutex UNLOCKED by main");
+		lg.d("settingsMutex UNLOCKED by main");
 	}
 	catch (string e) {
 		lg.en("Critical failure (before start), program stopping: " + e);
@@ -401,17 +411,27 @@ int main()
 					// Only run the program if the settings file is readable, will throw exception if its not
 					// Get the mutex before touching settings
 					if (!settings::settingsMutexLockSuccess("before loop readSettings")) {
-						throw "Mutex timeout in main thread (before loop readSettings)";
+						throw string("settingsMutex timeout in main thread (before loop readSettings)");
 					}
 					lg.d("!!!MAIN: MUTEX LOCKED (before loop readSettings)!!!");
 					
 					settings::readSettings();
 
 					settings::settingsMutex.unlock();
-					lg.d("Mutex UNLOCKED by main");
+					lg.d("settingsMutex UNLOCKED by main (after loop readSettings)");
+
+
+
+					if (!settings::settingsMutexLockSuccess("before initiateCal")) {
+						throw string("settingsMutex timeout in main thread (before initiateCal)");
+					}
+					lg.d("!!!MAIN: settingsMutex LOCKED (before initiateCal)!!!");
 
 					// Get & parse calendar data
 					initiateCal();
+
+					settings::settingsMutex.unlock();
+					lg.d("settingsMutex UNLOCKED by main (after initiateCal)");
 
 
 					// Only run the wake loop if no manual activation is to be done
@@ -586,14 +606,14 @@ int main()
 
 							// Get the mutex before writing to calendar vars
 							if (!settings::settingsMutexLockSuccess("before eventTimeCheck")) {
-								throw "Mutex timeout in main thread (before eventTimeCheck)";
+								throw string("settingsMutex timeout in main thread (before eventTimeCheck)");
 							}
-							lgw.d("!!!MAIN: MUTEX LOCKED (before eventTimeCheck)!!!");
+							lgw.d("!!!MAIN: settingsMutex LOCKED (before eventTimeCheck)!!!");
 
 							actionToDo = calEvent::eventTimeCheck();
 
 							settings::settingsMutex.unlock();
-							lgw.d("Mutex UNLOCKED by main after eventTimeCheck");
+							lgw.d("settingsMutex UNLOCKED by main after eventTimeCheck");
 
 							// actionToDo = "home"; // for testing
 							if (!actionToDo.empty())
@@ -640,28 +660,34 @@ int main()
 
 						// Get the mutex before zeroing the seatsActivateNow value
 						if (!settings::settingsMutexLockSuccess("before resetting numberOfSeatsActivateNow")) {
-							throw "Mutex timeout in main thread (before resetting numberOfSeatsActivateNow)";
+							throw string("settingsMutex timeout in main thread (before resetting numberOfSeatsActivateNow)");
 						}
-						lg.d("!!!MAIN: MUTEX LOCKED (before resetting numberOfSeatsActivateNow)!!!");
+						lg.d("!!!MAIN: settingsMutex LOCKED (before resetting numberOfSeatsActivateNow)!!!");
 
 						settings::numberOfSeatsActivateNow = 0;
 						lg.d("ActivateHVAC next run has been reset.");
 
 						settings::settingsMutex.unlock();
-						lg.d("Mutex UNLOCKED by main after resetting numberOfSeatsActivateNow");
+						lg.d("settingsMutex UNLOCKED by main after resetting numberOfSeatsActivateNow");
 
 
 					}
 					break; // Must exit maxTries loop if no error caught
 				}
 				catch (string e) {
-					lg.en("Critical failure: ", e, "\nFailure #", count, ", waiting 1 min and retrying.");
-					lg.i("Is internet connected?", InternetConnected());
-					sleepWithAPIcheck(60);
-					if (++count == maxTries)
-					{
-						lg.en("ERROR ", count, " out of max ", maxTries, "!!! Stopping, reason ->\n", e);
-						throw e;
+					try {
+						lg.en("Critical failure: ", e, "\nFailure #", count, ", waiting 1 min and retrying.");
+						lg.i("Is internet connected?", InternetConnected());
+						sleepWithAPIcheck(60);
+						if (++count == maxTries)
+						{
+							lg.en("ERROR ", count, " out of max ", maxTries, "!!! Stopping, reason ->\n", e);
+							throw e;
+						}
+					}
+					catch (string bigE) {
+						lg.e("BIG PROBLEMO", bigE);
+						lg.en("Something is catastrophically wrong");
 					}
 				}
 			}
@@ -676,6 +702,7 @@ int main()
 		calEvent::cleanup(); // to avoid calendar vectors overflowing
 
 		mainLoopCounter++;
+		//settings::u_repeatDelay = 5; // for testing, comment out this line always!!
 		lg.b("Waiting for ", settings::u_repeatDelay, " seconds... (now -> ", date_time_str_from_time_t(), " LOCAL)\n\n\n\n\n\n\n\n\n");
 		sleepWithAPIcheck(settings::u_repeatDelay);
 	}

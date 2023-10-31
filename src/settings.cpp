@@ -220,12 +220,12 @@ string settings::ignoredWordsPrint()
 bool settings::settingsMutexLockSuccess(string reason, int customTimeSeconds) {
 	int counter = 0;
 	while (!settings::settingsMutex.try_lock()) {
-		lg.d("Mutex locked (", reason, "), WAITING FOR UNLOCK, have looped ", counter, " times.");
+		lg.d("settingsMutex locked (", reason, "), WAITING FOR UNLOCK, have looped ", counter, " times.");
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		counter++;
 		// Enter seconds*5 (it waits for 200ms per loop, 5*200ms = 1s)
 		if (counter > customTimeSeconds * 5) {
-			lg.e("Mutex timer (", reason, ") overlimit, settingsMutexLockSuccess returning LockSuccess=FALSE");
+			lg.e("settingsMutex timer (", reason, ") overlimit, settingsMutexLockSuccess returning LockSuccess=FALSE");
 			return false;
 		}
 	}
@@ -236,9 +236,9 @@ bool settings::settingsMutexLockSuccess(string reason, int customTimeSeconds) {
 bool settings::doManualActivateHVAC() {
 	// Get the mutex before reading settings value
 	if (!settings::settingsMutexLockSuccess("before checking doManualActivateHVAC?")) {
-		throw "Mutex timeout in main thread (before checking doManualActivateHVAC?)";
+		throw string("settingsMutex timeout in main thread (before checking doManualActivateHVAC?)");
 	}
-	lg.p("!!!MAIN: MUTEX LOCKED (before checking doManualActivateHVAC?)!!!");
+	lg.p("!!!MAIN: settingsMutex LOCKED (before checking doManualActivateHVAC?)!!!");
 
 	bool triggerHVAC = false;
 
@@ -247,7 +247,7 @@ bool settings::doManualActivateHVAC() {
 	}
 
 	settings::settingsMutex.unlock();
-	lg.p("Mutex UNLOCKED by main after checking doManualActivateHVAC?");
+	lg.p("settingsMutex UNLOCKED by main after checking doManualActivateHVAC?");
 
 	return triggerHVAC;
 }
