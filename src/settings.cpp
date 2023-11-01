@@ -220,7 +220,7 @@ string settings::ignoredWordsPrint()
 bool settings::settingsMutexLockSuccess(string reason, int customTimeSeconds) {
 	int counter = 0;
 	while (!settings::settingsMutex.try_lock()) {
-		lg.d("settingsMutex locked (", reason, "), WAITING FOR UNLOCK, have looped ", counter, " times.");
+		lg.p("settingsMutex locked (", reason, "), WAITING FOR UNLOCK, have looped ", counter, " times.");
 		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		counter++;
 		// Enter seconds*5 (it waits for 200ms per loop, 5*200ms = 1s)

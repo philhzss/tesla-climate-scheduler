@@ -80,13 +80,15 @@ string curl_GET(string url)
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
 		/* Perform the request, res will get the return code */
+		lg.p("Pre curl-request");
 		res = curl_easy_perform(curl);
+		lg.p("Post curl-request");
 		/* Check for errors */
 		if (res != CURLE_OK)
 		{
 			fprintf(stderr, "curl_easy_perform() failed: %s\n",
 				curl_easy_strerror(res));
-			lg.d("Before error throw, curl error code: ", res);
+			lg.p("Before error throw, curl error code: ", res);
 			lg.d(curl_easy_strerror(res));
 
 			/* always cleanup */
