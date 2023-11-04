@@ -221,7 +221,7 @@ void DoCrowAPI(car* carPointer) {
 		json[carName]["climate_is_on"] = lg.prepareOnly(carPointer->Tis_climate_on);
 		json[carName]["battery_level_usable"] = lg.prepareOnly(carPointer->Tusable_battery_level);
 		json[carName]["battery_level"] = lg.prepareOnly(carPointer->Tbattery_level);
-
+		json[carName]["location"] = lg.prepareOnly(carPointer->location);
 
 
 		settings::settingsMutex.unlock();
