@@ -117,8 +117,11 @@ std::map<string, string> car::getData(bool wakeCar)
 
 		// Now that the car is online, we can get more data
 		json response = teslaGET(settings::teslaVURL + "vehicle_data");
-		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
 
+		// New endpoint required for location data
+		json responseDrive = teslaGET(settings::teslaVURL + "vehicle_data?endpoints=location_data");
+
+		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
 
 		// Get the mutex before getting more data
 		if (!settings::settingsMutexLockSuccess("before teslaGET CAR AWOKEN in getData")) {
@@ -141,7 +144,7 @@ std::map<string, string> car::getData(bool wakeCar)
 		Tusable_battery_level = charge_state["usable_battery_level"];
 		Tbattery_level = charge_state["battery_level"];
 
-		json drive_state = response["drive_state"];
+		json drive_state = responseDrive["drive_state"];
 		if (drive_state["shift_state"].is_null()) {
 			Tshift_state = "P";
 		}
@@ -149,8 +152,8 @@ std::map<string, string> car::getData(bool wakeCar)
 			Tshift_state = drive_state["shift_state"];
 			lg.i("Shift state is not null, is: " + Tshift_state);
 		}
-		Tlat = drive_state["active_route_latitude"];
-		Tlong = drive_state["active_route_longitude"];
+		Tlat = drive_state["latitude"];
+		Tlong = drive_state["longitude"];
 		location = checkCarLocation();
 
 		// Save the time at which data was obtained for the API
