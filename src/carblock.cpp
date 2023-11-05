@@ -120,9 +120,8 @@ std::map<string, string> car::getData(bool wakeCar)
 
 		// New endpoint required for location data
 		json responseDrive = teslaGET(settings::teslaVURL + "vehicle_data?endpoints=location_data");
-
+			
 		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
-
 		// Get the mutex before getting more data
 		if (!settings::settingsMutexLockSuccess("before teslaGET CAR AWOKEN in getData")) {
 			throw string("settingsMutex timeout in main thread (before teslaGET CAR AWOKEN in getData)");
@@ -248,8 +247,27 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 			res = curl_easy_perform(curl);
 			/* Check for errors */
 			if (res != CURLE_OK)
+			{
 				fprintf(stderr, "curl_easy_perform() failed: %s\n",
 					curl_easy_strerror(res));
+				lg.p("Before error throw, curl error code: ", res);
+				lg.d(curl_easy_strerror(res));
+
+				/* always cleanup */
+				curl_easy_cleanup(curl);
+				curl_global_cleanup();
+
+				if (res == 28) {
+					lg.d("The error is a curl 28 timeout error, continuing");
+					response_code_ok = false;
+					continue;
+				}
+				else {
+					lg.d("The error is NOT a curl 28 timeout error, throwing string");
+					throw string("curl_easy_perform() failed: " + std::to_string(res));
+				}
+			}
+
 			if (res == CURLE_OK) {
 				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
 				lg.i(response_code, "=response code for ", fullUrl);
@@ -327,7 +345,22 @@ json car::teslaGET(string specifiedUrlPage)
 			{
 				fprintf(stderr, "curl_easy_perform() failed: %s\n",
 					curl_easy_strerror(res));
-				throw string("curl_easy_perform() failed: " + std::to_string(res));
+				lg.p("Before error throw, curl error code: ", res);
+				lg.d(curl_easy_strerror(res));
+
+				/* always cleanup */
+				curl_easy_cleanup(curl);
+				curl_global_cleanup();
+
+				if (res == 28) {
+					lg.d("The error is a curl 28 timeout error, continuing");
+					response_code_ok = false;
+					continue;
+				}
+				else {
+					lg.d("The error is NOT a curl 28 timeout error, throwing string");
+					throw string("curl_easy_perform() failed: " + std::to_string(res));
+				}
 			}
 			if (res == CURLE_OK) {
 				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
@@ -473,7 +506,7 @@ int car::calcTempMod(int interior_temp)
 	if (finalTempTimeModifier <= 2)
 	{
 		lg.d("rawTempTimeModifier was calculated as ", rawTempTimeModifier, " mins, probably because default20CMinTime is set to ",
-			 settings::u_default20CMinTime, " mins.");
+			settings::u_default20CMinTime, " mins.");
 		finalTempTimeModifier = 2;
 		lg.d("Calculated TempTimeModifier too low, bottoming out at 2 minutes");
 	}
@@ -579,15 +612,15 @@ std::vector<string> car::coldCheckSet()
 
 	// Send the heat-seat request, turning the heated seat off if it's hot enough
 	json seat_result = teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", 0}, {"level", requestedSeatHeat } });
-	
+
 	// If seats should be 0, turn off ALL heated seats in car
 	if (requestedSeatHeat == 0) {
-		for (int seatNumber =1 ; seatNumber <= 4; seatNumber++) {
+		for (int seatNumber = 1; seatNumber <= 4; seatNumber++) {
 			teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", seatNumber}, {"level", requestedSeatHeat } });
-		}	
+		}
 	}
-	
-	
+
+
 	if (seat_result["result"]) {
 		resultVector.push_back(std::to_string(requestedSeatHeat));
 		lg.d("seat_result: ", seat_result["result"]);

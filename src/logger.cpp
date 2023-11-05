@@ -94,7 +94,15 @@ string Log::notify(string message)
 {
 	if (settings::slackEnabled)
 	{
-		string res = Log::curl_POST_slack(settings::u_slackChannel, message);
+		string res;
+		try {
+			res = Log::curl_POST_slack(settings::u_slackChannel, message);
+		}
+		catch (int i) {
+			lg.d("Caught error ", i, ", retrying curl_POST_slack() once");
+			res = Log::curl_POST_slack(settings::u_slackChannel, message);;
+			return res;
+		}
 		return "[Notif info] Notification sent: " + res;
 	}
 	else

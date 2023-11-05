@@ -22,6 +22,11 @@ string GetCalRawData() {
 		rawCalContent = curl_GET(settings::u_calendarURL);
 		return rawCalContent;
 	}
+	catch (int i) {
+		lg.d("Caught error ", i,", retrying GetCalRawData()");
+		string newResult = GetCalRawData();
+		return newResult;
+	}
 	catch (string e)
 	{
 		lg.d("rawCalContent for debugging:", rawCalContent);

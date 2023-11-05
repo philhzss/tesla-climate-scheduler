@@ -95,7 +95,14 @@ string curl_GET(string url)
 			curl_easy_cleanup(curl);
 			curl_global_cleanup();
 
-			throw string("curl_easy_perform() failed: " + std::to_string(res));
+			if (res == 28) {
+				lg.d("The error is a curl 28 timeout error, throwing 28");
+				throw 28;
+			}
+			else {
+				lg.d("The error is NOT a curl 28 timeout error, throwing string");
+				throw string("curl_easy_perform() failed: " + std::to_string(res));
+			}
 		}
 		/* always cleanup */
 		curl_easy_cleanup(curl);
