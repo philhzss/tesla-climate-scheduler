@@ -22,6 +22,7 @@ bool settings::u_allowTriggers;
 bool settings::u_encourageDefrost;
 int settings::u_noDefrostAbove;
 int settings::numberOfSeatsActivateNow;
+bool settings::manualHVACbrokeWake;
 // Car
 int settings::wakeTimer;
 int settings::triggerTimer;

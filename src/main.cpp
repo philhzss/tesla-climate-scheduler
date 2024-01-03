@@ -343,7 +343,7 @@ void DoCrowAPI(car* carPointer) {
 			apiReturn = "Completely incorrect or missing params";
 		}
 		lg.d(apiReturn);
-		
+
 
 		settings::settingsMutex.unlock();
 		lg.d("settingsMutex UNLOCKED by crow");
@@ -423,7 +423,7 @@ int main()
 						throw string("settingsMutex timeout in main thread (before loop readSettings)");
 					}
 					lg.d("!!!MAIN: MUTEX LOCKED (before loop readSettings)!!!");
-					
+
 					settings::readSettings();
 
 					settings::settingsMutex.unlock();
@@ -442,6 +442,8 @@ int main()
 					settings::settingsMutex.unlock();
 					lg.d("settingsMutex UNLOCKED by main (after initiateCal)");
 
+					settings::manualHVACbrokeWake = false;
+					// Always false initially but if true, stays true during a run
 
 					// Only run the wake loop if no manual activation is to be done
 					if (!settings::doManualActivateHVAC() && settings::u_allowTriggers)
@@ -453,12 +455,13 @@ int main()
 						bool shutoffHasBeenCheckedOnce = false;
 						int tempTimeMod;
 						int wakeLoopTimer = settings::u_repeatDelay / 2; // by default repeat-delay/2
-						// wakeLoopTimer = 5; // For Testing
+						wakeLoopTimer = 5; // For Testing
 						do
 						{
 							// Break out of loop if manual HVAC
 							if (settings::doManualActivateHVAC()) {
 								lgw.d("Breaking out of wake loop, manual HVAC activation requested");
+								settings::manualHVACbrokeWake = true;
 								break;
 							}
 
@@ -632,7 +635,10 @@ int main()
 								sleepWithAPIcheck(wakeLoopTimer);
 							}
 						} while (!actionToDo.empty());
-						break; // Must exit maxTries loop if no error caught
+						if (!settings::manualHVACbrokeWake) {
+							break;
+							// Must exit maxTries loop if no error caught, except if waiting for manual HVAC
+						}
 					}
 					else if (!settings::u_allowTriggers)
 					{
@@ -657,10 +663,12 @@ int main()
 							lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], Tesla.datapack);
 
 
-							// Update the triggered event to prevent it from re-running
-							if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
-							if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
-
+							// If this activation interrupted wakeLoop, prevent re-triggers
+							if (settings::manualHVACbrokeWake) {
+								calEvent::lastWakeEvent->homeDone = true;
+								calEvent::lastWakeEvent->workDone = true;
+								// We must use lastWakeEvent because lastTriggeredEvent isn't set yet
+							}
 						}
 						else
 						{

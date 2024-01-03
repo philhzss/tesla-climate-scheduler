@@ -129,6 +129,9 @@ public:
 	// Manually activate HVAC upon request
 	static bool doManualActivateHVAC();
 	// API
+	// Remember if last manual activation was during wakeLoop
+	static bool manualHVACbrokeWake;
+	// API
 	// If not 0, will activate HVAC for (1,2) ppl next loop. Auto-resets
 	static int numberOfSeatsActivateNow;
 
