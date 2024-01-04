@@ -442,253 +442,233 @@ int main()
 					settings::settingsMutex.unlock();
 					lg.d("settingsMutex UNLOCKED by main (after initiateCal)");
 
-					settings::manualHVACbrokeWake = false;
-					// Always false initially but if true, stays true during a run
-
-					// Only run the wake loop if no manual activation is to be done
-					if (!settings::doManualActivateHVAC() && settings::u_allowTriggers)
+					// Verify if any event matches the event checking parameters (Wake loop)
+					bool carAwokenOnce = false;
+					bool actionDone = false;
+					bool actionCancelDone = false;
+					bool shutoffHasBeenCheckedOnce = false;
+					int tempTimeMod;
+					int wakeLoopTimer = settings::u_repeatDelay / 2; // by default repeat-delay/2
+					// wakeLoopTimer = 5; // For Testing
+					do
 					{
-						// Verify if any event matches the event checking parameters (Wake loop)
-						bool carAwokenOnce = false;
-						bool actionDone = false;
-						bool actionCancelDone = false;
-						bool shutoffHasBeenCheckedOnce = false;
-						int tempTimeMod;
-						int wakeLoopTimer = settings::u_repeatDelay / 2; // by default repeat-delay/2
-						wakeLoopTimer = 5; // For Testing
-						do
+						// Check for manual HVAC request, before breaking loop if allowTriggers is false
+						if (settings::doManualActivateHVAC()) //-> DO a manual HVAC activation now
 						{
-							// Break out of loop if manual HVAC
-							if (settings::doManualActivateHVAC()) {
-								lgw.d("Breaking out of wake loop, manual HVAC activation requested");
-								settings::manualHVACbrokeWake = true;
-								break;
-							}
+							Tesla.getData(true); // Make sure you have most up to date data with car awake
+							// This is important for coldCheckSet to work properly for the seats
 
-							// Break out of loop if TCS triggers now blocked
-							if (!settings::u_allowTriggers) {
-								lgw.dn("Breaking out of wake loop, TCS triggers blocked");
-								break;
-							}
+							// Activate the car's HVAC
+							json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
+							bool state_after_hvac = hvac_result["result"]; // should return true
 
-							nowTime_secs = time(&nowTime_secs); // always update to current time!
-							calEvent::updateValidEventTimers(); // always update timers within wakeLoop!
+							std::vector<string> seats_defrost = Tesla.coldCheckSet();
+							string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
 
-							if (actionToDo != "")
+							if (state_after_hvac)
 							{
-								lg.d("actionToDo is: ", actionToDo);
-							}
+								// If we're here, it's success
 
-							if (actionToDo == "wake")
-							{
-								if (!carAwokenOnce) {
-									Tesla.getData(true); // Wake car and pull all data from it
-									if (Tesla.carOnline) {
-										lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
-										tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
-										settings::triggerTimer = tempTimeMod;
-
-										time_t driveInTimer_secs = calEvent::getNextWakeTimer(calEvent::lastWakeEvent);
-										time_t triggerTimer_secs = driveInTimer_secs - 60 * tempTimeMod;
-										string triggerTimeString = date_time_str_from_time_t("%R", &triggerTimer_secs);
-
-										lgw.in("Triggers at: ", triggerTimeString, " (", tempTimeMod, " mins before drive)", Tesla.datapack);
-										lgw.i("Car seems to be located at ", Tesla.location);
-										carAwokenOnce = true; // to avoid notifying user multiple times & waking car every loop
-
-									}
-									else {
-										lgw.e("Could not wake car?? Car still reporting as offline after wakeLoop");
-										// Could print a raw tesla-feed here for debugging if this triggers one day?
-									}
+								if (actionToDo == "wake") {
+									calEvent::lastWakeEvent->homeDone = true;
+									calEvent::lastWakeEvent->workDone = true;
+									// We must use lastWakeEvent because lastTriggeredEvent isn't set yet
 								}
-								else { lgw.i("car already awoken, waiting"); }
+
+								lgw.b();
+								lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], Tesla.datapack);
 							}
-							else if ((actionToDo == "home") || (actionToDo == "work"))
+							else
 							{
-								Tesla.getData(true); // Make sure you have most up to date data with car awake
-								lgw.i("Event triggered: ", actionToDo, ", car location: ", Tesla.location);
-								if (actionToDo == Tesla.location)
+								lgw.en("Could not turn HVAC on??");
+							}
+
+							// Get the mutex before zeroing the seatsActivateNow value
+							if (!settings::settingsMutexLockSuccess("before resetting numberOfSeatsActivateNow")) {
+								throw string("settingsMutex timeout in main thread (before resetting numberOfSeatsActivateNow)");
+							}
+							lg.d("!!!MAIN: settingsMutex LOCKED (before resetting numberOfSeatsActivateNow)!!!");
+
+							settings::numberOfSeatsActivateNow = 0;
+							lg.d("ActivateHVAC next run has been reset.");
+
+							settings::settingsMutex.unlock();
+							lg.d("settingsMutex UNLOCKED by main after resetting numberOfSeatsActivateNow");
+
+
+						}
+
+
+						// Break out of loop if TCS triggers now blocked
+						if (!settings::u_allowTriggers) {
+							lgw.i("\nAllow triggers is false, not checking for events.");
+							break;
+						}
+
+						nowTime_secs = time(&nowTime_secs); // always update to current time!
+						calEvent::updateValidEventTimers(); // always update timers within wakeLoop!
+
+						if (actionToDo != "")
+						{
+							lg.d("actionToDo is: ", actionToDo);
+						}
+
+						if (actionToDo == "wake")
+						{
+							if (!carAwokenOnce) {
+								Tesla.getData(true); // Wake car and pull all data from it
+								if (Tesla.carOnline) {
+									lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
+									tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
+									settings::triggerTimer = tempTimeMod;
+
+									time_t driveInTimer_secs = calEvent::getNextWakeTimer(calEvent::lastWakeEvent);
+									time_t triggerTimer_secs = driveInTimer_secs - 60 * tempTimeMod;
+									string triggerTimeString = date_time_str_from_time_t("%R", &triggerTimer_secs);
+
+									lgw.in("Triggers at: ", triggerTimeString, " (", tempTimeMod, " mins before drive)", Tesla.datapack);
+									lgw.i("Car seems to be located at ", Tesla.location);
+									carAwokenOnce = true; // to avoid notifying user multiple times & waking car every loop
+
+								}
+								else {
+									lgw.e("Could not wake car?? Car still reporting as offline after wakeLoop");
+									// Could print a raw tesla-feed here for debugging if this triggers one day?
+								}
+							}
+							else { lgw.i("car already awoken, waiting"); }
+						}
+						else if ((actionToDo == "home") || (actionToDo == "work"))
+						{
+							Tesla.getData(true); // Make sure you have most up to date data with car awake
+							lgw.i("Event triggered: ", actionToDo, ", car location: ", Tesla.location);
+							if (actionToDo == Tesla.location)
+							{
+								if (!actionDone) // only here to retry action if car moved/stopped driving
 								{
-									if (!actionDone) // only here to retry action if car moved/stopped driving
-									{
-										lgw.i("EVENT & LOCATION VALID: (", actionToDo, ")");
-										string triggerAllowedRes = Tesla.triggerAllowed();
-										if (triggerAllowedRes == "continue") {
+									lgw.i("EVENT & LOCATION VALID: (", actionToDo, ")");
+									string triggerAllowedRes = Tesla.triggerAllowed();
+									if (triggerAllowedRes == "continue") {
 
-											json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
-											bool state_after_hvac = hvac_result["result"]; // should return true
+										json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
+										bool state_after_hvac = hvac_result["result"]; // should return true
 
-											std::vector<string> seats_defrost = Tesla.coldCheckSet();
-											string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
+										std::vector<string> seats_defrost = Tesla.coldCheckSet();
+										string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
 
 
-											if (state_after_hvac)
-											{
-												// If we're here, it's success
-												lgw.b();
-												lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], Tesla.datapack);
+										if (state_after_hvac)
+										{
+											// If we're here, it's success
+											lgw.b();
+											lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], Tesla.datapack);
 
-
-												// Update the triggered event to prevent it from re-running
-												if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
-												if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
-
-											}
-											else
-											{
-												lgw.en("Could not turn HVAC on??");
-											}
-										}
-										else if (triggerAllowedRes == "tempNotGood") {
-											// If here, the only parameter mismatched is temperature
-											// We'll not keep trying because at this point the temp won't incrase or decrease enough to matter
-											lg.in("Trigger skipped, temperature within no-activate range (to save power).");
-											actionDone = true;
-											actionCancelDone = true;
 
 											// Update the triggered event to prevent it from re-running
 											if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
 											if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
+
 										}
-										else {
-											lgw.in("Event & location valid but parameter mismatch, will keep trying\n", triggerAllowedRes);
+										else
+										{
+											lgw.en("Could not turn HVAC on??");
 										}
+									}
+									else if (triggerAllowedRes == "tempNotGood") {
+										// If here, the only parameter mismatched is temperature
+										// We'll not keep trying because at this point the temp won't incrase or decrease enough to matter
+										lg.in("Trigger skipped, temperature within no-activate range (to save power).");
 										actionDone = true;
-									}
-								}
-								else // Here if the location doesnt match the actionToDo:
-								{
-									if (!actionCancelDone)
-									{
-										lgw.in("Event triggered for ", actionToDo, ", but car location is ", Tesla.location,
-											", location doesn't match action, not activating HVAC.");
 										actionCancelDone = true;
+
+										// Update the triggered event to prevent it from re-running
+										if (actionToDo == "home") { calEvent::lastTriggeredEvent->homeDone = true; }
+										if (actionToDo == "work") { calEvent::lastTriggeredEvent->workDone = true; }
 									}
-								}
-							}
-							else if (actionToDo == "duplicate")
-							{
-								string kindOfEvent;
-								tm datetime;
-								if (calEvent::lastTriggeredEvent->homeDone)
-								{
-									kindOfEvent = "home (shift start)";
-									datetime = calEvent::lastTriggeredEvent->start;
-								}
-								else if (calEvent::lastTriggeredEvent->workDone)
-								{
-									kindOfEvent = "work (shift end)";
-									datetime = calEvent::lastTriggeredEvent->end;
-								}
-								lgw.d("This event trigger for ", kindOfEvent, " has already ran.");
-								lgw.d("The event trigger datetime is:"
-									"\nYear=", datetime.tm_year,
-									"\nMonth=", datetime.tm_mon,
-									"\nDay=", datetime.tm_mday,
-									"\nTime=", datetime.tm_hour, ":", datetime.tm_min, "\n");
-							}
-							else if (actionToDo == "checkShutoff")
-							{
-								// Only check once, if the car is no longer home at shutOffTimer,
-								// we can assume you're gone thus you didn't call sick
-								if (!shutoffHasBeenCheckedOnce)
-								{
-									Tesla.getData(true); // We must have accurate location for this
-									if (Tesla.location == "home") {
-										// If we're here, car is still home within the set buffer for shutoffTimer
-										// Either you called sick or you're gonna be fucking late. Turn HVAC off
-										Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_stop");
-										lgw.in("HVAC SHUTOFF, car still home!", Tesla.datapack);
+									else {
+										lgw.in("Event & location valid but parameter mismatch, will keep trying\n", triggerAllowedRes);
 									}
-									// Wether HVAC was shutoff or not, we don't need to check for shutoff anymore:
-									shutoffHasBeenCheckedOnce = true;
-								}
-								else {
-									// If here, a previous loop shutdown the HVAC for this event
-									// This should only print if the HVAC was shutdown for this event.
-									lgw.d("checkShutoff has already verified for this event.");
+									actionDone = true;
 								}
 							}
-
-							// settings::wakeTimer = 100000; // for testing
-							// settings::triggerTimer = 69000; // for testing
-							lgw.d("Running eventTimeCheck with wakeTimer: ", settings::wakeTimer,
-								"mins, triggerTimer: ", settings::triggerTimer, "mins");
-
-							// Get the mutex before writing to calendar vars
-							if (!settings::settingsMutexLockSuccess("before eventTimeCheck")) {
-								throw string("settingsMutex timeout in main thread (before eventTimeCheck)");
-							}
-							lgw.d("!!!MAIN: settingsMutex LOCKED (before eventTimeCheck)!!!");
-
-							actionToDo = calEvent::eventTimeCheck();
-
-							settings::settingsMutex.unlock();
-							lgw.d("settingsMutex UNLOCKED by main after eventTimeCheck");
-
-							// actionToDo = "home"; // for testing
-							if (!actionToDo.empty())
+							else // Here if the location doesnt match the actionToDo:
 							{
-								lgw.i("End of wakeLoop, actionToBeDone is: ", actionToDo);
-								lgw.i("Waiting ", wakeLoopTimer, " seconds and re-running wakeLoop");
-								sleepWithAPIcheck(wakeLoopTimer);
-							}
-						} while (!actionToDo.empty());
-						if (!settings::manualHVACbrokeWake) {
-							break;
-							// Must exit maxTries loop if no error caught, except if waiting for manual HVAC
-						}
-					}
-					else if (!settings::u_allowTriggers)
-					{
-						lg.i("Allow triggers is false, not checking for events.");
-					}
-					if (settings::doManualActivateHVAC()) //-> DO a manual HVAC activation now
-					{
-						Tesla.getData(true); // Make sure you have most up to date data with car awake
-						// This is important for coldCheckSet to work properly for the seats
-
-						// Activate the car's HVAC
-						json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
-						bool state_after_hvac = hvac_result["result"]; // should return true
-
-						std::vector<string> seats_defrost = Tesla.coldCheckSet();
-						string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
-
-						if (state_after_hvac)
-						{
-							// If we're here, it's success
-							lgw.b();
-							lgw.in(firstWord, " ON\nSeat Heater: ", seats_defrost[0], Tesla.datapack);
-
-
-							// If this activation interrupted wakeLoop, prevent re-triggers
-							if (settings::manualHVACbrokeWake) {
-								calEvent::lastWakeEvent->homeDone = true;
-								calEvent::lastWakeEvent->workDone = true;
-								// We must use lastWakeEvent because lastTriggeredEvent isn't set yet
+								if (!actionCancelDone)
+								{
+									lgw.in("Event triggered for ", actionToDo, ", but car location is ", Tesla.location,
+										", location doesn't match action, not activating HVAC.");
+									actionCancelDone = true;
+								}
 							}
 						}
-						else
+						else if (actionToDo == "duplicate")
 						{
-							lgw.en("Could not turn HVAC on??");
+							string kindOfEvent;
+							tm datetime;
+							if (calEvent::lastTriggeredEvent->homeDone)
+							{
+								kindOfEvent = "home (shift start)";
+								datetime = calEvent::lastTriggeredEvent->start;
+							}
+							else if (calEvent::lastTriggeredEvent->workDone)
+							{
+								kindOfEvent = "work (shift end)";
+								datetime = calEvent::lastTriggeredEvent->end;
+							}
+							lgw.d("This event trigger for ", kindOfEvent, " has already ran.");
+							lgw.d("The event trigger datetime is:"
+								"\nYear=", datetime.tm_year,
+								"\nMonth=", datetime.tm_mon,
+								"\nDay=", datetime.tm_mday,
+								"\nTime=", datetime.tm_hour, ":", datetime.tm_min, "\n");
+						}
+						else if (actionToDo == "checkShutoff")
+						{
+							// Only check once, if the car is no longer home at shutOffTimer,
+							// we can assume you're gone thus you didn't call sick
+							if (!shutoffHasBeenCheckedOnce)
+							{
+								Tesla.getData(true); // We must have accurate location for this
+								if (Tesla.location == "home") {
+									// If we're here, car is still home within the set buffer for shutoffTimer
+									// Either you called sick or you're gonna be fucking late. Turn HVAC off
+									Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_stop");
+									lgw.in("HVAC SHUTOFF, car still home!", Tesla.datapack);
+								}
+								// Wether HVAC was shutoff or not, we don't need to check for shutoff anymore:
+								shutoffHasBeenCheckedOnce = true;
+							}
+							else {
+								// If here, a previous loop shutdown the HVAC for this event
+								// This should only print if the HVAC was shutdown for this event.
+								lgw.d("checkShutoff has already verified for this event.");
+							}
 						}
 
-						// Get the mutex before zeroing the seatsActivateNow value
-						if (!settings::settingsMutexLockSuccess("before resetting numberOfSeatsActivateNow")) {
-							throw string("settingsMutex timeout in main thread (before resetting numberOfSeatsActivateNow)");
-						}
-						lg.d("!!!MAIN: settingsMutex LOCKED (before resetting numberOfSeatsActivateNow)!!!");
+						// settings::wakeTimer = 100000; // for testing
+						// settings::triggerTimer = 69000; // for testing
+						lgw.d("Running eventTimeCheck with wakeTimer: ", settings::wakeTimer,
+							"mins, triggerTimer: ", settings::triggerTimer, "mins");
 
-						settings::numberOfSeatsActivateNow = 0;
-						lg.d("ActivateHVAC next run has been reset.");
+						// Get the mutex before writing to calendar vars
+						if (!settings::settingsMutexLockSuccess("before eventTimeCheck")) {
+							throw string("settingsMutex timeout in main thread (before eventTimeCheck)");
+						}
+						lgw.d("!!!MAIN: settingsMutex LOCKED (before eventTimeCheck)!!!");
+
+						actionToDo = calEvent::eventTimeCheck();
 
 						settings::settingsMutex.unlock();
-						lg.d("settingsMutex UNLOCKED by main after resetting numberOfSeatsActivateNow");
+						lgw.d("settingsMutex UNLOCKED by main after eventTimeCheck");
 
-
-					}
+						// actionToDo = "home"; // for testing
+						if (!actionToDo.empty())
+						{
+							lgw.i("End of wakeLoop, actionToBeDone is: ", actionToDo);
+							lgw.i("Waiting ", wakeLoopTimer, " seconds and re-running wakeLoop");
+							sleepWithAPIcheck(wakeLoopTimer);
+						}
+					} while (!actionToDo.empty());
 					break; // Must exit maxTries loop if no error caught
 				}
 				catch (string e) {
@@ -723,5 +703,6 @@ int main()
 		lg.b("Waiting for ", settings::u_repeatDelay, " seconds... (now -> ", date_time_str_from_time_t(), " LOCAL)\n\n\n\n\n\n\n\n\n");
 		sleepWithAPIcheck(settings::u_repeatDelay);
 	}
+
 	return 0;
 }

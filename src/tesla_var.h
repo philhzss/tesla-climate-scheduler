@@ -20,8 +20,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2023.11.05 - curl_timeout error catching improvements";
-const string tcs_version = "3.6.1";
+const string tcs_buildInfo = "\nBuild Date : 2024.01.04 - manualHVAC prevents wakeLoop retriggers";
+const string tcs_version = "3.6.2";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 

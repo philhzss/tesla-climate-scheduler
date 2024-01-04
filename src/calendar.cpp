@@ -370,6 +370,8 @@ string calEvent::eventTimeCheck()
 					lg.i("EVENT HAD ALREADY TRIGGERED FOR HOME AND HVAC SHUTOFF POSSIBLE, verifying.");
 					return "checkShutoff";
 				}
+				
+				event.updateLastTriggeredEvent();
 				lg.i("EVENT HAD ALREADY TRIGGERED FOR HOME, ignoring.");
 				return "duplicate";
 			}
@@ -398,6 +400,7 @@ string calEvent::eventTimeCheck()
 			}
 			else
 			{
+				event.updateLastTriggeredEvent();
 				lg.i("EVENT HAD ALREADY TRIGGERED FOR WORK, ignoring.");
 				return "duplicate";
 			}
