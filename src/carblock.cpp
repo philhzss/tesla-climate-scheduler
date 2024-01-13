@@ -56,7 +56,7 @@ void car::teslaAuth()
 }
 
 
-std::map<string, string> car::getData(bool wakeCar)
+std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 {
 	json teslaGetData;
 	// Get token from Tesla servers and store it in settings cpp
@@ -111,8 +111,8 @@ std::map<string, string> car::getData(bool wakeCar)
 
 		if (!initialWakeState)
 		{
-			sleepWithAPIcheck(10);
-			lg.d("Car was not awake, waiting 8 seconds after wake before getting data.");
+			lg.d("Car was not awake, waiting 10 seconds after wake before getting data.");
+			sleepWithAPIcheck(10, manualWakeWait);
 		}
 
 		// Now that the car is online, we can get more data

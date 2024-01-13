@@ -21,7 +21,7 @@ public:
 	std::unordered_map<string, string> step1_forms;
 	string step1_cookie;
 
-	
+
 };
 
 class car
@@ -62,7 +62,7 @@ private:
 
 public:
 	// Pull data from car, waking the car if requested
-	std::map<string, string> getData(bool wakeCar = false);
+	std::map<string, string> getData(bool wakeCar = false, bool manualWakeWait = false);
 
 	// POST request to "https://owner-api.teslamotors.com/ + url"
 	json teslaPOST(string specifiedUrlPage, json bodyPackage = json());

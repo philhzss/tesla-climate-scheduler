@@ -27,13 +27,16 @@ car Tesla;
 
 
 // Wait for X number of time, checking the API for a request every second. Silent (no log)
-void sleepWithAPIcheck(int totalSleepTime) {
+void sleepWithAPIcheck(int totalSleepTime, bool manualWakeWait) {
 	for (int i = 1; i < totalSleepTime; ++i) {
 		// Get the mutex before reading the numberOfSeatsActivateNow value
 		if (!settings::settingsMutexLockSuccess("before checking numberOfSeatsActivateNow")) {
 			throw string("settingsMutex timeout in main thread (before checking numberOfSeatsActivateNow)");
 		}
-		if (settings::numberOfSeatsActivateNow) {
+		
+		// Following code is required or sleepWithAPIcheck won't interupt for manual wake,
+		// which might make you wait up to 1 extra mins for a wake
+		if (settings::numberOfSeatsActivateNow && !manualWakeWait) {
 			settings::settingsMutex.unlock(); // Always release
 			// Stop the sleeping if the value is not 0
 			break;
@@ -455,7 +458,8 @@ int main()
 						// Check for manual HVAC request, before breaking loop if allowTriggers is false
 						if (settings::doManualActivateHVAC()) //-> DO a manual HVAC activation now
 						{
-							Tesla.getData(true); // Make sure you have most up to date data with car awake
+							bool thisIsAManualWake = true;
+							Tesla.getData(true, thisIsAManualWake); // Make sure you have most up to date data with car awake
 							// This is important for coldCheckSet to work properly for the seats
 
 							// Activate the car's HVAC
