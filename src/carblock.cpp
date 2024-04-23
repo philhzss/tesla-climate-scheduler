@@ -19,87 +19,127 @@ using std::string;
 static Log lg("Carblock", Log::LogLevel::Debug);
 
 
-void car::teslaAuth()
-{
-	/* This should be set to false if you want TCS to use TeslaPy Authorization
-	* (built-in). If you want to provied your own access-token, set to true
-	*/
-	bool usingExternalAuthToken = false;
-
-
-	// Get the mutex before touching settings.json
-	if (!settings::settingsMutexLockSuccess("before running python3 auth.py", 10)) {
-		throw string("settingsMutex timeout in main thread (before running python3 auth.py)");
-	}
-	lg.d("!!!MAIN: settingsMutex LOCKED (before running python3 auth.py)!!!");
-
-
-	if (usingExternalAuthToken) {
-		// Do nothing
-	}
-	else
+std::map<string, string> car::teslaFiGetData(bool wakeCar, bool manualWakeWait) {
+	try
 	{
-		// Actually RUN the auth script
-		// Requires teslaEmail in tesla.json!!!
-		lg.d("Running python3 auth.py to update tokens");
-		int systemResult = system("python3 auth.py"); // Use the refresh token to get an access token
-		lg.d("Result of python3 auth.py: ", systemResult);
-		settings::readSettings("silent"); // Read the new access token from settings.json
+		// Get the mutex before writing to any car variable, for API
+		if (!settings::settingsMutexLockSuccess("before teslaFiGetData")) {
+			throw string("settingsMutex timeout in main thread (before teslaFiGetData)");
+		}
+		lg.d("!!!MAIN: settingsMutex LOCKED (before teslaFiGetData)!!!");
+
+
+		json jsonTfiData = tfiRawQuery();
+
+		tfiConnectionState = jsonTfiData["state"];
+		tfiDate = jsonTfiData["Date"];
+		lg.d("tfiDate: " + tfiDate);
+
+		if (jsonTfiData["display_name"].type() == json::value_t::string) {
+			// Car is not sleeping, no need to wake
+			lg.d("Car display_name is a string (good), car is awake. Getting more data.");
+			tfiName = jsonTfiData["display_name"];
+			lg.d("tfiName: " + tfiName);
+			tfiIntTemp = jsonTfiData["inside_temp"];
+			lg.d("tfiIntTemp: " + tfiIntTemp);
+			tfiOutTemp = jsonTfiData["outside_temp"];
+			lg.d("tfiOutTemp: " + tfiOutTemp);
+			tfiTempSetting = jsonTfiData["driver_temp_setting"];
+			lg.d("tfiTempSetting: " + tfiTempSetting);
+			tfiIsHvacOn = jsonTfiData["is_climate_on"];
+			lg.d("tfiIsHvacOn: " + tfiIsHvacOn);
+			tfiUsableBat = jsonTfiData["usable_battery_level"];
+			lg.d("tfiUsableBat: " + tfiUsableBat);
+			tfiBat = jsonTfiData["battery_level"];
+			lg.d("tfiBat :" + tfiBat);
+			carAwake = true;
+		}
+		else if ((tfiConnectionState == "online") and (jsonTfiData["display_name"].type() != json::value_t::string))
+		{
+			// If the connection state is reported as online, but no other data can be pulled, car is in Tesla Fi sleep mode attempt. 
+			// Detect this and assume car is asleep if so:
+			lg.i("The car is trying to sleep, sleep mode assumed, carAwake=False");
+			carAwake = false;
+		}
+		else {
+			// Car is sleeping or trying to sleep, will have to wake
+			lg.d("Car display_name is null, not a string, car is most likely sleeping OR trying to sleep, carAwake=False");
+			carAwake = false;
+		}
+		tficarState = jsonTfiData["carState"];
+		lg.d("tficarState: " + tficarState);
+		tfiConnectionState = jsonTfiData["state"];
+		lg.d("tfiState (connection state): " + tfiConnectionState);
+
+		try {
+			string tfiShift = jsonTfiData["shift_state"];
+		}
+		catch (nlohmann::detail::type_error)
+		{
+			lg.d("json type_error for shift_state in TeslaFi, car assumed to be in park, manually writing");
+			tfiShift = "P";
+		}
+		lg.d("tfiShift: " + tfiShift);
+		tfiLocation = jsonTfiData["location"];
+		lg.d("tfiLocation: " + tfiLocation);
+
+		settings::settingsMutex.unlock();
+		lg.d("settingsMutex UNLOCKED after teslaFiGetData");
+	}
+	catch (string e)
+	{
+		lg.e("CURL TeslaFi exception: " + e);
+		settings::settingsMutex.unlock();
+		lg.d("settingsMutex UNLOCKED after teslaFiGetData EXCEPTION");
+		throw string("Can't get car data from Tesla Fi. (CURL problem?)");
+	}
+	catch (nlohmann::detail::type_error e)
+	{
+		lg.e("Problem getting data from Tesla Fi. Car updating? API down? nlohmann::detail::type_error");
+		settings::settingsMutex.unlock();
+		lg.d("settingsMutex UNLOCKED after teslaFiGetData EXCEPTION");
+		throw string("Can't get car data from Tesla Fi. nlohmann::detail::type_error");
 	}
 
-	// Release the mutex
-	settings::settingsMutex.unlock();
-	lg.d("settingsMutex UNLOCKED after python3 updated auth data");
 
-	return;
+	// Print map contents if LogLevelDebug
+	if (lg.ReadLevel() >= Log::Debug)
+	{
+		lg.b();
+		lg.d("carData_s map contents:");
+		for (std::pair<string, string> element : carData_s)
+		{
+			lg.d(element.first + ": " + element.second);
+		}
+	}
 
+	datapack = lg.prepareOnly("\nInside Temp: ", Tinside_temp,
+		"C\nOutside Temp: ", Toutside_temp,
+		"C\nBattery %: ", (int)Tbattery_level, " (", (int)Tusable_battery_level, ")");
+
+	return carData_s;
+
+}
+
+
+json tfiRawQuery() {
+	string readBufferData = curl_GET(settings::tfiURL);
+
+	// Parse raw data from tfi, after making sure you're authorized
+	lg.b();
+	lg.d("Raw data from TeslaFi: " + readBufferData);
+	if (readBufferData.find("unauthorized") != string::npos)
+	{
+		lg.e("TeslaFi access denied.");
+		throw string("TeslaFi token incorrect or expired.");
+	}
+	return json::parse(readBufferData);
 }
 
 
 std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 {
-	json teslaGetData;
-	// Get token from Tesla servers and store it in settings cpp
-	// This must be run before everything else
-	car::teslaAuth();
 
-	// Get Tesla vehicleS state and vID
-	try
-	{
-		teslaGetData = car::teslaGET("api/1/vehicles");
-		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
-	}
-	catch (string e)
-	{
-		lg.e("CURL Tesla API exception: ", e);
-		throw string("Can't get car data from Tesla API. (CURL problem?)");
-	}
-	catch (nlohmann::detail::type_error e)
-	{
-		string errorString = "Problem getting data from Tesla API. Car updating? Tesla API down? nlohmann::detail::type_error";
-		lg.e(errorString);
-		throw string(errorString);
-	}
-
-	// Get the mutex before writing to any car variable
-	if (!settings::settingsMutexLockSuccess("after succesful teslaGET in getData")) {
-		throw string("settingsMutex timeout in main thread (after succesful teslaGET in getData)");
-	}
-	lg.d("!!!MAIN: settingsMutex LOCKED (before first teslaGET in getData)!!!");
-
-	Tconnection_state = teslaGetData["state"];
-	carOnline = (Tconnection_state == "online") ? true : false;
-	// Store VID and VURL in settings
-	settings::teslaVID = teslaGetData["id_s"];
-	settings::teslaVURL = "api/1/vehicles/" + settings::teslaVID + "/";
-
-	// State and vehicle ID always obtained, even if wakeCar false
-	carData_s["vehicle_id"] = settings::teslaVID;
-	carData_s["state"] = Tconnection_state;
-	carData_s["Car awake"] = std::to_string(carOnline);
-
-	settings::settingsMutex.unlock();
-	lg.d("settingsMutex UNLOCKED before waking car");
 
 	if (wakeCar)
 	{
@@ -120,7 +160,7 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 
 		// New endpoint required for location data
 		json responseDrive = teslaGET(settings::teslaVURL + "vehicle_data?endpoints=location_data");
-			
+
 		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
 		// Get the mutex before getting more data
 		if (!settings::settingsMutexLockSuccess("before teslaGET CAR AWOKEN in getData")) {
@@ -175,22 +215,7 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 
 	}
 
-	// Print map contents if LogLevelDebug
-	if (lg.ReadLevel() >= Log::Debug)
-	{
-		lg.b();
-		lg.d("carData_s map contents:");
-		for (std::pair<string, string> element : carData_s)
-		{
-			lg.d(element.first + ": " + element.second);
-		}
-	}
 
-	datapack = lg.prepareOnly("\nInside Temp: ", Tinside_temp,
-		"C\nOutside Temp: ", Toutside_temp,
-		"C\nBattery %: ", (int)Tbattery_level, " (", (int)Tusable_battery_level, ")");
-
-	return carData_s;
 }
 
 
@@ -301,120 +326,6 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 }
 
 
-json car::teslaGET(string specifiedUrlPage)
-{
-	json responseObject;
-	bool response_code_ok;
-	do
-	{
-		string fullUrl = settings::teslaOwnerURL + specifiedUrlPage;
-		const char* const url_to_use = fullUrl.c_str();
-		CURL* curl;
-		CURLcode res;
-		// Buffer to store result temporarily:
-		string readBuffer;
-		long response_code;
-
-		curl_global_init(CURL_GLOBAL_ALL);
-		curl = curl_easy_init();
-		if (curl) {
-
-
-			// Header for already authorized request
-			const char* authHeaderC = settings::teslaAuthString.c_str();
-			struct curl_slist* headers = nullptr;
-			headers = curl_slist_append(headers, authHeaderC);
-			headers = curl_slist_append(headers, "Content-Type: application/json");
-			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
-
-			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, "Tesla Climate Scheduler/3.0.5"); // add variable v number
-
-			/* use a GET to fetch this */
-			curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
-
-			/* Perform the request, res will get the return code */
-			res = curl_easy_perform(curl);
-			/* Check for errors */
-			if (res != CURLE_OK)
-			{
-				fprintf(stderr, "curl_easy_perform() failed: %s\n",
-					curl_easy_strerror(res));
-				lg.p("Before error throw, curl error code: ", res);
-				lg.d(curl_easy_strerror(res));
-
-				/* always cleanup */
-				curl_easy_cleanup(curl);
-				curl_global_cleanup();
-
-				if (res == 28) {
-					lg.d("The error is a curl 28 timeout error, continuing");
-					response_code_ok = false;
-					continue;
-				}
-				else {
-					lg.d("The error is NOT a curl 28 timeout error, throwing string");
-					throw string("curl_easy_perform() failed: " + std::to_string(res));
-				}
-			}
-			if (res == CURLE_OK) {
-				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-				lg.i(response_code, "=response code for GET ", fullUrl);
-				lg.p("readBuffer (before jsonify): ", readBuffer);
-
-				if (response_code != 200)
-				{
-					lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
-					if (response_code == 408) {
-						lg.i("TIMEOUT");
-					}
-					else if (response_code == 401) {
-						lg.i("UNAUTHORIZED");
-					}
-					else if (response_code == 503) {
-						lg.i("SERVICE UNAVAILABLE");
-					}
-					else {
-						lg.in("IS TOKEN EXPIRED???");
-					}
-					lg.d("readBuffer for incorrect: " + readBuffer);
-					response_code_ok = false;
-					lg.i("Waiting 5 secs and retrying (teslaGET)");
-					sleepWithAPIcheck(5); // wait a little before redoing the curl request
-					// Are we sleeping with API check while having mutex LOCKED?
-					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
-					continue;
-
-				}
-				else {
-					response_code_ok = true;
-				}
-			}
-
-			/* always cleanup */
-			curl_easy_cleanup(curl);
-		}
-		curl_global_cleanup();
-
-
-		json jsonReadBuffer = json::parse(readBuffer);
-		if (jsonReadBuffer["response"].is_array()) {
-			/* Inside "response" is an array, one item PER VEHICLE. Currently only supports 1 vehicle
-			* But I will ahve to change this code to check for multiple vehicles eventually*/
-			responseObject = (jsonReadBuffer["response"])[0];
-		}
-		else {
-			responseObject = (jsonReadBuffer["response"]);
-		}
-
-	} while (!response_code_ok);
-	return responseObject;
-}
 
 
 void car::wake()

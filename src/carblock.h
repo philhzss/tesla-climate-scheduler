@@ -30,6 +30,9 @@ class car
 public:
 	// public vars
 	bool carOnline = false;
+
+	bool carAwake = false; // Replace with carOnline?? for Tfi
+
 	std::map<string, string> carData_s;
 
 	string teslaDataUpdateTime = "";
@@ -52,26 +55,38 @@ public:
 
 private:
 	void wake();
-	// Write token to settings::teslaAuthString for Tesla official API usage
-	void teslaAuth();
-
-
+	json tfiRawQuery();
 
 	// Verify if at home or work based on lat/lon and tolerance
 	string checkCarLocation();
+
+
+	// TeslaFi data
+	string tfiDate = "";
+	string tfiName = "";
+	string tficarState = "";
+	string tfiConnectionState = "";
+	string tfiShift = "";
+	string tfiLocation = "";
+	string tfiIntTemp = "";
+	string tfiOutTemp = "";
+	string tfiTempSetting = "";
+	string tfiIsHvacOn = "";
+	string tfiUsableBat = "";
+	string tfiBat = "";
+
+	// Function that checks TFi data, checks if polling disabled, etc
+	// WARNING, DOES NOT UPDATE CARDATA MAP!!!!!!!! --> ?? To check, not sure what this means (2024)
+	std::map<string, string> teslaFiGetData(bool wakeCar, bool manualWakeWait);
+
 
 public:
 	// Pull data from car, waking the car if requested
 	std::map<string, string> getData(bool wakeCar = false, bool manualWakeWait = false);
 
-	// POST request to "https://owner-api.teslamotors.com/ + url"
-	json teslaPOST(string specifiedUrlPage, json bodyPackage = json());
-
 	// Returns confirmed heated seat setting, & if max condition is on
 	std::vector<string> coldCheckSet();
 
-	// GET request to "https://owner-api.teslamotors.com/ + url", oAuth token built-in
-	json teslaGET(string specifiedUrlPage);
 	int calcTempMod(int interior_temp);
 
 	// Verify various car parameters and return reason if failure

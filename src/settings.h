@@ -14,13 +14,9 @@ public:
 	// Initial breakdown into separate json objects
 	static json teslaSettings, calendarSettings, generalSettings, carSettings, tempConfigs;
 
-
-	// Important stuff, Tesla official token, Tesla URL
-	static string teslaOwnerURL;
-	static string teslaAuthURL;
-	static string teslaVURL;
-	static string teslaVID;
-	static string teslaAuthString;
+	// TeslaFi URL
+	static string tfiURL;
+	static string u_tfiToken;
 
 
 	// Parse settings.json and save its contents in the program's memory
@@ -106,14 +102,6 @@ public:
 	static std::vector<string> u_wordsToIgnore;
 	static bool ignoredWordsExist();
 	static string ignoredWordsPrint();
-
-
-	// Tesla Setting
-	// Tesla Refresh Token for generating access tokens
-	static string u_teslaRefreshToken;
-	// Tesla Setting
-	// Owner API Access Token
-	static string u_teslaAccessToken;
 
 
 	// API

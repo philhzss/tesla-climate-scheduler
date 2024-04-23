@@ -40,14 +40,9 @@ int settings::u_shiftStartBias;
 int settings::u_shiftEndBias;
 int settings::u_commuteTime;
 std::vector<string> settings::u_wordsToIgnore;
-// Tesla
-string settings::teslaOwnerURL;
-string settings::teslaAuthURL;
-string settings::teslaVURL;
-string settings::teslaVID;
-string settings::teslaAuthString;
-string settings::u_teslaAccessToken;
-string settings::u_teslaRefreshToken;
+// TeslaFi
+string settings::u_tfiToken;
+string settings::tfiURL;
 
 
 void settings::readSettings(string silent)
@@ -57,7 +52,7 @@ void settings::readSettings(string silent)
 		stream >> settingsForm;
 
 		// Get the settings cubcategories
-		teslaSettings = settingsForm["Tesla account settings"];
+		teslaSettings = settingsForm["TeslaFi account settings"];
 		calendarSettings = settingsForm["Calendar Settings"];
 		generalSettings = settingsForm["General Settings"];
 		carSettings = settingsForm["Car settings"];
@@ -91,17 +86,13 @@ void settings::readSettings(string silent)
 			u_shiftEndBias = calendarSettings["shiftEndBias"];
 			calendarSettings["wordsToIgnore"].get_to(u_wordsToIgnore);
 
-			// TESLA ACCOUNT SETTINGS
-			u_teslaAccessToken = teslaSettings["teslaAccessToken"];
-			u_teslaRefreshToken = teslaSettings["teslaRefreshToken"];
+			// TESLAFI ACCOUNT SETTINGS
+			u_tfiToken = teslaSettings["TeslaFiToken"];
 
 			// TEMP CONFIG SETTINGS
 			u_allowTriggers = tempConfigs["allowTriggers"];
 			u_encourageDefrost = tempConfigs["encourageDefrost"];
 			u_noDefrostAbove = tempConfigs["noDefrostAbove"];
-
-			// Get and set the auth string directly from settings
-			settings::teslaAuthString = "Authorization: Bearer " + u_teslaAccessToken;
 
 			lg.b();
 			lg.d("Settings file settings.json successfully read.");
@@ -179,9 +170,7 @@ void settings::readSettings(string silent)
 		lg.b();
 	}
 
-	teslaOwnerURL = "https://owner-api.teslamotors.com/";
-	teslaAuthURL = "https://auth.tesla.com/oauth2/v3/";
-	// Note: Tesla VID and VURL defined in carblock
+	tfiURL = ("https://www.teslafi.com/feed.php?&token=" + u_tfiToken);
 
 	// Default to the bare minimum (2mins is tempTimeMod min) to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.
 	triggerTimer = 2;
