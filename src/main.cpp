@@ -222,7 +222,7 @@ void DoCrowAPI(car* carPointer) {
 		json["app"]["config"]["car_shutoffTimer"] = lg.prepareOnly(settings::u_shutoffTimer);
 
 
-		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->teslaDataUpdateTime);
+		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->tfiDate);
 		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);
 		json[carName]["state_connection"] = lg.prepareOnly(carPointer->Tconnection_state);
 		json[carName]["climate_temp_inside"] = lg.prepareOnly(carPointer->Tinside_temp);

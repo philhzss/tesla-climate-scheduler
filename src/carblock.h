@@ -28,14 +28,10 @@ class car
 {
 	friend class authorizer;
 public:
-	// public vars
 	bool carOnline = false;
-
-	bool carAwake = false; // Replace with carOnline?? for Tfi
 
 	std::map<string, string> carData_s;
 
-	string teslaDataUpdateTime = "";
 	string Tvehicle_name = "";
 	string Tshift_state = "";
 	string Tconnection_state = "";
@@ -45,24 +41,27 @@ public:
 	bool Tis_climate_on;
 	float Tusable_battery_level;
 	float Tbattery_level;
-	float Tlat;
-	float Tlong;
-	string location;
+	string location = "";
 	string datapack;
 	authorizer auth;
+
+
+	// TeslaFi data
+	string tfiDate = "";
 
 
 
 private:
 	void wake();
-	json tfiRawQuery();
+
+	// Pull data & update map
+	void tfiQueryCar(); 
 
 	// Verify if at home or work based on lat/lon and tolerance
 	string checkCarLocation();
 
 
 	// TeslaFi data
-	string tfiDate = "";
 	string tfiName = "";
 	string tficarState = "";
 	string tfiConnectionState = "";
