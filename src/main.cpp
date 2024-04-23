@@ -463,8 +463,8 @@ int main()
 							// This is important for coldCheckSet to work properly for the seats
 
 							// Activate the car's HVAC
-							json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
-							bool state_after_hvac = hvac_result["result"]; // should return true
+							json hvac_result = Tesla.tfiInternetOperation("&command=auto_conditioning_start");
+							bool state_after_hvac = hvac_result["response"]["result"]; // should return true
 
 							std::vector<string> seats_defrost = Tesla.coldCheckSet();
 							string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
@@ -554,8 +554,8 @@ int main()
 									string triggerAllowedRes = Tesla.triggerAllowed();
 									if (triggerAllowedRes == "continue") {
 
-										json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
-										bool state_after_hvac = hvac_result["result"]; // should return true
+										json hvac_result = Tesla.tfiInternetOperation("&command=auto_conditioning_start");
+										bool state_after_hvac = hvac_result["response"]["result"]; // should return true
 
 										std::vector<string> seats_defrost = Tesla.coldCheckSet();
 										string firstWord = (seats_defrost[1] == "1") ? "MAX DEFROST" : "HVAC";
@@ -636,7 +636,7 @@ int main()
 								if (Tesla.location == "home") {
 									// If we're here, car is still home within the set buffer for shutoffTimer
 									// Either you called sick or you're gonna be fucking late. Turn HVAC off
-									Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_stop");
+									Tesla.tfiInternetOperation("&command=auto_conditioning_stop");
 									lgw.in("HVAC SHUTOFF, car still home!", Tesla.datapack);
 								}
 								// Wether HVAC was shutoff or not, we don't need to check for shutoff anymore:

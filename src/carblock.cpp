@@ -39,7 +39,7 @@ std::map<string, string> car::teslaFiGetData(bool wakeCar, bool manualWakeWait) 
 				sleep(15);
 			}
 		} */
-		
+
 
 		bool initialWakeState = carOnline;
 		do {
@@ -84,6 +84,22 @@ std::map<string, string> car::teslaFiGetData(bool wakeCar, bool manualWakeWait) 
 }
 
 
+json car::tfiInternetOperation(string url) {
+	string readBufferData = curl_GET(settings::tfiURL + url);
+
+	// Parse raw data from tfi, after making sure you're authorized
+	lg.b();
+	lg.d("Raw data from TeslaFi: " + readBufferData);
+	if (readBufferData.find("unauthorized") != string::npos)
+	{
+		lg.e("TeslaFi access denied.");
+		throw string("TeslaFi token incorrect or expired.");
+	}
+
+	return json::parse(readBufferData);
+}
+
+
 void car::tfiQueryCar() {
 	try
 	{
@@ -93,20 +109,7 @@ void car::tfiQueryCar() {
 		}
 		lg.d("!!!MAIN: settingsMutex LOCKED (before teslaFiGetData)!!!");
 
-
-		string readBufferData = curl_GET(settings::tfiURL);
-
-		// Parse raw data from tfi, after making sure you're authorized
-		lg.b();
-		lg.d("Raw data from TeslaFi: " + readBufferData);
-		if (readBufferData.find("unauthorized") != string::npos)
-		{
-			lg.e("TeslaFi access denied.");
-			throw string("TeslaFi token incorrect or expired.");
-		}
-
-		
-		json jsonTfiData = json::parse(readBufferData);
+		json jsonTfiData = tfiInternetOperation();
 
 		tfiConnectionState = jsonTfiData["state"];
 		tfiDate = jsonTfiData["Date"];
@@ -314,7 +317,7 @@ void car::tfiQueryCar() {
 void car::wake()
 {
 	lg.b();
-	json wake_result = settings::tfiURL + "&command=wake_up";
+	json wake_result = tfiInternetOperation("&command=wake_up");
 	string init_state_after_wake = wake_result["response"]["state"];
 	lg.d("Wake command sent while state was: " + init_state_after_wake);
 	carOnline = (init_state_after_wake == "online") ? true : false;
@@ -437,20 +440,22 @@ std::vector<string> car::coldCheckSet()
 		requestedSeatHeat = 0;
 	}
 
+
 	// Send the heat-seat request, turning the heated seat off if it's hot enough
-	json seat_result = teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", 0}, {"level", requestedSeatHeat } });
+	json seat_result = tfiInternetOperation("&command=seat_heater&heater=0&level=" + std::to_string(requestedSeatHeat));
 
 	// If seats should be 0, turn off ALL heated seats in car
-	if (requestedSeatHeat == 0) {
+	// Currently disabled because it seems Tesla Fi can't heat anything other than the drivers seat?
+	/*if (requestedSeatHeat == 0) {
 		for (int seatNumber = 1; seatNumber <= 4; seatNumber++) {
 			teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", seatNumber}, {"level", requestedSeatHeat } });
 		}
-	}
+	} */
 
 
-	if (seat_result["result"]) {
+	if (seat_result["response"]["result"]) {
 		resultVector.push_back(std::to_string(requestedSeatHeat));
-		lg.d("seat_result: ", seat_result["result"]);
+		lg.d("seat_result: ", seat_result["response"]["result"]);
 	}
 	else {
 		resultVector.push_back("heated seats error");
@@ -458,8 +463,8 @@ std::vector<string> car::coldCheckSet()
 
 	if (Tinside_temp <= -10 || (settings::u_encourageDefrost && (Tinside_temp <= settings::u_noDefrostAbove)))
 	{
-		json jdefrost_result = teslaPOST(settings::teslaVURL + "command/set_preconditioning_max", json{ {"on", true } });
-		max_defrost_on = jdefrost_result["result"];
+		json jdefrost_result = tfiInternetOperation("command=set_preconditioning_max&statement=true");
+		max_defrost_on = jdefrost_result["response"]["result"];
 	}
 	lg.d("Tinside_temp: ", Tinside_temp, ", encourageDefrost: ", settings::u_encourageDefrost);
 	lg.d("max_defrost_on: ", max_defrost_on);
@@ -467,35 +472,4 @@ std::vector<string> car::coldCheckSet()
 	resultVector.push_back(std::to_string(max_defrost_on));
 	lg.d("resultVector, seat: ", resultVector[0], "// defrost_on: ", resultVector[1]);
 	return resultVector;
-}
-
-// Could be global util?
-string authorizer::random_ANstring() {
-	srand((unsigned int)time(NULL));
-	auto randchar = []() -> char
-	{
-		const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-		const size_t max_index = (sizeof(charset) - 1);
-		return charset[rand() % max_index];
-	};
-	string str(86, 0);
-	std::generate_n(str.begin(), 86, randchar);
-	return str;
-}
-
-// Could be global util?
-size_t authorizer::stringCount(const std::string& referenceString,
-	const std::string& subString) {
-
-	const size_t step = subString.size();
-
-	size_t count(0);
-	size_t pos(0);
-
-	while ((pos = referenceString.find(subString, pos)) != std::string::npos) {
-		pos += step;
-		++count;
-	}
-
-	return count;
 }
