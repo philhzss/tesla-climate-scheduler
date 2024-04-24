@@ -19,7 +19,7 @@ using std::string;
 static Log lg("Carblock", Log::LogLevel::Debug);
 
 
-std::map<string, string> car::teslaFiGetData(bool wakeCar, bool manualWakeWait) {
+std::map<string, string> car::tfiGetData(bool wakeCar, bool manualWakeWait) {
 
 	tfiQueryCar();
 
@@ -32,7 +32,7 @@ std::map<string, string> car::teslaFiGetData(bool wakeCar, bool manualWakeWait) 
 			lg.d("Restarting Tesla Fi polling");
 			string readBufferData = curl_GET(settings::tfiURL + "&command=wake");
 			sleepWithAPIcheck(10);
-			while (tfiName == "") {
+			while (tfiVehicle_name == "") {
 				// Then recheck Tfi data
 				car::tfiQueryCar();
 				lg.i("WAITING");
@@ -75,9 +75,9 @@ std::map<string, string> car::teslaFiGetData(bool wakeCar, bool manualWakeWait) 
 		}
 	}
 
-	datapack = lg.prepareOnly("\nInside Temp: ", Tinside_temp,
-		"C\nOutside Temp: ", Toutside_temp,
-		"C\nBattery %: ", (int)Tbattery_level, " (", (int)Tusable_battery_level, ")");
+	datapack = lg.prepareOnly("\nInside Temp: ", tfiInside_temp,
+		"C\nOutside Temp: ", tfiOutside_temp,
+		"C\nBattery %: ", tfiBattery_level, " (", tfiUsable_battery_level, ")");
 
 	return carData_s;
 
@@ -104,55 +104,59 @@ void car::tfiQueryCar() {
 	try
 	{
 		// Get the mutex before writing to any car variable, for API
-		if (!settings::settingsMutexLockSuccess("before teslaFiGetData")) {
-			throw string("settingsMutex timeout in main thread (before teslaFiGetData)");
+		if (!settings::settingsMutexLockSuccess("before tfiGetData")) {
+			throw string("settingsMutex timeout in main thread (before tfiGetData)");
 		}
-		lg.d("!!!MAIN: settingsMutex LOCKED (before teslaFiGetData)!!!");
+		lg.d("!!!MAIN: settingsMutex LOCKED (before tfiGetData)!!!");
 
 		json jsonTfiData = tfiInternetOperation();
 
-		tfiConnectionState = jsonTfiData["state"];
+		tfiConnection_state = jsonTfiData["state"];
 		tfiDate = jsonTfiData["Date"];
 		lg.d("tfiDate: " + tfiDate);
 
 		if (jsonTfiData["display_name"].type() == json::value_t::string) {
 			// Car is not sleeping, no need to wake
 			lg.d("Car display_name is a string (good), car is awake. Getting more data.");
-			tfiName = jsonTfiData["display_name"];
-			lg.d("tfiName: " + tfiName);
-			tficarState = jsonTfiData["carState"];
-			lg.d("tficarState: " + tficarState);
-			tfiConnectionState = jsonTfiData["state"];
-			lg.d("tfiState (connection state): " + tfiConnectionState);
+			tfiVehicle_name = jsonTfiData["display_name"];
+			lg.d("tfiVehicle_name: " + tfiVehicle_name);
+			tfiCar_state_activity = jsonTfiData["carState"];
+			lg.d("tfiCar_state_activity: " + tfiCar_state_activity);
+			tfiConnection_state = jsonTfiData["state"];
+			lg.d("tfiState (connection state): " + tfiConnection_state);
 
 			try {
-				string tfiShift = jsonTfiData["shift_state"];
+				string tfiShift_state = jsonTfiData["shift_state"];
 			}
 			catch (nlohmann::detail::type_error)
 			{
 				lg.d("json type_error for shift_state in TeslaFi, car assumed to be in park, manually writing");
-				tfiShift = "P";
+				tfiShift_state = "P";
 			}
-			lg.d("tfiShift: " + tfiShift);
+			lg.d("tfiShift_state: " + tfiShift_state);
 
 			tfiLocation = jsonTfiData["location"];
 			lg.d("tfiLocation: " + tfiLocation);
-			tfiIntTemp = jsonTfiData["inside_temp"];
-			lg.d("tfiIntTemp: " + tfiIntTemp);
-			tfiOutTemp = jsonTfiData["outside_temp"];
-			lg.d("tfiOutTemp: " + tfiOutTemp);
-			tfiTempSetting = jsonTfiData["driver_temp_setting"];
-			lg.d("tfiTempSetting: " + tfiTempSetting);
-			tfiIsHvacOn = jsonTfiData["is_climate_on"];
-			lg.d("tfiIsHvacOn: " + tfiIsHvacOn);
-			tfiUsableBat = jsonTfiData["usable_battery_level"];
-			lg.d("tfiUsableBat: " + tfiUsableBat);
-			tfiBat = jsonTfiData["battery_level"];
-			lg.d("tfiBat :" + tfiBat);
+
+			tfiInside_temp = std::stof(string(jsonTfiData["inside_temp"]));
+			lg.d("tfiInside_temp: ", tfiInside_temp);
+			tfiOutside_temp = std::stof(string(jsonTfiData["outside_temp"]));
+			lg.d("tfiOutside_temp: ", tfiOutside_temp);
+			tfiDriver_temp_setting = std::stof(string(jsonTfiData["driver_temp_setting"]));
+			lg.d("tfiDriver_temp_setting: ", tfiDriver_temp_setting);
+
+			// Cast string to int before converting to boolean
+			tfiIs_climate_on = std::stoi(string(jsonTfiData["is_climate_on"]));
+			lg.d("tfiIs_climate_on: " + tfiIs_climate_on);
+
+			tfiUsable_battery_level = std::stof(string(jsonTfiData["usable_battery_level"]));
+			lg.d("tfiUsable_battery_level: ", tfiUsable_battery_level);
+			tfiBattery_level = std::stof(string(jsonTfiData["battery_level"]));
+			lg.d("tfiBattery_level :", tfiBattery_level);
 
 			carOnline = true;
 		}
-		else if ((tfiConnectionState == "online") and (jsonTfiData["display_name"].type() != json::value_t::string))
+		else if ((tfiConnection_state == "online") and (jsonTfiData["display_name"].type() != json::value_t::string))
 		{
 			// If the connection state is reported as online, but no other data can be pulled, car is in Tesla Fi sleep mode attempt. 
 			// Detect this and assume car is asleep if so:
@@ -165,37 +169,37 @@ void car::tfiQueryCar() {
 			carOnline = false;
 		}
 		settings::settingsMutex.unlock();
-		lg.d("settingsMutex UNLOCKED after teslaFiGetData");
+		lg.d("settingsMutex UNLOCKED after tfiGetData");
 	}
 	catch (string e)
 	{
 		lg.e("CURL TeslaFi exception: " + e);
 		settings::settingsMutex.unlock();
-		lg.d("settingsMutex UNLOCKED after teslaFiGetData EXCEPTION");
+		lg.d("settingsMutex UNLOCKED after tfiGetData EXCEPTION");
 		throw string("Can't get car data from Tesla Fi. (CURL problem?)");
 	}
 	catch (nlohmann::detail::type_error e)
 	{
 		lg.e("Problem getting data from Tesla Fi. Car updating? API down? nlohmann::detail::type_error");
 		settings::settingsMutex.unlock();
-		lg.d("settingsMutex UNLOCKED after teslaFiGetData EXCEPTION");
+		lg.d("settingsMutex UNLOCKED after tfiGetData EXCEPTION");
 		throw string("Can't get car data from Tesla Fi. nlohmann::detail::type_error");
 	}
 
 	carData_s["Success"] = "True";
 	carData_s["Car awake"] = std::to_string(carOnline);
 	carData_s["Tesla Fi Date"] = tfiDate;
-	carData_s["Tesla Fi Name"] = tfiName;
-	carData_s["Tesla Fi Car State"] = tficarState;
-	carData_s["Tesla Fi Connection State"] = tfiConnectionState;
-	carData_s["Tesla Fi Shift State"] = tfiShift;
+	carData_s["Tesla Fi Name"] = tfiVehicle_name;
+	carData_s["Tesla Fi Car State"] = tfiCar_state_activity;
+	carData_s["Tesla Fi Connection State"] = tfiConnection_state;
+	carData_s["Tesla Fi Shift State"] = tfiShift_state;
 	carData_s["Tesla Fi Location"] = tfiLocation;
-	carData_s["Tesla Fi Inside temp"] = tfiIntTemp;
-	carData_s["Tesla Fi Outside temp"] = tfiOutTemp;
-	carData_s["Tesla Fi Driver Temp Setting"] = tfiTempSetting;
-	carData_s["Tesla Fi is HVAC On"] = tfiIsHvacOn;
-	carData_s["Tesla Fi Usable Battery"] = tfiUsableBat;
-	carData_s["Tesla Fi Battery level"] = tfiBat;
+	carData_s["Tesla Fi Inside temp"] = std::to_string(tfiInside_temp);
+	carData_s["Tesla Fi Outside temp"] = std::to_string(tfiOutside_temp);
+	carData_s["Tesla Fi Driver Temp Setting"] = tfiDriver_temp_setting;
+	carData_s["Tesla Fi is HVAC On"] = std::to_string(tfiIs_climate_on);
+	carData_s["Tesla Fi Usable Battery"] = std::to_string(tfiUsable_battery_level);
+	carData_s["Tesla Fi Battery level"] = std::to_string(tfiBattery_level);
 
 
 	return;
@@ -395,10 +399,10 @@ string car::triggerAllowed()
 	bool tempGood;
 	bool carOnlineGood;
 	bool shiftStateGood;
-	batteryGood = (Tusable_battery_level < 22) ? false : true;
-	tempGood = ((Tinside_temp > settings::u_noActivateLowerLimitTemp) && (Tinside_temp < settings::u_noActivateUpperLimitTemp)) ? false : true;
+	batteryGood = (tfiUsable_battery_level < 22) ? false : true;
+	tempGood = ((tfiInside_temp > settings::u_noActivateLowerLimitTemp) && (tfiInside_temp < settings::u_noActivateUpperLimitTemp)) ? false : true;
 	carOnlineGood = carOnline;
-	shiftStateGood = (Tshift_state == "P") ? true : false;
+	shiftStateGood = (tfiShift_state == "P") ? true : false;
 
 	if (batteryGood && tempGood && carOnlineGood && shiftStateGood)
 	{
@@ -423,15 +427,15 @@ std::vector<string> car::coldCheckSet()
 	int requestedSeatHeat; // power, 0-1-2-3
 	bool max_defrost_on = false; // if if triggers it gets set to true
 	std::vector<string> resultVector;
-	if (Tinside_temp <= settings::u_heatseat3temp)
+	if (tfiInside_temp <= settings::u_heatseat3temp)
 	{
 		requestedSeatHeat = 3;
 	}
-	else if (Tinside_temp <= settings::u_heatseat2temp)
+	else if (tfiInside_temp <= settings::u_heatseat2temp)
 	{
 		requestedSeatHeat = 2;
 	}
-	else if (Tinside_temp < settings::u_heatseat1temp)
+	else if (tfiInside_temp < settings::u_heatseat1temp)
 	{
 		requestedSeatHeat = 1;
 	}
@@ -461,12 +465,12 @@ std::vector<string> car::coldCheckSet()
 		resultVector.push_back("heated seats error");
 	}
 
-	if (Tinside_temp <= -10 || (settings::u_encourageDefrost && (Tinside_temp <= settings::u_noDefrostAbove)))
+	if (tfiInside_temp <= -10 || (settings::u_encourageDefrost && (tfiInside_temp <= settings::u_noDefrostAbove)))
 	{
 		json jdefrost_result = tfiInternetOperation("command=set_preconditioning_max&statement=true");
 		max_defrost_on = jdefrost_result["response"]["result"];
 	}
-	lg.d("Tinside_temp: ", Tinside_temp, ", encourageDefrost: ", settings::u_encourageDefrost);
+	lg.d("Tinside_temp: ", tfiInside_temp, ", encourageDefrost: ", settings::u_encourageDefrost);
 	lg.d("max_defrost_on: ", max_defrost_on);
 
 	resultVector.push_back(std::to_string(max_defrost_on));

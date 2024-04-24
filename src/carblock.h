@@ -9,15 +9,21 @@ public:
 
 	std::map<string, string> carData_s;
 
-	string Tvehicle_name = "";
-	string Tshift_state = "";
-	string Tconnection_state = "";
-	float Tinside_temp;
-	float Toutside_temp;
-	float Tdriver_temp_setting;
-	bool Tis_climate_on;
-	float Tusable_battery_level;
-	float Tbattery_level;
+	// TeslaFi data
+	string tfiVehicle_name = "";
+	string tfiShift_state = "";
+	string tfiConnection_state = "";
+	string tfiCar_state_activity = "";
+	string tfiLocation = "";
+	float tfiInside_temp;
+	float tfiOutside_temp;
+	float tfiDriver_temp_setting;
+	bool tfiIs_climate_on;
+	float tfiUsable_battery_level;
+	float tfiBattery_level;
+
+
+	// Non-TeslaFi Car Data
 	string location = "";
 	string datapack;
 
@@ -31,31 +37,17 @@ private:
 	void wake();
 
 	// Pull data & update map
-	void tfiQueryCar(); 
+	void tfiQueryCar();
 
 	// Verify if at home or work based on lat/lon and tolerance
 	string checkCarLocation();
 
-
-	// TeslaFi data
-	string tfiName = "";
-	string tficarState = "";
-	string tfiConnectionState = "";
-	string tfiShift = "";
-	string tfiLocation = "";
-	string tfiIntTemp = "";
-	string tfiOutTemp = "";
-	string tfiTempSetting = "";
-	string tfiIsHvacOn = "";
-	string tfiUsableBat = "";
-	string tfiBat = "";
-
 public:
 	// URL request with Tesla Fi, URL is anything after tFi URL
 	json tfiInternetOperation(string url = "");
-	
+
 	// Pull data from car, waking the car if requested, updating datapack
-	std::map<string, string> teslaFiGetData(bool wakeCar, bool manualWakeWait);
+	std::map<string, string> tfiGetData(bool wakeCar = false, bool manualWakeWait = false);
 
 	// Returns confirmed heated seat setting, & if max condition is on
 	std::vector<string> coldCheckSet();

@@ -33,7 +33,7 @@ void sleepWithAPIcheck(int totalSleepTime, bool manualWakeWait) {
 		if (!settings::settingsMutexLockSuccess("before checking numberOfSeatsActivateNow")) {
 			throw string("settingsMutex timeout in main thread (before checking numberOfSeatsActivateNow)");
 		}
-		
+
 		// Following code is required or sleepWithAPIcheck won't interupt for manual wake,
 		// which might make you wait up to 1 extra mins for a wake
 		if (settings::numberOfSeatsActivateNow && !manualWakeWait) {
@@ -206,7 +206,7 @@ void DoCrowAPI(car* carPointer) {
 		}
 		lg.d("!!!CROW: settingsMutex LOCKED!!!");
 
-		string carName = lg.prepareOnly(carPointer->Tvehicle_name);
+		string carName = lg.prepareOnly(carPointer->tfiVehicle_name);
 		json["app"]["car_name"] = carName;
 		json["app"]["TCS_version"] = tcs_version;
 		json["app"]["TCS_buildinfo"] = tcs_buildInfo;
@@ -223,14 +223,14 @@ void DoCrowAPI(car* carPointer) {
 
 
 		json[carName]["last_car_data_update"] = lg.prepareOnly(carPointer->tfiDate);
-		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->Tshift_state);
-		json[carName]["state_connection"] = lg.prepareOnly(carPointer->Tconnection_state);
-		json[carName]["climate_temp_inside"] = lg.prepareOnly(carPointer->Tinside_temp);
-		json[carName]["climate_temp_outside"] = lg.prepareOnly(carPointer->Toutside_temp);
-		json[carName]["climate_driver_temp_setting"] = lg.prepareOnly(carPointer->Tdriver_temp_setting);
-		json[carName]["climate_is_on"] = lg.prepareOnly(carPointer->Tis_climate_on);
-		json[carName]["battery_level_usable"] = lg.prepareOnly(carPointer->Tusable_battery_level);
-		json[carName]["battery_level"] = lg.prepareOnly(carPointer->Tbattery_level);
+		json[carName]["state_shift_gear"] = lg.prepareOnly(carPointer->tfiShift_state);
+		json[carName]["state_connection"] = lg.prepareOnly(carPointer->tfiConnection_state);
+		json[carName]["climate_temp_inside"] = lg.prepareOnly(carPointer->tfiInside_temp);
+		json[carName]["climate_temp_outside"] = lg.prepareOnly(carPointer->tfiOutside_temp);
+		json[carName]["climate_driver_temp_setting"] = lg.prepareOnly(carPointer->tfiDriver_temp_setting);
+		json[carName]["climate_is_on"] = lg.prepareOnly(carPointer->tfiIs_climate_on);
+		json[carName]["battery_level_usable"] = lg.prepareOnly(carPointer->tfiUsable_battery_level);
+		json[carName]["battery_level"] = lg.prepareOnly(carPointer->tfiBattery_level);
 		json[carName]["location"] = lg.prepareOnly(carPointer->location);
 
 
@@ -400,7 +400,7 @@ int main()
 
 	int mainLoopCounter = 1;
 
-	Tesla.getData(true); // Wake car and pull all data from it initially for API
+	Tesla.tfiGetData(true); // Wake car and pull all data from it initially for API
 
 	// Start of program, Always loop everything
 	while (true) {
@@ -459,7 +459,7 @@ int main()
 						if (settings::doManualActivateHVAC()) //-> DO a manual HVAC activation now
 						{
 							bool thisIsAManualWake = true;
-							Tesla.getData(true, thisIsAManualWake); // Make sure you have most up to date data with car awake
+							Tesla.tfiGetData(true, thisIsAManualWake); // Make sure you have most up to date data with car awake
 							// This is important for coldCheckSet to work properly for the seats
 
 							// Activate the car's HVAC
@@ -520,7 +520,7 @@ int main()
 						if (actionToDo == "wake")
 						{
 							if (!carAwokenOnce) {
-								Tesla.getData(true); // Wake car and pull all data from it
+								Tesla.tfiGetData(true); // Wake car and pull all data from it
 								if (Tesla.carOnline) {
 									lgw.i("Car is awake and int temp is: " + Tesla.carData_s["inside_temp"]);
 									tempTimeMod = Tesla.calcTempMod(std::stoi(Tesla.carData_s["inside_temp"]));
@@ -544,7 +544,7 @@ int main()
 						}
 						else if ((actionToDo == "home") || (actionToDo == "work"))
 						{
-							Tesla.getData(true); // Make sure you have most up to date data with car awake
+							Tesla.tfiGetData(true); // Make sure you have most up to date data with car awake
 							lgw.i("Event triggered: ", actionToDo, ", car location: ", Tesla.location);
 							if (actionToDo == Tesla.location)
 							{
@@ -632,7 +632,7 @@ int main()
 							// we can assume you're gone thus you didn't call sick
 							if (!shutoffHasBeenCheckedOnce)
 							{
-								Tesla.getData(true); // We must have accurate location for this
+								Tesla.tfiGetData(true); // We must have accurate location for this
 								if (Tesla.location == "home") {
 									// If we're here, car is still home within the set buffer for shutoffTimer
 									// Either you called sick or you're gonna be fucking late. Turn HVAC off
