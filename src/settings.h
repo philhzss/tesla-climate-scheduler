@@ -38,12 +38,6 @@ public:
 	// General Setting
 	// (Seconds) How long to wait before the program loops entirely
 	static int u_repeatDelay;
-	// General Setting
-	// [lat, long] Home coordinates
-	static std::vector<string> u_homeCoords;
-	// General Setting
-	// [lat, long] Work coordinates
-	static std::vector<string> u_workCoords;
 
 
 

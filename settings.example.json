@@ -20,14 +20,6 @@
   },
   "General Settings": {
     "apiPort": 20512,
-    "coordsHome": [
-      "lat",
-      "long"
-    ],
-    "coordsWork": [
-      "lat",
-      "long"
-    ],
     "logToFile": true,
     "repeatDelay": 60,
     "slackChannel": "slack channel URL, or blank if no slack"
@@ -37,9 +29,7 @@
     "encourageDefrost": false,
     "noDefrostAbove": 3
   },
-  "Tesla account settings": {
-    "teslaAccessToken": "init Value - do not modify unless using external authenticator (not yet implemented) for now don't touch this line'",
-    "teslaEmail": "your tesla email, required for auth.py",
-    "teslaRefreshToken": "Paste Here, Generated From External Source"
+  "TeslaFi account settings": {
+    "TeslaFiToken": "Token from Tesla Fi API page"
   }
 }
