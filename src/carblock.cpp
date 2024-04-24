@@ -21,8 +21,6 @@ static Log lg("Carblock", Log::LogLevel::Debug);
 
 std::map<string, string> car::tfiGetData(bool wakeCar, bool manualWakeWait) {
 
-	tfiQueryCar();
-
 	// Check wake status and wake if required
 	if (wakeCar)
 	{
@@ -61,6 +59,9 @@ std::map<string, string> car::tfiGetData(bool wakeCar, bool manualWakeWait) {
 
 		// This is just home-work, cannot directly copy Tfi location in here:
 		carData_s["location_home_or_work"] = location;
+	}
+	else {
+		tfiQueryCar(); // Query as less as possible
 	}
 
 
@@ -217,7 +218,9 @@ void car::wake()
 	if (carOnline) {
 		return;
 	}
-	sleep(5); // No API checking during this sleep
+	sleepWithAPIcheck(25);
+	// Added a lot more time (25 vs 5) to reduce API calls to Tesla Fi, 25 should be enough for wake
+	// Originally said "No API checking during this sleep" but not sure why, lets find out
 	return;
 }
 
