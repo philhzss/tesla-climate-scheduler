@@ -8,15 +8,13 @@ static Log lg("Settings", Log::LogLevel::Debug);
 
 // Settings definitions
 json settings::settingsForm;
-json settings::teslaSettings, settings::calendarSettings, settings::generalSettings, settings::carSettings, settings::tempConfigs;
+json settings::teslaFiSettings, settings::calendarSettings, settings::generalSettings, settings::carSettings, settings::tempConfigs;
 
 // General
 string settings::u_slackChannel;
 bool settings::slackEnabled;
 bool settings::u_logToFile;
 int settings::u_repeatDelay;
-std::vector<string> settings::u_homeCoords;
-std::vector<string> settings::u_workCoords;
 int settings::u_apiPort;
 bool settings::u_allowTriggers;
 bool settings::u_encourageDefrost;
@@ -52,7 +50,7 @@ void settings::readSettings(string silent)
 		stream >> settingsForm;
 
 		// Get the settings cubcategories
-		teslaSettings = settingsForm["TeslaFi account settings"];
+		teslaFiSettings = settingsForm["TeslaFi account settings"];
 		calendarSettings = settingsForm["Calendar Settings"];
 		generalSettings = settingsForm["General Settings"];
 		carSettings = settingsForm["Car settings"];
@@ -64,8 +62,6 @@ void settings::readSettings(string silent)
 			u_slackChannel = generalSettings["slackChannel"];
 			u_logToFile = generalSettings["logToFile"];
 			u_repeatDelay = generalSettings["repeatDelay"];
-			generalSettings["coordsHome"].get_to(u_homeCoords);
-			generalSettings["coordsWork"].get_to(u_workCoords);
 			u_apiPort = generalSettings["apiPort"];
 
 
@@ -87,7 +83,7 @@ void settings::readSettings(string silent)
 			calendarSettings["wordsToIgnore"].get_to(u_wordsToIgnore);
 
 			// TESLAFI ACCOUNT SETTINGS
-			u_tfiToken = teslaSettings["TeslaFiToken"];
+			u_tfiToken = teslaFiSettings["TeslaFiToken"];
 
 			// TEMP CONFIG SETTINGS
 			u_allowTriggers = tempConfigs["allowTriggers"];

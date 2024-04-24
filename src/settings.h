@@ -12,7 +12,7 @@ class settings
 public:
 	static json settingsForm;
 	// Initial breakdown into separate json objects
-	static json teslaSettings, calendarSettings, generalSettings, carSettings, tempConfigs;
+	static json teslaFiSettings, calendarSettings, generalSettings, carSettings, tempConfigs;
 
 	// TeslaFi URL
 	static string tfiURL;
@@ -38,12 +38,6 @@ public:
 	// General Setting
 	// (Seconds) How long to wait before the program loops entirely
 	static int u_repeatDelay;
-	// General Setting
-	// [lat, long] Home coordinates
-	static std::vector<string> u_homeCoords;
-	// General Setting
-	// [lat, long] Work coordinates
-	static std::vector<string> u_workCoords;
 
 
 

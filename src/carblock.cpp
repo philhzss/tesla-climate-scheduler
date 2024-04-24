@@ -207,117 +207,6 @@ void car::tfiQueryCar() {
 
 
 
-// Scheduled for deletion:
-
-//json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
-//{
-//	json responseObject;
-//	bool response_code_ok;
-//	do
-//	{
-//		string fullUrl = settings::teslaOwnerURL + specifiedUrlPage;
-//		const char* const url_to_use = fullUrl.c_str();
-//		// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
-//
-//		CURL* curl;
-//		CURLcode res;
-//		// Buffer to store result temporarily:
-//		string readBuffer;
-//		long response_code;
-//
-//		/* In windows, this will init the winsock stuff */
-//		curl_global_init(CURL_GLOBAL_ALL);
-//
-//		/* get a curl handle */
-//		curl = curl_easy_init();
-//
-//		if (curl) {
-//			/* First set the URL that is about to receive our POST. This URL can
-//			   just as well be a https:// URL if that is what should receive the
-//			   data. */
-//			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
-//
-//			curl_easy_setopt(curl, CURLOPT_USERAGENT, "TCS");
-//			/* Now specify the POST data */
-//			struct curl_slist* headers = nullptr;
-//			// This should only be specified false on teslaAuth as we dont have token yet
-//			headers = curl_slist_append(headers, "Content-Type: application/json");
-//			const char* token_c = settings::teslaAuthString.c_str();
-//			lg.p("Sending auth header: " + settings::teslaAuthString);
-//			headers = curl_slist_append(headers, token_c);
-//
-//
-//			// Serialize the body/package json to string
-//			string data = bodyPackage.dump();
-//			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-//			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
-//			curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
-//			curl_easy_setopt(curl, CURLOPT_POST, 1);
-//			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-//			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-//			curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
-//
-//
-//			/* Perform the request, res will get the return code */
-//			res = curl_easy_perform(curl);
-//			/* Check for errors */
-//			if (res != CURLE_OK)
-//			{
-//				fprintf(stderr, "curl_easy_perform() failed: %s\n",
-//					curl_easy_strerror(res));
-//				lg.p("Before error throw, curl error code: ", res);
-//				lg.d(curl_easy_strerror(res));
-//
-//				/* always cleanup */
-//				curl_easy_cleanup(curl);
-//				curl_global_cleanup();
-//
-//				if (res == 28) {
-//					lg.d("The error is a curl 28 timeout error, continuing");
-//					response_code_ok = false;
-//					continue;
-//				}
-//				else {
-//					lg.d("The error is NOT a curl 28 timeout error, throwing string");
-//					throw string("curl_easy_perform() failed: " + std::to_string(res));
-//				}
-//			}
-//
-//			if (res == CURLE_OK) {
-//				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-//				lg.i(response_code, "=response code for ", fullUrl);
-//				lg.p("readBuffer (before jsonify): " + readBuffer);
-//
-//				if (response_code != 200)
-//				{
-//					lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
-//					lg.d("readBuffer for incorrect: " + readBuffer);
-//					response_code_ok = false;
-//					lg.i("Waiting 30 secs and retrying (teslaPOST)");
-//					sleepWithAPIcheck(30); // wait a little before redoing the curl request
-//					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
-//					continue;
-//				}
-//				else {
-//					response_code_ok = true;
-//				}
-//			}
-//
-//			/* always cleanup */
-//			curl_easy_cleanup(curl);
-//		}
-//		curl_global_cleanup();
-//		lg.d("TeslaPOST readBuffer passed to jsonObject (res should be 200 success)");
-//		json jsonReadBuffer = json::parse(readBuffer);
-//		// Inside "response" is an array, the first item is what contains the response:
-//		responseObject = jsonReadBuffer["response"];
-//	} while (!response_code_ok);
-//	return responseObject;
-//}
-
-
-
-
 void car::wake()
 {
 	lg.b();
@@ -448,11 +337,13 @@ std::vector<string> car::coldCheckSet()
 	// Send the heat-seat request, turning the heated seat off if it's hot enough
 	json seat_result = tfiInternetOperation("&command=seat_heater&heater=0&level=" + std::to_string(requestedSeatHeat));
 
+	// Scheduled for deletion
 	// If seats should be 0, turn off ALL heated seats in car
 	// Currently disabled because it seems Tesla Fi can't heat anything other than the drivers seat?
 	/*if (requestedSeatHeat == 0) {
 		for (int seatNumber = 1; seatNumber <= 4; seatNumber++) {
-			teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", seatNumber}, {"level", requestedSeatHeat } });
+			And in any case when you do this, just use climate preset with all seats 0?? This code is probably useless
+			
 		}
 	} */
 
