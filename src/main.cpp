@@ -197,6 +197,22 @@ void DoCrowAPI(car* carPointer) {
 	lg.d("Crow Thread ID: ", std::this_thread::get_id());
 	crow::SimpleApp app; //define your crow application
 
+
+	// TEST
+	CROW_ROUTE(app, "/")
+		.methods(crow::HTTPMethod::Post)
+		([](const crow::request& req) {
+		// Process the webhook payload
+		std::string post_data = req.body;
+		// Print the webhook payload
+		std::cout << "Received webhook payload:\n" << post_data << std::endl;
+
+		// Send a simple acknowledgment response
+		return crow::response(200, "Webhook received successfully");
+			});
+
+
+
 	//define your endpoint at the root directory
 	CROW_ROUTE(app, "/api")([carPointer]() {
 		crow::json::wvalue json;
