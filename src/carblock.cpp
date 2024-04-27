@@ -19,49 +19,12 @@ using std::string;
 static Log lg("Carblock", Log::LogLevel::Debug);
 
 
-void car::teslaAuth()
-{
-	/* This should be set to false if you want TCS to use TeslaPy Authorization
-	* (built-in). If you want to provied your own access-token, set to true
-	*/
-	bool usingExternalAuthToken = false;
-
-
-	// Get the mutex before touching settings.json
-	if (!settings::settingsMutexLockSuccess("before running python3 auth.py", 10)) {
-		throw string("settingsMutex timeout in main thread (before running python3 auth.py)");
-	}
-	lg.d("!!!MAIN: settingsMutex LOCKED (before running python3 auth.py)!!!");
-
-
-	if (usingExternalAuthToken) {
-		// Do nothing
-	}
-	else
-	{
-		// Actually RUN the auth script
-		// Requires teslaEmail in tesla.json!!!
-		lg.d("Running python3 auth.py to update tokens");
-		int systemResult = system("python3 auth.py"); // Use the refresh token to get an access token
-		lg.d("Result of python3 auth.py: ", systemResult);
-		settings::readSettings("silent"); // Read the new access token from settings.json
-	}
-
-	// Release the mutex
-	settings::settingsMutex.unlock();
-	lg.d("settingsMutex UNLOCKED after python3 updated auth data");
-
-	return;
-
-}
 
 
 std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 {
 	json teslaGetData;
-	// Get token from Tesla servers and store it in settings cpp
-	// This must be run before everything else
-	car::teslaAuth();
+
 
 	// Get Tesla vehicleS state and vID
 	try
@@ -280,7 +243,6 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 					response_code_ok = false;
 					lg.i("Waiting 30 secs and retrying (teslaPOST)");
 					sleepWithAPIcheck(30); // wait a little before redoing the curl request
-					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
 					continue;
 				}
 				else {
@@ -384,10 +346,9 @@ json car::teslaGET(string specifiedUrlPage)
 					}
 					lg.d("readBuffer for incorrect: " + readBuffer);
 					response_code_ok = false;
-					lg.i("Waiting 5 secs and retrying (teslaGET)");
-					sleepWithAPIcheck(5); // wait a little before redoing the curl request
+					lg.i("Waiting 55555 secs and retrying (teslaGET)");
+					sleepWithAPIcheck(55555); // wait a little before redoing the curl request
 					// Are we sleeping with API check while having mutex LOCKED?
-					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
 					continue;
 
 				}

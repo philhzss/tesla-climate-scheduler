@@ -52,8 +52,7 @@ public:
 
 private:
 	void wake();
-	// Write token to settings::teslaAuthString for Tesla official API usage
-	void teslaAuth();
+
 
 
 

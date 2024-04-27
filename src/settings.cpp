@@ -41,13 +41,7 @@ int settings::u_shiftEndBias;
 int settings::u_commuteTime;
 std::vector<string> settings::u_wordsToIgnore;
 // Tesla
-string settings::teslaOwnerURL;
-string settings::teslaAuthURL;
-string settings::teslaVURL;
-string settings::teslaVID;
-string settings::teslaAuthString;
-string settings::u_teslaAccessToken;
-string settings::u_teslaRefreshToken;
+
 
 
 void settings::readSettings(string silent)
@@ -92,8 +86,7 @@ void settings::readSettings(string silent)
 			calendarSettings["wordsToIgnore"].get_to(u_wordsToIgnore);
 
 			// TESLA ACCOUNT SETTINGS
-			u_teslaAccessToken = teslaSettings["teslaAccessToken"];
-			u_teslaRefreshToken = teslaSettings["teslaRefreshToken"];
+
 
 			// TEMP CONFIG SETTINGS
 			u_allowTriggers = tempConfigs["allowTriggers"];
@@ -101,7 +94,7 @@ void settings::readSettings(string silent)
 			u_noDefrostAbove = tempConfigs["noDefrostAbove"];
 
 			// Get and set the auth string directly from settings
-			settings::teslaAuthString = "Authorization: Bearer " + u_teslaAccessToken;
+			// settings::teslaAuthString = "Authorization: Bearer " + u_teslaAccessToken;
 
 			lg.b();
 			lg.d("Settings file settings.json successfully read.");
@@ -179,8 +172,7 @@ void settings::readSettings(string silent)
 		lg.b();
 	}
 
-	teslaOwnerURL = "https://owner-api.teslamotors.com/";
-	teslaAuthURL = "https://auth.tesla.com/oauth2/v3/";
+	// Teslemetry URL
 	// Note: Tesla VID and VURL defined in carblock
 
 	// Default to the bare minimum (2mins is tempTimeMod min) to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.
