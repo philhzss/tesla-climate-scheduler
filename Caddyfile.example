@@ -1,0 +1,7 @@
+your.domain.name.net:20513
+
+log {
+	level DEBUG
+}
+
+reverse_proxy :20512
