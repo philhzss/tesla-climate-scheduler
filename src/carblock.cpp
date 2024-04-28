@@ -16,7 +16,7 @@ using std::string;
 
 
 // Log file name for console messages
-static Log lg("Carblock", Log::LogLevel::Debug);
+static Log lg("Carblock", Log::LogLevel::Programming);
 
 
 
@@ -29,7 +29,7 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 	// Get Tesla vehicleS state and vID
 	try
 	{
-		teslaGetData = car::teslaGET("api/1/vehicles");
+		teslaGetData = car::teslaGET("vehicle_data");
 		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
 	}
 	catch (string e)
@@ -50,16 +50,19 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 	}
 	lg.d("!!!MAIN: settingsMutex LOCKED (before first teslaGET in getData)!!!");
 
-	Tconnection_state = teslaGetData["state"];
-	carOnline = (Tconnection_state == "online") ? true : false;
-	// Store VID and VURL in settings
-	settings::teslaVID = teslaGetData["id_s"];
-	settings::teslaVURL = "api/1/vehicles/" + settings::teslaVID + "/";
-
-	// State and vehicle ID always obtained, even if wakeCar false
-	carData_s["vehicle_id"] = settings::teslaVID;
-	carData_s["state"] = Tconnection_state;
+	// Check if we got the full API response
+	if (teslaGetData["response"] != "null") {
+		Tconnection_state = teslaGetData["response"]["state"];
+		carOnline = (Tconnection_state == "online") ? true : false;
+	}
+	else {
+		// If here, we can assume car is offline or asleep
+		lg.i("error");
+		carOnline = false;
+	}
+	
 	carData_s["Car awake"] = std::to_string(carOnline);
+
 
 	settings::settingsMutex.unlock();
 	lg.d("settingsMutex UNLOCKED before waking car");
@@ -79,10 +82,10 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 		}
 
 		// Now that the car is online, we can get more data
-		json response = teslaGET(settings::teslaVURL + "vehicle_data");
+		json response = teslaGET("vehicle_data");
 
 		// New endpoint required for location data
-		json responseDrive = teslaGET(settings::teslaVURL + "vehicle_data?endpoints=location_data");
+		json responseDrive = teslaGET("vehicle_data?endpoints=location_data");
 			
 		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
 		// Get the mutex before getting more data
@@ -163,7 +166,7 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 	bool response_code_ok;
 	do
 	{
-		string fullUrl = settings::teslaOwnerURL + specifiedUrlPage;
+		string fullUrl = settings::teslemURL + specifiedUrlPage;
 		const char* const url_to_use = fullUrl.c_str();
 		// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
 
@@ -185,15 +188,14 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 			   data. */
 			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
 
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, "TCS");
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, tcs_userAgent.c_str());
 			/* Now specify the POST data */
 			struct curl_slist* headers = nullptr;
 			// This should only be specified false on teslaAuth as we dont have token yet
 			headers = curl_slist_append(headers, "Content-Type: application/json");
-			const char* token_c = settings::teslaAuthString.c_str();
-			lg.p("Sending auth header: " + settings::teslaAuthString);
-			headers = curl_slist_append(headers, token_c);
-
+			lg.p("Sending auth header: " + settings::authHeader);
+			const char* authHeader_c = settings::authHeader.c_str();
+			headers = curl_slist_append(headers, authHeader_c);
 
 			// Serialize the body/package json to string
 			string data = bodyPackage.dump();
@@ -269,7 +271,7 @@ json car::teslaGET(string specifiedUrlPage)
 	bool response_code_ok;
 	do
 	{
-		string fullUrl = settings::teslaOwnerURL + specifiedUrlPage;
+		string fullUrl = settings::teslemURL + specifiedUrlPage;
 		const char* const url_to_use = fullUrl.c_str();
 		CURL* curl;
 		CURLcode res;
@@ -283,15 +285,16 @@ json car::teslaGET(string specifiedUrlPage)
 
 
 			// Header for already authorized request
-			const char* authHeaderC = settings::teslaAuthString.c_str();
 			struct curl_slist* headers = nullptr;
-			headers = curl_slist_append(headers, authHeaderC);
+			lg.p("Sending auth header: " + settings::authHeader);
+			const char* authHeader_c = settings::authHeader.c_str();
+			headers = curl_slist_append(headers, authHeader_c);
 			headers = curl_slist_append(headers, "Content-Type: application/json");
 			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
 
 			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, "Tesla Climate Scheduler/3.0.5"); // add variable v number
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, tcs_userAgent.c_str());
 
 			/* use a GET to fetch this */
 			curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
@@ -346,8 +349,8 @@ json car::teslaGET(string specifiedUrlPage)
 					}
 					lg.d("readBuffer for incorrect: " + readBuffer);
 					response_code_ok = false;
-					lg.i("Waiting 55555 secs and retrying (teslaGET)");
-					sleepWithAPIcheck(55555); // wait a little before redoing the curl request
+					lg.i("Waiting 5 secs and retrying (teslaGET)");
+					sleepWithAPIcheck(5); // wait a little before redoing the curl request
 					// Are we sleeping with API check while having mutex LOCKED?
 					continue;
 
@@ -381,53 +384,16 @@ json car::teslaGET(string specifiedUrlPage)
 void car::wake()
 {
 	lg.b();
-	json wake_result = teslaPOST(settings::teslaVURL + "wake_up");
-	string state_after_wake = wake_result["state"];
-	lg.d("Wake command sent while state was: " + state_after_wake);
-	carOnline = (state_after_wake == "online") ? true : false;
+	json wake_result = teslaPOST("wake_up");
+	string init_state_after_wake = wake_result["response"]["state"];
+	lg.d("Wake command sent while state was: " + init_state_after_wake);
+	carOnline = (init_state_after_wake == "online") ? true : false;
 	if (carOnline) {
-		// add a delay here of X seconds to make sure Tinside_temp is accurate? v3.0.4.1 debug
 		return;
 	}
 	sleep(5); // No API checking during this sleep
 	return;
 }
-
-
-
-static
-void dump(const char* text,
-	FILE* stream, unsigned char* ptr, size_t size)
-{
-	size_t i;
-	size_t c;
-	unsigned int width = 0x10;
-
-	fprintf(stream, "%s, %10.10ld bytes (0x%8.8lx)\n",
-		text, (long)size, (long)size);
-
-	for (i = 0; i < size; i += width) {
-		fprintf(stream, "%4.4lx: ", (long)i);
-
-		/* show hex to the left */
-		for (c = 0; c < width; c++) {
-			if (i + c < size)
-				fprintf(stream, "%02x ", ptr[i + c]);
-			else
-				fputs("   ", stream);
-		}
-
-		/* show data on the right */
-		for (c = 0; (c < width) && (i + c < size); c++) {
-			char x = (ptr[i + c] >= 0x20 && ptr[i + c] < 0x80) ? ptr[i + c] : '.';
-			fputc(x, stream);
-		}
-
-		fputc('\n', stream); /* newline */
-	}
-}
-
-
 
 
 
@@ -571,13 +537,23 @@ std::vector<string> car::coldCheckSet()
 		requestedSeatHeat = 0;
 	}
 
+	// VERIFY SEAT HEATER ENDPOINTS
+	// VERIFY SEAT HEATER ENDPOINTS
+	// VERIFY SEAT HEATER ENDPOINTS
+	// VERIFY SEAT HEATER ENDPOINTS
+	// VERIFY SEAT HEATER ENDPOINTS
+	// VERIFY SEAT HEATER ENDPOINTS
+	// VERIFY SEAT HEATER ENDPOINTS
+	// VERIFY SEAT HEATER ENDPOINTS
+
+
 	// Send the heat-seat request, turning the heated seat off if it's hot enough
-	json seat_result = teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", 0}, {"level", requestedSeatHeat } });
+	json seat_result = teslaPOST("remote_seat_heater_request", json{ {"heater", 0}, {"level", requestedSeatHeat } });
 
 	// If seats should be 0, turn off ALL heated seats in car
 	if (requestedSeatHeat == 0) {
 		for (int seatNumber = 1; seatNumber <= 4; seatNumber++) {
-			teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", seatNumber}, {"level", requestedSeatHeat } });
+			teslaPOST("remote_seat_heater_request", json{ {"heater", seatNumber}, {"level", requestedSeatHeat } });
 		}
 	}
 
@@ -592,7 +568,7 @@ std::vector<string> car::coldCheckSet()
 
 	if (Tinside_temp <= -10 || (settings::u_encourageDefrost && (Tinside_temp <= settings::u_noDefrostAbove)))
 	{
-		json jdefrost_result = teslaPOST(settings::teslaVURL + "command/set_preconditioning_max", json{ {"on", true } });
+		json jdefrost_result = teslaPOST("set_preconditioning_max", json{ {"on", true } });
 		max_defrost_on = jdefrost_result["result"];
 	}
 	lg.d("Tinside_temp: ", Tinside_temp, ", encourageDefrost: ", settings::u_encourageDefrost);
@@ -601,35 +577,4 @@ std::vector<string> car::coldCheckSet()
 	resultVector.push_back(std::to_string(max_defrost_on));
 	lg.d("resultVector, seat: ", resultVector[0], "// defrost_on: ", resultVector[1]);
 	return resultVector;
-}
-
-// Could be global util?
-string authorizer::random_ANstring() {
-	srand((unsigned int)time(NULL));
-	auto randchar = []() -> char
-	{
-		const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-		const size_t max_index = (sizeof(charset) - 1);
-		return charset[rand() % max_index];
-	};
-	string str(86, 0);
-	std::generate_n(str.begin(), 86, randchar);
-	return str;
-}
-
-// Could be global util?
-size_t authorizer::stringCount(const std::string& referenceString,
-	const std::string& subString) {
-
-	const size_t step = subString.size();
-
-	size_t count(0);
-	size_t pos(0);
-
-	while ((pos = referenceString.find(subString, pos)) != std::string::npos) {
-		pos += step;
-		++count;
-	}
-
-	return count;
 }

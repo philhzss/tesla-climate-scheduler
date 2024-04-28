@@ -44,7 +44,7 @@ std::vector<string> settings::u_wordsToIgnore;
 string settings::u_teslemToken;
 string settings::u_teslaVIN;
 string settings::teslemURL;
-const char* settings::auth_headerC;
+string settings::authHeader;
 
 
 void settings::readSettings(string silent)
@@ -98,7 +98,7 @@ void settings::readSettings(string silent)
 			u_noDefrostAbove = tempConfigs["noDefrostAbove"];
 
 			// Get and set the auth string directly from settings
-			settings::auth_headerC = ("Authorization: Bearer " + u_teslemToken).c_str();
+			settings::authHeader = "Authorization: Bearer " + u_teslemToken;
 
 
 			lg.b();
@@ -178,7 +178,7 @@ void settings::readSettings(string silent)
 	}
 
 	// Teslemetry URL
-	teslemURL == "https://api.teslemetry.com/api/1/vehicles/" + u_teslaVIN + "/";
+	teslemURL = "https://api.teslemetry.com/api/1/vehicles/" + u_teslaVIN + "/";
 
 
 	// Default to the bare minimum (2mins is tempTimeMod min) to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.

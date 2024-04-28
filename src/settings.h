@@ -16,7 +16,7 @@ public:
 
 
 	// Important stuff, Teslemetry Token
-	static const char* auth_headerC;
+	static string authHeader;
 	static string teslemURL;
 	
 
