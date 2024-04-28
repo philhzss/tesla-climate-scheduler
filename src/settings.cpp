@@ -41,7 +41,10 @@ int settings::u_shiftEndBias;
 int settings::u_commuteTime;
 std::vector<string> settings::u_wordsToIgnore;
 // Tesla
-
+string settings::u_teslemToken;
+string settings::u_teslaVIN;
+string settings::teslemURL;
+const char* settings::auth_headerC;
 
 
 void settings::readSettings(string silent)
@@ -86,7 +89,8 @@ void settings::readSettings(string silent)
 			calendarSettings["wordsToIgnore"].get_to(u_wordsToIgnore);
 
 			// TESLA ACCOUNT SETTINGS
-
+			u_teslemToken = teslaSettings["Teslemetry Access Token"];
+			u_teslaVIN = teslaSettings["VIN"];
 
 			// TEMP CONFIG SETTINGS
 			u_allowTriggers = tempConfigs["allowTriggers"];
@@ -94,7 +98,8 @@ void settings::readSettings(string silent)
 			u_noDefrostAbove = tempConfigs["noDefrostAbove"];
 
 			// Get and set the auth string directly from settings
-			// settings::teslaAuthString = "Authorization: Bearer " + u_teslaAccessToken;
+			settings::auth_headerC = ("Authorization: Bearer " + u_teslemToken).c_str();
+
 
 			lg.b();
 			lg.d("Settings file settings.json successfully read.");
@@ -144,7 +149,7 @@ void settings::readSettings(string silent)
 			string endKw;
 			startKw = (shiftStartTimer < 0) ? "BEFORE" : "AFTER";
 			endKw = (shiftEndTimer < 0) ? "BEFORE" : "AFTER";
-			
+
 			if (u_allowTriggers) {
 				lg.b("\nCar will be ready for driving: \n", abs(shiftStartTimer), " minutes ", startKw, " calendar event start time."
 					"\n", abs(shiftEndTimer), " minutes ", endKw, " calendar event end time."
@@ -173,7 +178,8 @@ void settings::readSettings(string silent)
 	}
 
 	// Teslemetry URL
-	// Note: Tesla VID and VURL defined in carblock
+	teslemURL == "https://api.teslemetry.com/api/1/vehicles/" + u_teslaVIN + "/";
+
 
 	// Default to the bare minimum (2mins is tempTimeMod min) to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.
 	triggerTimer = 2;
@@ -255,7 +261,7 @@ void settings::writeSettings(string key, bool value)
 	file << std::setw(4) << settingsForm;
 	file.close();
 
-	lg.d("Wrote ",key, ":",value, " to Temporary Configurables");
+	lg.d("Wrote ", key, ":", value, " to Temporary Configurables");
 
 	readSettings("silent"); // Re-update the settings in program from file
 }

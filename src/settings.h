@@ -16,7 +16,9 @@ public:
 
 
 	// Important stuff, Teslemetry Token
-
+	static const char* auth_headerC;
+	static string teslemURL;
+	
 
 	// Parse settings.json and save its contents in the program's memory
 	static void readSettings(string silent = "");
@@ -43,6 +45,14 @@ public:
 	// General Setting
 	// [lat, long] Work coordinates
 	static std::vector<string> u_workCoords;
+
+
+	// Tesla Account Setting
+	// Teslemetry Token from console
+	static string u_teslemToken;
+	// Tesla VIN (also available in Teslemtry console
+	static string u_teslaVIN;
+
 
 
 

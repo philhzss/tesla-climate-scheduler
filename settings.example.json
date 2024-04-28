@@ -38,6 +38,7 @@
     "noDefrostAbove": 3
   },
   "Tesla account settings": {
-    "placeholder": "placeholder"
+    "Teslemetry Access Token": "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "VIN": "xxxxxxxxxxxxxxxxx"
   }
 }
