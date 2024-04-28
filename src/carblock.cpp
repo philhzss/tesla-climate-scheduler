@@ -52,7 +52,11 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 
 	// Check if we got the full API response
 	if (teslaGetData["response"] != "null") {
-		Tconnection_state = teslaGetData["response"]["state"];
+		
+		
+		// PROBLEM HERE: The full response when sleeping does not contain ["state"] anymore
+		
+		Tconnection_state = teslaGetData["response"]["state"];// <<----------------
 		carOnline = (Tconnection_state == "online") ? true : false;
 	}
 	else {
