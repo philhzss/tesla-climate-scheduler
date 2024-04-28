@@ -60,7 +60,7 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 		lg.i("error");
 		carOnline = false;
 	}
-	
+
 	carData_s["Car awake"] = std::to_string(carOnline);
 
 
@@ -86,7 +86,7 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 
 		// New endpoint required for location data
 		json responseDrive = teslaGET("vehicle_data?endpoints=location_data");
-			
+
 		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
 		// Get the mutex before getting more data
 		if (!settings::settingsMutexLockSuccess("before teslaGET CAR AWOKEN in getData")) {
@@ -238,14 +238,52 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 				lg.i(response_code, "=response code for ", fullUrl);
 				lg.p("readBuffer (before jsonify): " + readBuffer);
 
+
+
+
 				if (response_code != 200)
 				{
-					lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
-					lg.d("readBuffer for incorrect: " + readBuffer);
-					response_code_ok = false;
-					lg.i("Waiting 30 secs and retrying (teslaPOST)");
-					sleepWithAPIcheck(30); // wait a little before redoing the curl request
-					continue;
+					// If not 200, maybe a problem
+					if (timeoutButSleeping(readBuffer)) {
+						// But if we're just timed out but sleeping, no problem
+						response_code_ok = true;
+					}
+					else {
+						lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
+
+					}
+				}
+
+
+
+
+				if (response_code != 200)
+				{
+					// If not 200, maybe a problem
+					if (timeoutButSleeping(readBuffer)) {
+						// But if we're just timed out but sleeping, no problem
+						response_code_ok = true;
+					}
+					else {
+						lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
+						if (response_code == 408) {
+							lg.i("TIMEOUT");
+						}
+						else if (response_code == 401) {
+							lg.i("UNAUTHORIZED");
+						}
+						else if (response_code == 503) {
+							lg.i("SERVICE UNAVAILABLE");
+						}
+						else {
+							lg.in("IS TOKEN EXPIRED???");
+						}
+						lg.d("readBuffer for incorrect: " + readBuffer);
+						response_code_ok = false;
+						lg.i("Waiting 30 secs and retrying (teslaPOST)");
+						sleepWithAPIcheck(30); // wait a little before redoing the curl request
+						continue;
+					}
 				}
 				else {
 					response_code_ok = true;
@@ -334,26 +372,32 @@ json car::teslaGET(string specifiedUrlPage)
 
 				if (response_code != 200)
 				{
-					lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
-					if (response_code == 408) {
-						lg.i("TIMEOUT");
-					}
-					else if (response_code == 401) {
-						lg.i("UNAUTHORIZED");
-					}
-					else if (response_code == 503) {
-						lg.i("SERVICE UNAVAILABLE");
+					// If not 200, maybe a problem
+					if (timeoutButSleeping(readBuffer)) {
+						// But if we're just timed out but sleeping, no problem
+						response_code_ok = true;
 					}
 					else {
-						lg.in("IS TOKEN EXPIRED???");
+						lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
+						if (response_code == 408) {
+							lg.i("TIMEOUT");
+						}
+						else if (response_code == 401) {
+							lg.i("UNAUTHORIZED");
+						}
+						else if (response_code == 503) {
+							lg.i("SERVICE UNAVAILABLE");
+						}
+						else {
+							lg.in("IS TOKEN EXPIRED???");
+						}
+						lg.d("readBuffer for incorrect: " + readBuffer);
+						response_code_ok = false;
+						lg.i("Waiting 5 secs and retrying (teslaGET)");
+						sleepWithAPIcheck(5); // wait a little before redoing the curl request
+						// Are we sleeping with API check while having mutex LOCKED?
+						continue;
 					}
-					lg.d("readBuffer for incorrect: " + readBuffer);
-					response_code_ok = false;
-					lg.i("Waiting 5 secs and retrying (teslaGET)");
-					sleepWithAPIcheck(5); // wait a little before redoing the curl request
-					// Are we sleeping with API check while having mutex LOCKED?
-					continue;
-
 				}
 				else {
 					response_code_ok = true;
@@ -577,4 +621,10 @@ std::vector<string> car::coldCheckSet()
 	resultVector.push_back(std::to_string(max_defrost_on));
 	lg.d("resultVector, seat: ", resultVector[0], "// defrost_on: ", resultVector[1]);
 	return resultVector;
+}
+
+
+bool car::timeoutButSleeping(string readBuffer) {
+	size_t exists = readBuffer.find("vehicle unavailable");
+	return (exists != string::npos) ? true : false;
 }

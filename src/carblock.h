@@ -29,7 +29,7 @@ public:
 private:
 	void wake();
 
-
+	bool timeoutButSleeping(string readBuffer);
 
 
 	// Verify if at home or work based on lat/lon and tolerance
