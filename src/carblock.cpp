@@ -630,5 +630,5 @@ std::vector<string> car::coldCheckSet()
 
 bool car::timeoutButSleeping(string readBuffer) {
 	size_t exists = readBuffer.find("vehicle unavailable");
-	return (exists != string::npos) ? true : false;
+	return exists != string::npos;
 }
