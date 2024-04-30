@@ -197,6 +197,22 @@ void DoCrowAPI(car* carPointer) {
 	lg.d("Crow Thread ID: ", std::this_thread::get_id());
 	crow::SimpleApp app; //define your crow application
 
+
+	// TEST
+	CROW_ROUTE(app, "/")
+		.methods(crow::HTTPMethod::Post)
+		([](const crow::request& req) {
+		// Process the webhook payload
+		std::string post_data = req.body;
+		// Print the webhook payload
+		std::cout << "Received webhook payload:\n" << post_data << std::endl;
+
+		// Send a simple acknowledgment response
+		return crow::response(200, "Webhook received successfully");
+			});
+
+
+
 	//define your endpoint at the root directory
 	CROW_ROUTE(app, "/api")([carPointer]() {
 		crow::json::wvalue json;
@@ -359,6 +375,7 @@ void DoCrowAPI(car* carPointer) {
 	app.port(settings::u_apiPort).multithreaded().run();
 	// app.port(30512).multithreaded().run();
 	// 20512 main port, 30512 test port to not interfere with running version
+	
 }
 
 
@@ -463,7 +480,7 @@ int main()
 							// This is important for coldCheckSet to work properly for the seats
 
 							// Activate the car's HVAC
-							json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
+							json hvac_result = Tesla.teslaPOST("auto_conditioning_start");
 							bool state_after_hvac = hvac_result["result"]; // should return true
 
 							std::vector<string> seats_defrost = Tesla.coldCheckSet();
@@ -554,7 +571,7 @@ int main()
 									string triggerAllowedRes = Tesla.triggerAllowed();
 									if (triggerAllowedRes == "continue") {
 
-										json hvac_result = Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_start");
+										json hvac_result = Tesla.teslaPOST("auto_conditioning_start");
 										bool state_after_hvac = hvac_result["result"]; // should return true
 
 										std::vector<string> seats_defrost = Tesla.coldCheckSet();
@@ -636,7 +653,7 @@ int main()
 								if (Tesla.location == "home") {
 									// If we're here, car is still home within the set buffer for shutoffTimer
 									// Either you called sick or you're gonna be fucking late. Turn HVAC off
-									Tesla.teslaPOST(settings::teslaVURL + "command/auto_conditioning_stop");
+									Tesla.teslaPOST("auto_conditioning_stop");
 									lgw.in("HVAC SHUTOFF, car still home!", Tesla.datapack);
 								}
 								// Wether HVAC was shutoff or not, we don't need to check for shutoff anymore:

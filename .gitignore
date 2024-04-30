@@ -11,6 +11,7 @@
 
 # My settings file (sensitive)
 settings.json
+Caddyfile
 
 # Visual Studio stuff
 /obj

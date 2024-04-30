@@ -19,54 +19,17 @@ using std::string;
 static Log lg("Carblock", Log::LogLevel::Debug);
 
 
-void car::teslaAuth()
-{
-	/* This should be set to false if you want TCS to use TeslaPy Authorization
-	* (built-in). If you want to provied your own access-token, set to true
-	*/
-	bool usingExternalAuthToken = false;
-
-
-	// Get the mutex before touching settings.json
-	if (!settings::settingsMutexLockSuccess("before running python3 auth.py", 10)) {
-		throw string("settingsMutex timeout in main thread (before running python3 auth.py)");
-	}
-	lg.d("!!!MAIN: settingsMutex LOCKED (before running python3 auth.py)!!!");
-
-
-	if (usingExternalAuthToken) {
-		// Do nothing
-	}
-	else
-	{
-		// Actually RUN the auth script
-		// Requires teslaEmail in tesla.json!!!
-		lg.d("Running python3 auth.py to update tokens");
-		int systemResult = system("python3 auth.py"); // Use the refresh token to get an access token
-		lg.d("Result of python3 auth.py: ", systemResult);
-		settings::readSettings("silent"); // Read the new access token from settings.json
-	}
-
-	// Release the mutex
-	settings::settingsMutex.unlock();
-	lg.d("settingsMutex UNLOCKED after python3 updated auth data");
-
-	return;
-
-}
 
 
 std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 {
 	json teslaGetData;
-	// Get token from Tesla servers and store it in settings cpp
-	// This must be run before everything else
-	car::teslaAuth();
+
 
 	// Get Tesla vehicleS state and vID
 	try
 	{
-		teslaGetData = car::teslaGET("api/1/vehicles");
+		teslaGetData = car::teslaGET("vehicle_data");
 		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
 	}
 	catch (string e)
@@ -87,16 +50,19 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 	}
 	lg.d("!!!MAIN: settingsMutex LOCKED (before first teslaGET in getData)!!!");
 
-	Tconnection_state = teslaGetData["state"];
-	carOnline = (Tconnection_state == "online") ? true : false;
-	// Store VID and VURL in settings
-	settings::teslaVID = teslaGetData["id_s"];
-	settings::teslaVURL = "api/1/vehicles/" + settings::teslaVID + "/";
+	// Check if we got the full API response, if not then car is not awake / connected
+	if (timeoutButSleeping(teslaGetData.dump())) {
 
-	// State and vehicle ID always obtained, even if wakeCar false
-	carData_s["vehicle_id"] = settings::teslaVID;
-	carData_s["state"] = Tconnection_state;
+		// If here, "vehicle unavailable: vehicle is offline or asleep"		
+		carOnline = false;
+	}
+	else {
+		// If here, teslaGetData does not contain "vehicle unavailable"
+		carOnline = true;
+	}
+
 	carData_s["Car awake"] = std::to_string(carOnline);
+
 
 	settings::settingsMutex.unlock();
 	lg.d("settingsMutex UNLOCKED before waking car");
@@ -116,11 +82,11 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 		}
 
 		// Now that the car is online, we can get more data
-		json response = teslaGET(settings::teslaVURL + "vehicle_data");
+		json response = teslaGET("vehicle_data");
 
 		// New endpoint required for location data
-		json responseDrive = teslaGET(settings::teslaVURL + "vehicle_data?endpoints=location_data");
-			
+		json responseDrive = teslaGET("vehicle_data?endpoints=location_data");
+
 		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
 		// Get the mutex before getting more data
 		if (!settings::settingsMutexLockSuccess("before teslaGET CAR AWOKEN in getData")) {
@@ -196,11 +162,14 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 
 json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 {
-	json responseObject;
+	json jsonReadBuffer;
 	bool response_code_ok;
 	do
 	{
-		string fullUrl = settings::teslaOwnerURL + specifiedUrlPage;
+		// We need "command/" for every single command except wake_up
+		if (specifiedUrlPage != "wake_up") { specifiedUrlPage = "command/" + specifiedUrlPage; }
+
+		string fullUrl = settings::teslemURL + specifiedUrlPage;
 		const char* const url_to_use = fullUrl.c_str();
 		// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
 
@@ -222,15 +191,14 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 			   data. */
 			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
 
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, "TCS");
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, tcs_userAgent.c_str());
 			/* Now specify the POST data */
 			struct curl_slist* headers = nullptr;
 			// This should only be specified false on teslaAuth as we dont have token yet
 			headers = curl_slist_append(headers, "Content-Type: application/json");
-			const char* token_c = settings::teslaAuthString.c_str();
-			lg.p("Sending auth header: " + settings::teslaAuthString);
-			headers = curl_slist_append(headers, token_c);
-
+			lg.p("Sending auth header: " + settings::authHeader);
+			const char* authHeader_c = settings::authHeader.c_str();
+			headers = curl_slist_append(headers, authHeader_c);
 
 			// Serialize the body/package json to string
 			string data = bodyPackage.dump();
@@ -267,21 +235,53 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 					throw string("curl_easy_perform() failed: " + std::to_string(res));
 				}
 			}
-
 			if (res == CURLE_OK) {
 				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
 				lg.i(response_code, "=response code for ", fullUrl);
 				lg.p("readBuffer (before jsonify): " + readBuffer);
 
+
 				if (response_code != 200)
 				{
-					lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
-					lg.d("readBuffer for incorrect: " + readBuffer);
-					response_code_ok = false;
-					lg.i("Waiting 30 secs and retrying (teslaPOST)");
-					sleepWithAPIcheck(30); // wait a little before redoing the curl request
-					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
-					continue;
+					// If not 200, maybe a problem
+					if (timeoutButSleeping(readBuffer)) {
+						// But if we're just timed out but sleeping, no problem
+						response_code_ok = true;
+					}
+					else {
+						lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
+
+					}
+				}
+
+
+				if (response_code != 200)
+				{
+					// If not 200, maybe a problem
+					if (timeoutButSleeping(readBuffer)) {
+						// But if we're just timed out but sleeping, no problem
+						response_code_ok = true;
+					}
+					else {
+						lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
+						if (response_code == 408) {
+							lg.i("TIMEOUT");
+						}
+						else if (response_code == 401) {
+							lg.i("UNAUTHORIZED");
+						}
+						else if (response_code == 503) {
+							lg.i("SERVICE UNAVAILABLE");
+						}
+						else {
+							lg.in("IS TOKEN EXPIRED???");
+						}
+						lg.d("readBuffer for incorrect: " + readBuffer);
+						response_code_ok = false;
+						lg.i("Waiting 30 secs and retrying (teslaPOST)");
+						sleepWithAPIcheck(30); // wait a little before redoing the curl request
+						continue;
+					}
 				}
 				else {
 					response_code_ok = true;
@@ -293,11 +293,10 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 		}
 		curl_global_cleanup();
 		lg.d("TeslaPOST readBuffer passed to jsonObject (res should be 200 success)");
-		json jsonReadBuffer = json::parse(readBuffer);
-		// Inside "response" is an array, the first item is what contains the response:
-		responseObject = jsonReadBuffer["response"];
+		jsonReadBuffer = json::parse(readBuffer);
+		jsonReadBuffer = jsonReadBuffer["response"];
 	} while (!response_code_ok);
-	return responseObject;
+	return jsonReadBuffer;
 }
 
 
@@ -307,7 +306,7 @@ json car::teslaGET(string specifiedUrlPage)
 	bool response_code_ok;
 	do
 	{
-		string fullUrl = settings::teslaOwnerURL + specifiedUrlPage;
+		string fullUrl = settings::teslemURL + specifiedUrlPage;
 		const char* const url_to_use = fullUrl.c_str();
 		CURL* curl;
 		CURLcode res;
@@ -321,15 +320,16 @@ json car::teslaGET(string specifiedUrlPage)
 
 
 			// Header for already authorized request
-			const char* authHeaderC = settings::teslaAuthString.c_str();
 			struct curl_slist* headers = nullptr;
-			headers = curl_slist_append(headers, authHeaderC);
+			lg.p("Sending auth header: " + settings::authHeader);
+			const char* authHeader_c = settings::authHeader.c_str();
+			headers = curl_slist_append(headers, authHeader_c);
 			headers = curl_slist_append(headers, "Content-Type: application/json");
 			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
 
 			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, "Tesla Climate Scheduler/3.0.5"); // add variable v number
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, tcs_userAgent.c_str());
 
 			/* use a GET to fetch this */
 			curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
@@ -369,27 +369,32 @@ json car::teslaGET(string specifiedUrlPage)
 
 				if (response_code != 200)
 				{
-					lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
-					if (response_code == 408) {
-						lg.i("TIMEOUT");
-					}
-					else if (response_code == 401) {
-						lg.i("UNAUTHORIZED");
-					}
-					else if (response_code == 503) {
-						lg.i("SERVICE UNAVAILABLE");
+					// If not 200, maybe a problem
+					if (timeoutButSleeping(readBuffer)) {
+						// But if we're just timed out but sleeping, no problem
+						response_code_ok = true;
 					}
 					else {
-						lg.in("IS TOKEN EXPIRED???");
+						lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
+						if (response_code == 408) {
+							lg.i("TIMEOUT");
+						}
+						else if (response_code == 401) {
+							lg.i("UNAUTHORIZED");
+						}
+						else if (response_code == 503) {
+							lg.i("SERVICE UNAVAILABLE");
+						}
+						else {
+							lg.in("IS TOKEN EXPIRED???");
+						}
+						lg.d("readBuffer for incorrect: " + readBuffer);
+						response_code_ok = false;
+						lg.i("Waiting 5 secs and retrying (teslaGET)");
+						sleepWithAPIcheck(5); // wait a little before redoing the curl request
+						// Are we sleeping with API check while having mutex LOCKED?
+						continue;
 					}
-					lg.d("readBuffer for incorrect: " + readBuffer);
-					response_code_ok = false;
-					lg.i("Waiting 5 secs and retrying (teslaGET)");
-					sleepWithAPIcheck(5); // wait a little before redoing the curl request
-					// Are we sleeping with API check while having mutex LOCKED?
-					teslaAuth(); // to allow updating the token without restarting app, or to rerun auth.py
-					continue;
-
 				}
 				else {
 					response_code_ok = true;
@@ -420,53 +425,16 @@ json car::teslaGET(string specifiedUrlPage)
 void car::wake()
 {
 	lg.b();
-	json wake_result = teslaPOST(settings::teslaVURL + "wake_up");
-	string state_after_wake = wake_result["state"];
-	lg.d("Wake command sent while state was: " + state_after_wake);
-	carOnline = (state_after_wake == "online") ? true : false;
+	json wake_result = teslaPOST("wake_up");
+	string init_state_after_wake = wake_result["state"];
+	lg.d("Wake command sent while state was: " + init_state_after_wake);
+	carOnline = (init_state_after_wake == "online") ? true : false;
 	if (carOnline) {
-		// add a delay here of X seconds to make sure Tinside_temp is accurate? v3.0.4.1 debug
 		return;
 	}
 	sleep(5); // No API checking during this sleep
 	return;
 }
-
-
-
-static
-void dump(const char* text,
-	FILE* stream, unsigned char* ptr, size_t size)
-{
-	size_t i;
-	size_t c;
-	unsigned int width = 0x10;
-
-	fprintf(stream, "%s, %10.10ld bytes (0x%8.8lx)\n",
-		text, (long)size, (long)size);
-
-	for (i = 0; i < size; i += width) {
-		fprintf(stream, "%4.4lx: ", (long)i);
-
-		/* show hex to the left */
-		for (c = 0; c < width; c++) {
-			if (i + c < size)
-				fprintf(stream, "%02x ", ptr[i + c]);
-			else
-				fputs("   ", stream);
-		}
-
-		/* show data on the right */
-		for (c = 0; (c < width) && (i + c < size); c++) {
-			char x = (ptr[i + c] >= 0x20 && ptr[i + c] < 0x80) ? ptr[i + c] : '.';
-			fputc(x, stream);
-		}
-
-		fputc('\n', stream); /* newline */
-	}
-}
-
-
 
 
 
@@ -611,12 +579,12 @@ std::vector<string> car::coldCheckSet()
 	}
 
 	// Send the heat-seat request, turning the heated seat off if it's hot enough
-	json seat_result = teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", 0}, {"level", requestedSeatHeat } });
+	json seat_result = teslaPOST("remote_seat_heater_request", json{ {"heater", 0}, {"level", requestedSeatHeat } });
 
 	// If seats should be 0, turn off ALL heated seats in car
 	if (requestedSeatHeat == 0) {
 		for (int seatNumber = 1; seatNumber <= 4; seatNumber++) {
-			teslaPOST(settings::teslaVURL + "command/remote_seat_heater_request", json{ {"heater", seatNumber}, {"level", requestedSeatHeat } });
+			teslaPOST("remote_seat_heater_request", json{ {"heater", seatNumber}, {"level", requestedSeatHeat } });
 		}
 	}
 
@@ -631,7 +599,7 @@ std::vector<string> car::coldCheckSet()
 
 	if (Tinside_temp <= -10 || (settings::u_encourageDefrost && (Tinside_temp <= settings::u_noDefrostAbove)))
 	{
-		json jdefrost_result = teslaPOST(settings::teslaVURL + "command/set_preconditioning_max", json{ {"on", true } });
+		json jdefrost_result = teslaPOST("set_preconditioning_max", json{ {"on", true } });
 		max_defrost_on = jdefrost_result["result"];
 	}
 	lg.d("Tinside_temp: ", Tinside_temp, ", encourageDefrost: ", settings::u_encourageDefrost);
@@ -642,33 +610,8 @@ std::vector<string> car::coldCheckSet()
 	return resultVector;
 }
 
-// Could be global util?
-string authorizer::random_ANstring() {
-	srand((unsigned int)time(NULL));
-	auto randchar = []() -> char
-	{
-		const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-		const size_t max_index = (sizeof(charset) - 1);
-		return charset[rand() % max_index];
-	};
-	string str(86, 0);
-	std::generate_n(str.begin(), 86, randchar);
-	return str;
-}
 
-// Could be global util?
-size_t authorizer::stringCount(const std::string& referenceString,
-	const std::string& subString) {
-
-	const size_t step = subString.size();
-
-	size_t count(0);
-	size_t pos(0);
-
-	while ((pos = referenceString.find(subString, pos)) != std::string::npos) {
-		pos += step;
-		++count;
-	}
-
-	return count;
+bool car::timeoutButSleeping(string readBuffer) {
+	size_t exists = readBuffer.find("vehicle unavailable");
+	return exists != string::npos;
 }

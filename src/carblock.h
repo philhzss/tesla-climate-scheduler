@@ -1,32 +1,9 @@
 #include "map"
 #pragma once
 
-// New auth stuff
-class authorizer {
-public:
-	string random_ANstring();
-	string code_verifier;
-
-	const string client_id = "ownerapi";
-	string code_challenge;
-	const string code_challenge_method = "S256";
-	const string redirect_uri = "https://auth.tesla.com/void/callback";
-	const string response_type = "code";
-	const string scope = "openid%20email%20offline_access";
-	const string state = "anyRandomString";
-
-
-	size_t stringCount(const std::string& referenceString,
-		const std::string& subString);
-	std::unordered_map<string, string> step1_forms;
-	string step1_cookie;
-
-
-};
 
 class car
 {
-	friend class authorizer;
 public:
 	// public vars
 	bool carOnline = false;
@@ -46,15 +23,14 @@ public:
 	float Tlong;
 	string location;
 	string datapack;
-	authorizer auth;
 
 
 
 private:
 	void wake();
-	// Write token to settings::teslaAuthString for Tesla official API usage
-	void teslaAuth();
 
+	// True if contains "vehicle unavailable"
+	bool timeoutButSleeping(string readBuffer);
 
 
 	// Verify if at home or work based on lat/lon and tolerance
@@ -64,13 +40,13 @@ public:
 	// Pull data from car, waking the car if requested
 	std::map<string, string> getData(bool wakeCar = false, bool manualWakeWait = false);
 
-	// POST request to "https://owner-api.teslamotors.com/ + url"
+	// POST request to "https://api.teslemetry.com/api/1/vehicles/ + url", with token & vehicle_tag built in
 	json teslaPOST(string specifiedUrlPage, json bodyPackage = json());
 
 	// Returns confirmed heated seat setting, & if max condition is on
 	std::vector<string> coldCheckSet();
 
-	// GET request to "https://owner-api.teslamotors.com/ + url", oAuth token built-in
+	// GET request to "https://api.teslemetry.com/api/1/vehicles/ + url", with token & vehicle_tag built in
 	json teslaGET(string specifiedUrlPage);
 	int calcTempMod(int interior_temp);
 
