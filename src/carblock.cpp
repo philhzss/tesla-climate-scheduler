@@ -50,19 +50,15 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 	}
 	lg.d("!!!MAIN: settingsMutex LOCKED (before first teslaGET in getData)!!!");
 
-	// Check if we got the full API response
-	if (teslaGetData["response"] != "null") {
+	// Check if we got the full API response, if not then car is not awake / connected
+	if (timeoutButSleeping(teslaGetData.dump())) {
 		
-		
-		// PROBLEM HERE: The full response when sleeping does not contain ["state"] anymore
-		
-		Tconnection_state = teslaGetData["response"]["state"];// <<----------------
-		carOnline = (Tconnection_state == "online") ? true : false;
+		// If here, "vehicle unavailable: vehicle is offline or asleep"		
+		carOnline = false;
 	}
 	else {
-		// If here, we can assume car is offline or asleep
-		lg.i("error");
-		carOnline = false;
+		// If here, teslaGetData does not contain "vehicle unavailable"
+		carOnline = true;
 	}
 
 	carData_s["Car awake"] = std::to_string(carOnline);

@@ -29,6 +29,7 @@ public:
 private:
 	void wake();
 
+	// True if contains "vehicle unavailable"
 	bool timeoutButSleeping(string readBuffer);
 
 
