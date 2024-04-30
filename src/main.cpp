@@ -10,7 +10,7 @@
 
 using std::string;
 
-static Log lg("Main", Log::LogLevel::Programming);
+static Log lg("Main", Log::LogLevel::Debug);
 static Log lgw("WakeLoop", Log::LogLevel::Debug);
 
 std::mutex settings::settingsMutex;

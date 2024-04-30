@@ -40,7 +40,7 @@ public:
 	// Pull data from car, waking the car if requested
 	std::map<string, string> getData(bool wakeCar = false, bool manualWakeWait = false);
 
-	// POST request to "https://owner-api.teslamotors.com/ + url"
+	// POST request to "https://api.teslemetry.com/api/1/vehicles/ + url", with token & vehicle_tag built in
 	json teslaPOST(string specifiedUrlPage, json bodyPackage = json());
 
 	// Returns confirmed heated seat setting, & if max condition is on

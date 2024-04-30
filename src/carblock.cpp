@@ -16,7 +16,7 @@ using std::string;
 
 
 // Log file name for console messages
-static Log lg("Carblock", Log::LogLevel::Programming);
+static Log lg("Carblock", Log::LogLevel::Debug);
 
 
 
@@ -52,7 +52,7 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 
 	// Check if we got the full API response, if not then car is not awake / connected
 	if (timeoutButSleeping(teslaGetData.dump())) {
-		
+
 		// If here, "vehicle unavailable: vehicle is offline or asleep"		
 		carOnline = false;
 	}
@@ -162,10 +162,13 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 
 json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 {
-	json responseObject;
+	json jsonReadBuffer;
 	bool response_code_ok;
 	do
 	{
+		// We need "command/" for every single command except wake_up
+		if (specifiedUrlPage != "wake_up") { specifiedUrlPage = "command/" + specifiedUrlPage; }
+
 		string fullUrl = settings::teslemURL + specifiedUrlPage;
 		const char* const url_to_use = fullUrl.c_str();
 		// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
@@ -232,13 +235,10 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 					throw string("curl_easy_perform() failed: " + std::to_string(res));
 				}
 			}
-
 			if (res == CURLE_OK) {
 				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
 				lg.i(response_code, "=response code for ", fullUrl);
 				lg.p("readBuffer (before jsonify): " + readBuffer);
-
-
 
 
 				if (response_code != 200)
@@ -253,8 +253,6 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 
 					}
 				}
-
-
 
 
 				if (response_code != 200)
@@ -295,11 +293,10 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 		}
 		curl_global_cleanup();
 		lg.d("TeslaPOST readBuffer passed to jsonObject (res should be 200 success)");
-		json jsonReadBuffer = json::parse(readBuffer);
-		// Inside "response" is an array, the first item is what contains the response:
-		responseObject = jsonReadBuffer["response"];
+		jsonReadBuffer = json::parse(readBuffer);
+		jsonReadBuffer = jsonReadBuffer["response"];
 	} while (!response_code_ok);
-	return responseObject;
+	return jsonReadBuffer;
 }
 
 
@@ -429,7 +426,7 @@ void car::wake()
 {
 	lg.b();
 	json wake_result = teslaPOST("wake_up");
-	string init_state_after_wake = wake_result["response"]["state"];
+	string init_state_after_wake = wake_result["state"];
 	lg.d("Wake command sent while state was: " + init_state_after_wake);
 	carOnline = (init_state_after_wake == "online") ? true : false;
 	if (carOnline) {
@@ -580,16 +577,6 @@ std::vector<string> car::coldCheckSet()
 	{
 		requestedSeatHeat = 0;
 	}
-
-	// VERIFY SEAT HEATER ENDPOINTS
-	// VERIFY SEAT HEATER ENDPOINTS
-	// VERIFY SEAT HEATER ENDPOINTS
-	// VERIFY SEAT HEATER ENDPOINTS
-	// VERIFY SEAT HEATER ENDPOINTS
-	// VERIFY SEAT HEATER ENDPOINTS
-	// VERIFY SEAT HEATER ENDPOINTS
-	// VERIFY SEAT HEATER ENDPOINTS
-
 
 	// Send the heat-seat request, turning the heated seat off if it's hot enough
 	json seat_result = teslaPOST("remote_seat_heater_request", json{ {"heater", 0}, {"level", requestedSeatHeat } });

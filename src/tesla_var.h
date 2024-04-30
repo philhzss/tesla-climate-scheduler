@@ -20,8 +20,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2024.01.13 - manualHVAC sleeps after wake to get proper temp";
-const string tcs_version = "3.6.3";
+const string tcs_buildInfo = "\nBuild Date : 2024.04.30 - Teslemetry initial version";
+const string tcs_version = "3.7";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 
