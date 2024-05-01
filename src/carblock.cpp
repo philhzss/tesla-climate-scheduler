@@ -246,20 +246,7 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 					if (timeoutButSleeping(readBuffer)) {
 						// But if we're just timed out but sleeping, no problem
 						response_code_ok = true;
-					}
-					else {
-						lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
-
-					}
-				}
-
-
-				if (response_code != 200)
-				{
-					// If not 200, maybe a problem
-					if (timeoutButSleeping(readBuffer)) {
-						// But if we're just timed out but sleeping, no problem
-						response_code_ok = true;
+						lg.d("408 timed out but vehicle sleeping");
 					}
 					else {
 						lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
@@ -372,6 +359,7 @@ json car::teslaGET(string specifiedUrlPage)
 					if (timeoutButSleeping(readBuffer)) {
 						// But if we're just timed out but sleeping, no problem
 						response_code_ok = true;
+						lg.d("408 timed out but vehicle sleeping");
 					}
 					else {
 						lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
