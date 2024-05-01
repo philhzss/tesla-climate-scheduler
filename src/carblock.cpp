@@ -26,7 +26,6 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 	json teslaGetData;
 
 
-	// Get Tesla vehicleS state and vID
 	try
 	{
 		teslaGetData = car::teslaGET("vehicle_data");
