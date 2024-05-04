@@ -61,7 +61,7 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 	}
 
 	carData_s["Car awake"] = std::to_string(carOnline);
-
+	Tconnection_state = lg.prepareOnly(carOnline); // Tconnection_state is thread safe but carOnline is not
 
 	settings::settingsMutex.unlock();
 	lg.d("settingsMutex UNLOCKED before waking car");
@@ -134,6 +134,9 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 		carData_s["usable_battery_level"] = std::to_string(Tusable_battery_level);
 		carData_s["battery_level"] = std::to_string(Tbattery_level);
 		carData_s["location_home_or_work"] = location;
+
+		carData_s["Car awake"] = std::to_string(carOnline);
+		Tconnection_state = lg.prepareOnly(carOnline); // Tconnection_state is thread safe but carOnline is not
 
 		settings::settingsMutex.unlock();
 		lg.d("settingsMutex UNLOCKED after waking car");
