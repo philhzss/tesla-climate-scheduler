@@ -1,7 +1,5 @@
-#include <unistd.h>
 #include "tesla_var.h"
-#include "logger.h"
-#include "carblock.h"
+
 
 
 
@@ -9,7 +7,6 @@ using std::cout;
 using std::endl;
 using std::cin;
 using std::string;
-
 
 
 
@@ -164,12 +161,15 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 {
 	json jsonReadBuffer;
 	bool response_code_ok;
+	string tempUrlPage;
 	do
 	{
+		// Reset URL value before modifying
+		tempUrlPage = specifiedUrlPage;
 		// We need "command/" for every single command except wake_up
-		if (specifiedUrlPage != "wake_up") { specifiedUrlPage = "command/" + specifiedUrlPage; }
+		if (tempUrlPage != "wake_up") { tempUrlPage = "command/" + tempUrlPage; }
 
-		string fullUrl = settings::teslemURL + specifiedUrlPage;
+		string fullUrl = settings::teslemURL + tempUrlPage;
 		const char* const url_to_use = fullUrl.c_str();
 		// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
 
@@ -448,7 +448,7 @@ int car::calcTempMod(int interior_temp)
 	else
 	{
 		lg.p("Interior temp is ", interior_temp, "C, using winter curve.");
-		rawTempTimeModifier = pow(interior_temp, 2) / 300 - interior_temp / 2 + (9 + defaultMinTime);
+		rawTempTimeModifier = pow(interior_temp, 2) / 300 - interior_temp / static_cast<double>(2) + (9 + defaultMinTime);
 		if (rawTempTimeModifier >= 32)
 		{
 			// Capped at 32 mins when super cold in car
@@ -567,12 +567,12 @@ std::vector<string> car::coldCheckSet()
 	}
 
 	// Send the heat-seat request, turning the heated seat off if it's hot enough
-	json seat_result = teslaPOST("remote_seat_heater_request", json{ {"heater", 0}, {"level", requestedSeatHeat } });
+	json seat_result = teslaPOST("remote_seat_heater_request", json{ {"seat_position", 0}, {"level", requestedSeatHeat } });
 
 	// If seats should be 0, turn off ALL heated seats in car
 	if (requestedSeatHeat == 0) {
 		for (int seatNumber = 1; seatNumber <= 4; seatNumber++) {
-			teslaPOST("remote_seat_heater_request", json{ {"heater", seatNumber}, {"level", requestedSeatHeat } });
+			teslaPOST("remote_seat_heater_request", json{ {"seat_position", seatNumber}, {"level", requestedSeatHeat } });
 		}
 	}
 

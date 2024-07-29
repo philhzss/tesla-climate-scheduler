@@ -9,6 +9,7 @@
 #include "carblock.h"
 #include <fstream>
 #include <thread>
+#include <unistd.h>
 
 
 using json = nlohmann::json;
