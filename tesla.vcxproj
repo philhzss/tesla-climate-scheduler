@@ -79,7 +79,6 @@
     <IncludePath>G:\My Drive\dev\Tesla auto-sched climate\Tesla Climate Scheduler cpp\tesla\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="include\base64.cpp" />
     <ClCompile Include="src\calendar.cpp" />
     <ClCompile Include="src\carblock.cpp" />
     <ClCompile Include="src\logger.cpp" />
@@ -87,9 +86,9 @@
     <ClCompile Include="src\settings.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\base64.h" />
     <ClInclude Include="include\nlohmann\adl_serializer.hpp" />
     <ClInclude Include="include\nlohmann\byte_container_with_subtype.hpp" />
+    <ClInclude Include="include\nlohmann\detail\abi_macros.hpp" />
     <ClInclude Include="include\nlohmann\detail\conversions\from_json.hpp" />
     <ClInclude Include="include\nlohmann\detail\conversions\to_chars.hpp" />
     <ClInclude Include="include\nlohmann\detail\conversions\to_json.hpp" />
@@ -107,25 +106,31 @@
     <ClInclude Include="include\nlohmann\detail\iterators\iter_impl.hpp" />
     <ClInclude Include="include\nlohmann\detail\iterators\json_reverse_iterator.hpp" />
     <ClInclude Include="include\nlohmann\detail\iterators\primitive_iterator.hpp" />
+    <ClInclude Include="include\nlohmann\detail\json_custom_base_class.hpp" />
     <ClInclude Include="include\nlohmann\detail\json_pointer.hpp" />
     <ClInclude Include="include\nlohmann\detail\json_ref.hpp" />
     <ClInclude Include="include\nlohmann\detail\macro_scope.hpp" />
     <ClInclude Include="include\nlohmann\detail\macro_unscope.hpp" />
+    <ClInclude Include="include\nlohmann\detail\meta\call_std\begin.hpp" />
+    <ClInclude Include="include\nlohmann\detail\meta\call_std\end.hpp" />
     <ClInclude Include="include\nlohmann\detail\meta\cpp_future.hpp" />
     <ClInclude Include="include\nlohmann\detail\meta\detected.hpp" />
+    <ClInclude Include="include\nlohmann\detail\meta\identity_tag.hpp" />
     <ClInclude Include="include\nlohmann\detail\meta\is_sax.hpp" />
+    <ClInclude Include="include\nlohmann\detail\meta\std_fs.hpp" />
     <ClInclude Include="include\nlohmann\detail\meta\type_traits.hpp" />
     <ClInclude Include="include\nlohmann\detail\meta\void_t.hpp" />
     <ClInclude Include="include\nlohmann\detail\output\binary_writer.hpp" />
     <ClInclude Include="include\nlohmann\detail\output\output_adapters.hpp" />
     <ClInclude Include="include\nlohmann\detail\output\serializer.hpp" />
+    <ClInclude Include="include\nlohmann\detail\string_concat.hpp" />
+    <ClInclude Include="include\nlohmann\detail\string_escape.hpp" />
     <ClInclude Include="include\nlohmann\detail\value_t.hpp" />
     <ClInclude Include="include\nlohmann\json.hpp" />
     <ClInclude Include="include\nlohmann\json_fwd.hpp" />
     <ClInclude Include="include\nlohmann\ordered_map.hpp" />
     <ClInclude Include="include\nlohmann\thirdparty\hedley\hedley.hpp" />
     <ClInclude Include="include\nlohmann\thirdparty\hedley\hedley_undef.hpp" />
-    <ClInclude Include="include\picosha2.h" />
     <ClInclude Include="src\calendar.h" />
     <ClInclude Include="src\carblock.h" />
     <ClInclude Include="src\logger.h" />
@@ -145,11 +150,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Caddyfile" />
-    <None Include="include\nlohmann\LICENSE.MIT" />
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <Link>
-      <AdditionalOptions>-lcurl -pthread -lboost_system %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-lcurl -pthread %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <ClCompile />
     <PostBuildEvent>
@@ -165,6 +169,7 @@
     </PreBuildEvent>
     <ClCompile>
       <AdditionalIncludeDirectories />
+      <CppLanguageStandard>c++14</CppLanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

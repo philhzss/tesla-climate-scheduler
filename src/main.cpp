@@ -4,8 +4,8 @@
 #include "calendar.h"
 #include <iomanip>
 
-#define CROW_MAIN
 #include <crow.h>
+#define CROW_MAIN
 
 
 using std::string;
@@ -33,7 +33,7 @@ void sleepWithAPIcheck(int totalSleepTime, bool manualWakeWait) {
 		if (!settings::settingsMutexLockSuccess("before checking numberOfSeatsActivateNow")) {
 			throw string("settingsMutex timeout in main thread (before checking numberOfSeatsActivateNow)");
 		}
-		
+
 		// Following code is required or sleepWithAPIcheck won't interupt for manual wake,
 		// which might make you wait up to 1 extra mins for a wake
 		if (settings::numberOfSeatsActivateNow && !manualWakeWait) {
@@ -198,18 +198,17 @@ void DoCrowAPI(car* carPointer) {
 	crow::SimpleApp app; //define your crow application
 
 
-	// TEST
-	CROW_ROUTE(app, "/")
-		.methods(crow::HTTPMethod::Post)
-		([](const crow::request& req) {
-		// Process the webhook payload
-		std::string post_data = req.body;
-		// Print the webhook payload
-		std::cout << "Received webhook payload:\n" << post_data << std::endl;
-
-		// Send a simple acknowledgment response
-		return crow::response(200, "Webhook received successfully");
-			});
+	//// Webhook receive
+	//CROW_ROUTE(app, "/")
+	//	.methods(crow::HTTPMethod::Post)
+	//	([](const crow::request& req) {
+	//	// Process the webhook payload
+	//	std::string post_data = req.body;
+	//	// Print the webhook payload
+	//	std::cout << "Received webhook payload:\n" << post_data << std::endl;
+	//	// Send a simple acknowledgment response
+	//	return crow::response(200, "Webhook received successfully");
+	//		});
 
 
 
@@ -375,7 +374,7 @@ void DoCrowAPI(car* carPointer) {
 	app.port(settings::u_apiPort).multithreaded().run();
 	// app.port(30512).multithreaded().run();
 	// 20512 main port, 30512 test port to not interfere with running version
-	
+
 }
 
 
