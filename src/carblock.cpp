@@ -162,8 +162,13 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 	json jsonReadBuffer;
 	bool response_code_ok;
 	string tempUrlPage;
+	int errorRetryCount = 0;
 	do
 	{
+		if (errorRetryCount > 7) {
+			throw string("TeslaPOST errored too many times, aborting");
+		}
+
 		// Reset URL value before modifying
 		tempUrlPage = specifiedUrlPage;
 		// We need "command/" for every single command except wake_up
@@ -250,7 +255,7 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 						lg.d("408 timed out but vehicle sleeping");
 					}
 					else {
-						lg.en("Abnormal server response (", response_code, ") for ", fullUrl);
+						lg.en("Abnormal server response (", response_code, ") for POST ", fullUrl);
 						if (response_code == 408) {
 							lg.i("TIMEOUT");
 						}
@@ -267,6 +272,7 @@ json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
 						response_code_ok = false;
 						lg.i("Waiting 30 secs and retrying (teslaPOST)");
 						sleepWithAPIcheck(30); // wait a little before redoing the curl request
+						errorRetryCount++;
 						continue;
 					}
 				}
@@ -291,8 +297,13 @@ json car::teslaGET(string specifiedUrlPage)
 {
 	json responseObject;
 	bool response_code_ok;
+	int errorRetryCount = 0;
 	do
 	{
+		if (errorRetryCount > 7) {
+			throw string("TeslaGET errored too many times, aborting");
+		}
+		
 		string fullUrl = settings::teslemURL + specifiedUrlPage;
 		const char* const url_to_use = fullUrl.c_str();
 		CURL* curl;
@@ -378,9 +389,10 @@ json car::teslaGET(string specifiedUrlPage)
 						}
 						lg.d("readBuffer for incorrect: " + readBuffer);
 						response_code_ok = false;
-						lg.i("Waiting 5 secs and retrying (teslaGET)");
-						sleepWithAPIcheck(5); // wait a little before redoing the curl request
-						// Are we sleeping with API check while having mutex LOCKED?
+						lg.i("Waiting 10 secs and retrying (teslaGET)");
+						sleepWithAPIcheck(10); // wait a little before redoing the curl request
+						// Are we sleeping with API check while having mutex LOCKED? Not sure but it seems to work?
+						errorRetryCount++;
 						continue;
 					}
 				}
