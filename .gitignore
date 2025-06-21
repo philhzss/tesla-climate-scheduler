@@ -19,3 +19,4 @@ Caddyfile
 /readme
 .vs/
 *.user
+/CMakeSettings.json
