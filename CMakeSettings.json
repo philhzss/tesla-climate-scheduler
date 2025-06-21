@@ -1,0 +1,15 @@
+﻿{
+  "configurations": [
+    {
+      "name": "Pi-Debug",
+      "generator": "Unix Makefiles",
+      "remoteMachineName": "10.0.0.99",
+      "remoteCMakeListsRoot": "/home/pi/projects/tesla",
+      "remoteBuildRoot": "/home/pi/projects/builds",
+      "cmakeExecutable": "/usr/bin/cmake",
+      "buildCommandArgs": "-j$(nproc)",
+      "remoteCopySources": true,
+      "configurationType": "Debug"
+    }
+  ]
+}
