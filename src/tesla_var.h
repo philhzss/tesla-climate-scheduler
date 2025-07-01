@@ -21,8 +21,8 @@ using std::string;
 
 
 // Program info
-const string tcs_buildInfo = "\nBuild Date : 2024.08.04 - POST-GET Error limit";
-const string tcs_version = "3.7.1";
+const string tcs_buildInfo = "\nBuild Date : 2024.07.01 - TeslaFi is back";
+const string tcs_version = "3.8.0-beta";
 const string tcs_versionInfo = "\nVersion: _*" + tcs_version + "*_" + tcs_buildInfo;
 const string tcs_userAgent = "Tesla Climate Scheduler/" + tcs_version;
 

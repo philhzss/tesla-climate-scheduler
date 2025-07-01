@@ -18,5 +18,7 @@ Caddyfile
 /out
 /readme
 .vs/
+.vscode/
+build/
 *.user
 /CMakeSettings.json
