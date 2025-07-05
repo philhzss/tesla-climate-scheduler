@@ -37,8 +37,7 @@
     "encourageDefrost": false,
     "noDefrostAbove": 3
   },
-  "Tesla account settings": {
-    "Teslemetry Access Token": "xxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "VIN": "xxxxxxxxxxxxxxxxx"
+  "TeslaFi account settings": {
+    "TeslaFiToken": "Token from Tesla Fi API page"
   }
 }

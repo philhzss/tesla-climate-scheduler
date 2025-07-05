@@ -7,47 +7,48 @@ class car
 public:
 	// public vars
 	bool carOnline = false;
+
 	std::map<string, string> carData_s;
 
-	string teslaDataUpdateTime = "";
-	string Tvehicle_name = "";
-	string Tshift_state = "";
-	string Tconnection_state = "";
-	float Tinside_temp;
-	float Toutside_temp;
-	float Tdriver_temp_setting;
-	bool Tis_climate_on;
-	float Tusable_battery_level;
-	float Tbattery_level;
-	float Tlat;
-	float Tlong;
-	string location;
+	// TeslaFi data
+	string tfiVehicle_name = "";
+	string tfiShift_state = "";
+	string tfiConnection_state = "";
+	string tfiCar_state_activity = "";
+	string tfiLocation = "";
+	float tfiInside_temp;
+	float tfiOutside_temp;
+	float tfiDriver_temp_setting;
+	bool tfiIs_climate_on;
+	float tfiUsable_battery_level;
+	float tfiBattery_level;
+	string tfiDate = "";
+
+	// Non-TeslaFi Car Data
+	string location = "";
 	string datapack;
 
-
+	
 
 private:
 	void wake();
 
-	// True if contains "vehicle unavailable"
-	bool timeoutButSleeping(string readBuffer);
-
+	// Pull data & update map
+	void tfiQueryCar();
 
 	// Verify if at home or work based on lat/lon and tolerance
 	string checkCarLocation();
 
 public:
-	// Pull data from car, waking the car if requested
-	std::map<string, string> getData(bool wakeCar = false, bool manualWakeWait = false);
+	// URL request with Tesla Fi, URL is anything after tFi URL
+	json tfiInternetOperation(string url = "");
 
-	// POST request to "https://api.teslemetry.com/api/1/vehicles/ + url", with token & vehicle_tag built in
-	json teslaPOST(string specifiedUrlPage, json bodyPackage = json());
+	// Pull data from car, waking the car if requested, updating datapack
+	std::map<string, string> tfiGetData(bool wakeCar = false, bool manualWakeWait = false);
 
 	// Returns confirmed heated seat setting, & if max condition is on
 	std::vector<string> coldCheckSet();
 
-	// GET request to "https://api.teslemetry.com/api/1/vehicles/ + url", with token & vehicle_tag built in
-	json teslaGET(string specifiedUrlPage);
 	int calcTempMod(int interior_temp);
 
 	// Verify various car parameters and return reason if failure

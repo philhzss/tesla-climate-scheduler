@@ -14,61 +14,35 @@ using std::string;
 static Log lg("Carblock", Log::LogLevel::Debug);
 
 
+std::map<string, string> car::tfiGetData(bool wakeCar, bool manualWakeWait) {
 
+	tfiQueryCar();
 
-std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
-{
-	json teslaGetData;
-
-
-	try
-	{
-		teslaGetData = car::teslaGET("vehicle_data");
-		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
-	}
-	catch (string e)
-	{
-		lg.e("CURL Tesla API exception: ", e);
-		throw string("Can't get car data from Tesla API. (CURL problem?)");
-	}
-	catch (nlohmann::detail::type_error e)
-	{
-		string errorString = "Problem getting data from Tesla API. Car updating? Tesla API down? nlohmann::detail::type_error";
-		lg.e(errorString);
-		throw string(errorString);
-	}
-
-	// Get the mutex before writing to any car variable
-	if (!settings::settingsMutexLockSuccess("after succesful teslaGET in getData")) {
-		throw string("settingsMutex timeout in main thread (after succesful teslaGET in getData)");
-	}
-	lg.d("!!!MAIN: settingsMutex LOCKED (before first teslaGET in getData)!!!");
-
-	// Check if we got the full API response, if not then car is not awake / connected
-	if (timeoutButSleeping(teslaGetData.dump())) {
-
-		// If here, "vehicle unavailable: vehicle is offline or asleep"		
-		carOnline = false;
-	}
-	else {
-		// If here, teslaGetData does not contain "vehicle unavailable"
-		carOnline = true;
-	}
-
-	carData_s["Car awake"] = std::to_string(carOnline);
-	Tconnection_state = lg.prepareOnly(carOnline); // Tconnection_state is thread safe but carOnline is not
-
-	settings::settingsMutex.unlock();
-	lg.d("settingsMutex UNLOCKED before waking car");
-
+	// Check wake status and wake if required
 	if (wakeCar)
 	{
-		bool initialWakeState = carOnline; // if it was sleeping, must delay Tinside_temp
+		// Start by resuming Tfi polling if required
+		// IS THIS REALLY REQUIRED?? KEEPING IN CASE::
+		/*if (carData_s["Tesla Fi Name"] == "") {
+			lg.d("Restarting Tesla Fi polling");
+			string readBufferData = curl_GET(settings::tfiURL + "&command=wake");
+			sleepWithAPIcheck(10);
+			while (tfiVehicle_name == "") {
+				// Then recheck Tfi data
+				car::tfiQueryCar();
+				lg.i("WAITING");
+				sleep(15);
+			}
+		} */
+
+
+		bool initialWakeState = carOnline;
 		do {
 			// Run wake function until carOnline is true
 			car::wake();
 		} while (!carOnline);
 
+		// if it was sleeping, must delay Tinside_temp
 		if (!initialWakeState)
 		{
 			lg.d("Car was not awake, waiting 10 seconds after wake before getting data.");
@@ -76,67 +50,14 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 		}
 
 		// Now that the car is online, we can get more data
-		json response = teslaGET("vehicle_data");
+		tfiQueryCar();
 
-		// New endpoint required for location data
-		json responseDrive = teslaGET("vehicle_data?endpoints=location_data");
-
-		// Mutex must be locked AFTER teslaGET, or we could stay stuck in the teslaGET 30 sec wait loop
-		// Get the mutex before getting more data
-		if (!settings::settingsMutexLockSuccess("before teslaGET CAR AWOKEN in getData")) {
-			throw string("settingsMutex timeout in main thread (before teslaGET CAR AWOKEN in getData)");
-		}
-		lg.d("!!!MAIN: settingsMutex LOCKED (before teslaGET CAR AWOKEN in getData)!!!");
-
-		// lg.d(response.dump()); // Debug
-
-		json vehicle_state = response["vehicle_state"];
-		Tvehicle_name = vehicle_state["vehicle_name"];
-
-		json climate_state = response["climate_state"];
-		Tinside_temp = climate_state["inside_temp"];
-		Toutside_temp = climate_state["outside_temp"];
-		Tdriver_temp_setting = climate_state["driver_temp_setting"];
-		Tis_climate_on = climate_state["is_climate_on"];
-
-		json charge_state = response["charge_state"];
-		Tusable_battery_level = charge_state["usable_battery_level"];
-		Tbattery_level = charge_state["battery_level"];
-
-		json drive_state = responseDrive["drive_state"];
-		if (drive_state["shift_state"].is_null()) {
-			Tshift_state = "P";
-		}
-		else {
-			Tshift_state = drive_state["shift_state"];
-			lg.i("Shift state is not null, is: " + Tshift_state);
-		}
-		Tlat = drive_state["latitude"];
-		Tlong = drive_state["longitude"];
 		location = checkCarLocation();
 
-		// Save the time at which data was obtained for the API
-		teslaDataUpdateTime = date_time_str_from_time_t() + " LOCAL";
-
-		// remove trailing 0s?
-		carData_s["vehicle_name"] = Tvehicle_name;
-		carData_s["shift_state"] = Tshift_state;
-		// not good
-		carData_s["inside_temp"] = std::to_string(Tinside_temp);
-		carData_s["outside_temp"] = std::to_string(Toutside_temp);
-		carData_s["driver_temp_setting"] = std::to_string(Tdriver_temp_setting);
-		carData_s["is_climate_on"] = std::to_string(Tis_climate_on);
-		carData_s["usable_battery_level"] = std::to_string(Tusable_battery_level);
-		carData_s["battery_level"] = std::to_string(Tbattery_level);
+		// This is just home-work, cannot directly copy Tfi location in here:
 		carData_s["location_home_or_work"] = location;
-
-		carData_s["Car awake"] = std::to_string(carOnline);
-		Tconnection_state = lg.prepareOnly(carOnline); // Tconnection_state is thread safe but carOnline is not
-
-		settings::settingsMutex.unlock();
-		lg.d("settingsMutex UNLOCKED after waking car");
-
 	}
+
 
 	// Print map contents if LogLevelDebug
 	if (lg.ReadLevel() >= Log::Debug)
@@ -149,290 +70,149 @@ std::map<string, string> car::getData(bool wakeCar, bool manualWakeWait)
 		}
 	}
 
-	datapack = lg.prepareOnly("\nInside Temp: ", Tinside_temp,
-		"C\nOutside Temp: ", Toutside_temp,
-		"C\nBattery %: ", (int)Tbattery_level, " (", (int)Tusable_battery_level, ")");
+	datapack = lg.prepareOnly("\nInside Temp: ", tfiInside_temp,
+		"C\nOutside Temp: ", tfiOutside_temp,
+		"C\nBattery %: ", tfiBattery_level, " (", tfiUsable_battery_level, ")");
 
 	return carData_s;
+
 }
 
 
-json car::teslaPOST(string specifiedUrlPage, json bodyPackage)
-{
-	json jsonReadBuffer;
-	bool response_code_ok;
-	string tempUrlPage;
-	int errorRetryCount = 0;
-	do
+json car::tfiInternetOperation(string url) {
+	string readBufferData = curl_GET(settings::tfiURL + url);
+
+	// Parse raw data from tfi, after making sure you're authorized
+	lg.b();
+	lg.d("Raw data from TeslaFi: " + readBufferData);
+	if (readBufferData.find("unauthorized") != string::npos)
 	{
-		if (errorRetryCount > 7) {
-			throw string("TeslaPOST errored too many times, aborting");
-		}
+		lg.e("TeslaFi access denied.");
+		throw string("TeslaFi token incorrect or expired.");
+	}
 
-		// Reset URL value before modifying
-		tempUrlPage = specifiedUrlPage;
-		// We need "command/" for every single command except wake_up
-		if (tempUrlPage != "wake_up") { tempUrlPage = "command/" + tempUrlPage; }
-
-		string fullUrl = settings::teslemURL + tempUrlPage;
-		const char* const url_to_use = fullUrl.c_str();
-		// lg.d("teslaPOSTing to this URL: " + fullUrl); // disabled for clutter
-
-		CURL* curl;
-		CURLcode res;
-		// Buffer to store result temporarily:
-		string readBuffer;
-		long response_code;
-
-		/* In windows, this will init the winsock stuff */
-		curl_global_init(CURL_GLOBAL_ALL);
-
-		/* get a curl handle */
-		curl = curl_easy_init();
-
-		if (curl) {
-			/* First set the URL that is about to receive our POST. This URL can
-			   just as well be a https:// URL if that is what should receive the
-			   data. */
-			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
-
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, tcs_userAgent.c_str());
-			/* Now specify the POST data */
-			struct curl_slist* headers = nullptr;
-			// This should only be specified false on teslaAuth as we dont have token yet
-			headers = curl_slist_append(headers, "Content-Type: application/json");
-			lg.p("Sending auth header: " + settings::authHeader);
-			const char* authHeader_c = settings::authHeader.c_str();
-			headers = curl_slist_append(headers, authHeader_c);
-
-			// Serialize the body/package json to string
-			string data = bodyPackage.dump();
-			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
-			curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
-			curl_easy_setopt(curl, CURLOPT_POST, 1);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
-
-
-			/* Perform the request, res will get the return code */
-			res = curl_easy_perform(curl);
-			/* Check for errors */
-			if (res != CURLE_OK)
-			{
-				fprintf(stderr, "curl_easy_perform() failed: %s\n",
-					curl_easy_strerror(res));
-				lg.p("Before error throw, curl error code: ", res);
-				lg.d(curl_easy_strerror(res));
-
-				/* always cleanup */
-				curl_easy_cleanup(curl);
-				curl_global_cleanup();
-
-				if (res == 28) {
-					lg.d("The error is a curl 28 timeout error, continuing");
-					response_code_ok = false;
-					continue;
-				}
-				else {
-					lg.d("The error is NOT a curl 28 timeout error, throwing string");
-					throw string("curl_easy_perform() failed: " + std::to_string(res));
-				}
-			}
-			if (res == CURLE_OK) {
-				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-				lg.i(response_code, "=response code for ", fullUrl);
-				lg.p("readBuffer (before jsonify): " + readBuffer);
-
-
-				if (response_code != 200)
-				{
-					// If not 200, maybe a problem
-					if (timeoutButSleeping(readBuffer)) {
-						// But if we're just timed out but sleeping, no problem
-						response_code_ok = true;
-						lg.d("408 timed out but vehicle sleeping");
-					}
-					else {
-						lg.en("Abnormal server response (", response_code, ") for POST ", fullUrl);
-						if (response_code == 408) {
-							lg.i("TIMEOUT");
-						}
-						else if (response_code == 401) {
-							lg.i("UNAUTHORIZED");
-						}
-						else if (response_code == 503) {
-							lg.i("SERVICE UNAVAILABLE");
-						}
-						else {
-							lg.in("IS TOKEN EXPIRED???");
-						}
-						lg.d("readBuffer for incorrect: " + readBuffer);
-						response_code_ok = false;
-						lg.i("Waiting 30 secs and retrying (teslaPOST)");
-						sleepWithAPIcheck(30); // wait a little before redoing the curl request
-						errorRetryCount++;
-						continue;
-					}
-				}
-				else {
-					response_code_ok = true;
-				}
-			}
-
-			/* always cleanup */
-			curl_easy_cleanup(curl);
-		}
-		curl_global_cleanup();
-		lg.d("TeslaPOST readBuffer passed to jsonObject (res should be 200 success)");
-		jsonReadBuffer = json::parse(readBuffer);
-		jsonReadBuffer = jsonReadBuffer["response"];
-	} while (!response_code_ok);
-	return jsonReadBuffer;
+	return json::parse(readBufferData);
 }
 
 
-json car::teslaGET(string specifiedUrlPage)
-{
-	json responseObject;
-	bool response_code_ok;
-	int errorRetryCount = 0;
-	do
+void car::tfiQueryCar() {
+	try
 	{
-		if (errorRetryCount > 7) {
-			throw string("TeslaGET errored too many times, aborting");
+		// Get the mutex before writing to any car variable, for API
+		if (!settings::settingsMutexLockSuccess("before tfiGetData")) {
+			throw string("settingsMutex timeout in main thread (before tfiGetData)");
 		}
-		
-		string fullUrl = settings::teslemURL + specifiedUrlPage;
-		const char* const url_to_use = fullUrl.c_str();
-		CURL* curl;
-		CURLcode res;
-		// Buffer to store result temporarily:
-		string readBuffer;
-		long response_code;
+		lg.d("!!!MAIN: settingsMutex LOCKED (before tfiGetData)!!!");
 
-		curl_global_init(CURL_GLOBAL_ALL);
-		curl = curl_easy_init();
-		if (curl) {
+		json jsonTfiData = tfiInternetOperation();
 
+		tfiConnection_state = jsonTfiData["state"];
+		tfiDate = jsonTfiData["Date"];
+		lg.d("tfiDate: " + tfiDate);
 
-			// Header for already authorized request
-			struct curl_slist* headers = nullptr;
-			lg.p("Sending auth header: " + settings::authHeader);
-			const char* authHeader_c = settings::authHeader.c_str();
-			headers = curl_slist_append(headers, authHeader_c);
-			headers = curl_slist_append(headers, "Content-Type: application/json");
-			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+		if (jsonTfiData["display_name"].type() == json::value_t::string) {
+			// Car is not sleeping, no need to wake
+			lg.d("Car display_name is a string (good), car is awake. Getting more data.");
+			tfiVehicle_name = jsonTfiData["display_name"];
+			lg.d("tfiVehicle_name: " + tfiVehicle_name);
+			tfiCar_state_activity = jsonTfiData["carState"];
+			lg.d("tfiCar_state_activity: " + tfiCar_state_activity);
+			tfiConnection_state = jsonTfiData["state"];
+			lg.d("tfiState (connection state): " + tfiConnection_state);
 
-
-			curl_easy_setopt(curl, CURLOPT_URL, url_to_use);
-			curl_easy_setopt(curl, CURLOPT_USERAGENT, tcs_userAgent.c_str());
-
-			/* use a GET to fetch this */
-			curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
-
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-			curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
-
-			/* Perform the request, res will get the return code */
-			res = curl_easy_perform(curl);
-			/* Check for errors */
-			if (res != CURLE_OK)
+			try {
+				string tfiShift_state = jsonTfiData["shift_state"];
+			}
+			catch (nlohmann::detail::type_error)
 			{
-				fprintf(stderr, "curl_easy_perform() failed: %s\n",
-					curl_easy_strerror(res));
-				lg.p("Before error throw, curl error code: ", res);
-				lg.d(curl_easy_strerror(res));
-
-				/* always cleanup */
-				curl_easy_cleanup(curl);
-				curl_global_cleanup();
-
-				if (res == 28) {
-					lg.d("The error is a curl 28 timeout error, continuing");
-					response_code_ok = false;
-					continue;
-				}
-				else {
-					lg.d("The error is NOT a curl 28 timeout error, throwing string");
-					throw string("curl_easy_perform() failed: " + std::to_string(res));
-				}
+				lg.d("json type_error for shift_state in TeslaFi, car assumed to be in park, manually writing");
+				tfiShift_state = "P";
 			}
-			if (res == CURLE_OK) {
-				curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
-				lg.i(response_code, "=response code for GET ", fullUrl);
-				lg.p("readBuffer (before jsonify): ", readBuffer);
+			lg.d("tfiShift_state: " + tfiShift_state);
 
-				if (response_code != 200)
-				{
-					// If not 200, maybe a problem
-					if (timeoutButSleeping(readBuffer)) {
-						// But if we're just timed out but sleeping, no problem
-						response_code_ok = true;
-						lg.d("408 timed out but vehicle sleeping");
-					}
-					else {
-						lg.e("Abnormal server response (", response_code, ") for GET ", fullUrl);
-						if (response_code == 408) {
-							lg.i("TIMEOUT");
-						}
-						else if (response_code == 401) {
-							lg.i("UNAUTHORIZED");
-						}
-						else if (response_code == 503) {
-							lg.i("SERVICE UNAVAILABLE");
-						}
-						else {
-							lg.in("IS TOKEN EXPIRED???");
-						}
-						lg.d("readBuffer for incorrect: " + readBuffer);
-						response_code_ok = false;
-						lg.i("Waiting 10 secs and retrying (teslaGET)");
-						sleepWithAPIcheck(10); // wait a little before redoing the curl request
-						// Are we sleeping with API check while having mutex LOCKED? Not sure but it seems to work?
-						errorRetryCount++;
-						continue;
-					}
-				}
-				else {
-					response_code_ok = true;
-				}
-			}
+			tfiLocation = jsonTfiData["location"];
+			lg.d("tfiLocation: " + tfiLocation);
 
-			/* always cleanup */
-			curl_easy_cleanup(curl);
+			tfiInside_temp = std::stof(string(jsonTfiData["inside_temp"]));
+			lg.d("tfiInside_temp: ", tfiInside_temp);
+			tfiOutside_temp = std::stof(string(jsonTfiData["outside_temp"]));
+			lg.d("tfiOutside_temp: ", tfiOutside_temp);
+			tfiDriver_temp_setting = std::stof(string(jsonTfiData["driver_temp_setting"]));
+			lg.d("tfiDriver_temp_setting: ", tfiDriver_temp_setting);
+
+			// Cast string to int before converting to boolean
+			tfiIs_climate_on = std::stoi(string(jsonTfiData["is_climate_on"]));
+			lg.d("tfiIs_climate_on: " + tfiIs_climate_on);
+
+			tfiUsable_battery_level = std::stof(string(jsonTfiData["usable_battery_level"]));
+			lg.d("tfiUsable_battery_level: ", tfiUsable_battery_level);
+			tfiBattery_level = std::stof(string(jsonTfiData["battery_level"]));
+			lg.d("tfiBattery_level :", tfiBattery_level);
+
+			carOnline = true;
 		}
-		curl_global_cleanup();
-
-
-		json jsonReadBuffer = json::parse(readBuffer);
-		if (jsonReadBuffer["response"].is_array()) {
-			/* Inside "response" is an array, one item PER VEHICLE. Currently only supports 1 vehicle
-			* But I will ahve to change this code to check for multiple vehicles eventually*/
-			responseObject = (jsonReadBuffer["response"])[0];
+		else if ((tfiConnection_state == "online") and (jsonTfiData["display_name"].type() != json::value_t::string))
+		{
+			// If the connection state is reported as online, but no other data can be pulled, car is in Tesla Fi sleep mode attempt. 
+			// Detect this and assume car is asleep if so:
+			lg.i("The car is trying to sleep, sleep mode assumed, carOnline=False");
+			carOnline = false;
 		}
 		else {
-			responseObject = (jsonReadBuffer["response"]);
+			// Car is sleeping or trying to sleep, will have to wake
+			lg.d("Car display_name is null, not a string, car is most likely sleeping OR trying to sleep, carOnline=False");
+			carOnline = false;
 		}
+		settings::settingsMutex.unlock();
+		lg.d("settingsMutex UNLOCKED after tfiGetData");
+	}
+	catch (string e)
+	{
+		lg.e("CURL TeslaFi exception: " + e);
+		settings::settingsMutex.unlock();
+		lg.d("settingsMutex UNLOCKED after tfiGetData EXCEPTION");
+		throw string("Can't get car data from Tesla Fi. (CURL problem?)");
+	}
+	catch (nlohmann::detail::type_error e)
+	{
+		lg.e("Problem getting data from Tesla Fi. Car updating? API down? nlohmann::detail::type_error");
+		settings::settingsMutex.unlock();
+		lg.d("settingsMutex UNLOCKED after tfiGetData EXCEPTION");
+		throw string("Can't get car data from Tesla Fi. nlohmann::detail::type_error");
+	}
 
-	} while (!response_code_ok);
-	return responseObject;
+	carData_s["Success"] = "True";
+	carData_s["Car awake"] = std::to_string(carOnline);
+	carData_s["Tesla Fi Date"] = tfiDate;
+	carData_s["Tesla Fi Name"] = tfiVehicle_name;
+	carData_s["Tesla Fi Car State"] = tfiCar_state_activity;
+	carData_s["Tesla Fi Connection State"] = tfiConnection_state;
+	carData_s["Tesla Fi Shift State"] = tfiShift_state;
+	carData_s["Tesla Fi Location"] = tfiLocation;
+	carData_s["Tesla Fi Inside temp"] = std::to_string(tfiInside_temp);
+	carData_s["Tesla Fi Outside temp"] = std::to_string(tfiOutside_temp);
+	carData_s["Tesla Fi Driver Temp Setting"] = tfiDriver_temp_setting;
+	carData_s["Tesla Fi is HVAC On"] = std::to_string(tfiIs_climate_on);
+	carData_s["Tesla Fi Usable Battery"] = std::to_string(tfiUsable_battery_level);
+	carData_s["Tesla Fi Battery level"] = std::to_string(tfiBattery_level);
+
+
+	return;
 }
-
 
 void car::wake()
 {
 	lg.b();
-	json wake_result = teslaPOST("wake_up");
-	string init_state_after_wake = wake_result["state"];
+	json wake_result = tfiInternetOperation("&command=wake_up");
+	string init_state_after_wake = wake_result["response"]["state"];
 	lg.d("Wake command sent while state was: " + init_state_after_wake);
 	carOnline = (init_state_after_wake == "online") ? true : false;
 	if (carOnline) {
 		return;
 	}
-	sleep(5); // No API checking during this sleep
+	sleepWithAPIcheck(25);
+	// Added a lot more time (25 vs 5) to reduce API calls to Tesla Fi, 25 should be enough for wake
+	// Originally said "No API checking during this sleep" but not sure why, lets find out
 	return;
 }
 
@@ -486,45 +266,13 @@ int car::calcTempMod(int interior_temp)
 
 string car::checkCarLocation()
 {
-	float distanceRadius = 0.005; // Degrees
-	float homeLat = std::stof(settings::u_homeCoords[0]);
-	float homeLong = std::stof(settings::u_homeCoords[1]);
-	float workLat = std::stof(settings::u_workCoords[0]);
-	float workLong = std::stof(settings::u_workCoords[1]);
-	string latRes;
-	string longRes;
 	string locationRes;
 
-	// Compare lat
-	if ((Tlat - homeLat + distanceRadius) * (Tlat - homeLat - distanceRadius) <= 0) // true if in range
-	{
-		latRes = "home";
-	}
-	else if ((Tlat - workLat + distanceRadius) * (Tlat - workLat - distanceRadius) <= 0)
-	{
-		latRes = "work";
-	}
-	else
-	{
-		latRes = "unknown";
-	}
+	if (tfiLocation == "Home") { locationRes = "home"; }
+	else if (tfiLocation == "Work / Montreal ACC") { locationRes = "work"; }
+	else { locationRes = "unknown"; }
 
-	// Compare long
-	if ((Tlong - homeLong + distanceRadius) * (Tlong - homeLong - distanceRadius) <= 0) // true if in range
-	{
-		longRes = "home";
-	}
-	else if ((Tlong - workLong + distanceRadius) * (Tlong - workLong - distanceRadius) <= 0)
-	{
-		longRes = "work";
-	}
-	else
-	{
-		longRes = "unknown";
-	}
-
-	// Verify and return
-	return (latRes == longRes) ? longRes : "unknown";
+	return locationRes;
 }
 
 string car::triggerAllowed()
@@ -533,10 +281,10 @@ string car::triggerAllowed()
 	bool tempGood;
 	bool carOnlineGood;
 	bool shiftStateGood;
-	batteryGood = (Tusable_battery_level < 22) ? false : true;
-	tempGood = ((Tinside_temp > settings::u_noActivateLowerLimitTemp) && (Tinside_temp < settings::u_noActivateUpperLimitTemp)) ? false : true;
+	batteryGood = (tfiUsable_battery_level < 22) ? false : true;
+	tempGood = ((tfiInside_temp > settings::u_noActivateLowerLimitTemp) && (tfiInside_temp < settings::u_noActivateUpperLimitTemp)) ? false : true;
 	carOnlineGood = carOnline;
-	shiftStateGood = (Tshift_state == "P") ? true : false;
+	shiftStateGood = (tfiShift_state == "P") ? true : false;
 
 	if (batteryGood && tempGood && carOnlineGood && shiftStateGood)
 	{
@@ -561,15 +309,15 @@ std::vector<string> car::coldCheckSet()
 	int requestedSeatHeat; // power, 0-1-2-3
 	bool max_defrost_on = false; // if if triggers it gets set to true
 	std::vector<string> resultVector;
-	if (Tinside_temp <= settings::u_heatseat3temp)
+	if (tfiInside_temp <= settings::u_heatseat3temp)
 	{
 		requestedSeatHeat = 3;
 	}
-	else if (Tinside_temp <= settings::u_heatseat2temp)
+	else if (tfiInside_temp <= settings::u_heatseat2temp)
 	{
 		requestedSeatHeat = 2;
 	}
-	else if (Tinside_temp < settings::u_heatseat1temp)
+	else if (tfiInside_temp < settings::u_heatseat1temp)
 	{
 		requestedSeatHeat = 1;
 	}
@@ -579,14 +327,16 @@ std::vector<string> car::coldCheckSet()
 	}
 
 	// Send the heat-seat request, turning the heated seat off if it's hot enough
-	json seat_result = teslaPOST("remote_seat_heater_request", json{ {"seat_position", 0}, {"level", requestedSeatHeat } });
+	json seat_result = tfiInternetOperation("&command=seat_heater&heater=0&level=" + std::to_string(requestedSeatHeat));
 
 	// If seats should be 0, turn off ALL heated seats in car
-	if (requestedSeatHeat == 0) {
-		for (int seatNumber = 1; seatNumber <= 4; seatNumber++) {
-			teslaPOST("remote_seat_heater_request", json{ {"seat_position", seatNumber}, {"level", requestedSeatHeat } });
-		}
-	}
+	// Currently disabled because it seems Tesla Fi can't heat anything other than the drivers seat?
+	// TODO This code doesn't work - have not written it with tFi
+	// if (requestedSeatHeat == 0) {
+	// 	for (int seatNumber = 1; seatNumber <= 4; seatNumber++) {
+	// 		teslaPOST("remote_seat_heater_request", json{ {"seat_position", seatNumber}, {"level", requestedSeatHeat } });
+	// 	}
+	// }
 
 
 	if (seat_result["result"]) {
@@ -597,21 +347,15 @@ std::vector<string> car::coldCheckSet()
 		resultVector.push_back("heated seats error");
 	}
 
-	if (Tinside_temp <= -10 || (settings::u_encourageDefrost && (Tinside_temp <= settings::u_noDefrostAbove)))
+	if (tfiInside_temp <= -10 || (settings::u_encourageDefrost && (tfiInside_temp <= settings::u_noDefrostAbove)))
 	{
-		json jdefrost_result = teslaPOST("set_preconditioning_max", json{ {"on", true } });
+		json jdefrost_result = tfiInternetOperation("command=set_preconditioning_max&statement=true");
 		max_defrost_on = jdefrost_result["result"];
 	}
-	lg.d("Tinside_temp: ", Tinside_temp, ", encourageDefrost: ", settings::u_encourageDefrost);
+	lg.d("tfiInside_temp: ", tfiInside_temp, ", encourageDefrost: ", settings::u_encourageDefrost);
 	lg.d("max_defrost_on: ", max_defrost_on);
 
 	resultVector.push_back(std::to_string(max_defrost_on));
 	lg.d("resultVector, seat: ", resultVector[0], "// defrost_on: ", resultVector[1]);
 	return resultVector;
-}
-
-
-bool car::timeoutButSleeping(string readBuffer) {
-	size_t exists = readBuffer.find("vehicle unavailable");
-	return exists != string::npos;
 }

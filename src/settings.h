@@ -14,10 +14,9 @@ public:
 	// Initial breakdown into separate json objects
 	static json teslaSettings, calendarSettings, generalSettings, carSettings, tempConfigs;
 
-
-	// Important stuff, Teslemetry Token
-	static string authHeader;
-	static string teslemURL;
+	// TeslaFi URL
+	static string tfiURL;
+	static string u_tfiToken;
 	
 
 	// Parse settings.json and save its contents in the program's memory
@@ -45,14 +44,6 @@ public:
 	// General Setting
 	// [lat, long] Work coordinates
 	static std::vector<string> u_workCoords;
-
-
-	// Tesla Account Setting
-	// Teslemetry Token from console
-	static string u_teslemToken;
-	// Tesla VIN (also available in Teslemtry console
-	static string u_teslaVIN;
-
 
 
 

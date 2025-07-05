@@ -40,11 +40,9 @@ int settings::u_shiftStartBias;
 int settings::u_shiftEndBias;
 int settings::u_commuteTime;
 std::vector<string> settings::u_wordsToIgnore;
-// Tesla
-string settings::u_teslemToken;
-string settings::u_teslaVIN;
-string settings::teslemURL;
-string settings::authHeader;
+// TeslaFi
+string settings::u_tfiToken;
+string settings::tfiURL;
 
 
 void settings::readSettings(string silent)
@@ -54,7 +52,7 @@ void settings::readSettings(string silent)
 		stream >> settingsForm;
 
 		// Get the settings cubcategories
-		teslaSettings = settingsForm["Tesla account settings"];
+		teslaSettings = settingsForm["TeslaFi account settings"];
 		calendarSettings = settingsForm["Calendar Settings"];
 		generalSettings = settingsForm["General Settings"];
 		carSettings = settingsForm["Car settings"];
@@ -88,18 +86,13 @@ void settings::readSettings(string silent)
 			u_shiftEndBias = calendarSettings["shiftEndBias"];
 			calendarSettings["wordsToIgnore"].get_to(u_wordsToIgnore);
 
-			// TESLA ACCOUNT SETTINGS
-			u_teslemToken = teslaSettings["Teslemetry Access Token"];
-			u_teslaVIN = teslaSettings["VIN"];
+			// TESLAFI ACCOUNT SETTINGS
+			u_tfiToken = teslaSettings["TeslaFiToken"];
 
 			// TEMP CONFIG SETTINGS
 			u_allowTriggers = tempConfigs["allowTriggers"];
 			u_encourageDefrost = tempConfigs["encourageDefrost"];
 			u_noDefrostAbove = tempConfigs["noDefrostAbove"];
-
-			// Get and set the auth string directly from settings
-			settings::authHeader = "Authorization: Bearer " + u_teslemToken;
-
 
 			lg.b();
 			lg.d("Settings file settings.json successfully read.");
@@ -177,8 +170,8 @@ void settings::readSettings(string silent)
 		lg.b();
 	}
 
-	// Teslemetry URL
-	teslemURL = "https://api.teslemetry.com/api/1/vehicles/" + u_teslaVIN + "/";
+	// TeslaFi URL
+	tfiURL = ("https://www.teslafi.com/feed.php?&token=" + u_tfiToken);
 
 
 	// Default to the bare minimum (2mins is tempTimeMod min) to avoid an error in eventTimeCheck, calculate after waketimer has obtained the car temp.
