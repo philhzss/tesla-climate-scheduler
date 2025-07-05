@@ -13,6 +13,9 @@
 settings.json
 Caddyfile
 
+#Log
+log_*.txt
+
 # Visual Studio stuff
 /obj
 /out
