@@ -16,26 +16,11 @@ static Log lg("Carblock", Log::LogLevel::Debug);
 
 std::map<string, string> car::tfiGetData(bool wakeCar, bool manualWakeWait) {
 
-	tfiQueryCar();
-
+	bool lastGood = !wakeCar;
+	
 	// Check wake status and wake if required
 	if (wakeCar)
 	{
-		// Start by resuming Tfi polling if required
-		// IS THIS REALLY REQUIRED?? KEEPING IN CASE::
-		/*if (carData_s["Tesla Fi Name"] == "") {
-			lg.d("Restarting Tesla Fi polling");
-			string readBufferData = curl_GET(settings::tfiURL + "&command=wake");
-			sleepWithAPIcheck(10);
-			while (tfiVehicle_name == "") {
-				// Then recheck Tfi data
-				car::tfiQueryCar();
-				lg.i("WAITING");
-				sleep(15);
-			}
-		} */
-
-
 		bool initialWakeState = carOnline;
 		do {
 			// Run wake function until carOnline is true
@@ -46,17 +31,19 @@ std::map<string, string> car::tfiGetData(bool wakeCar, bool manualWakeWait) {
 		if (!initialWakeState)
 		{
 			lg.d("Car was not awake, waiting 10 seconds after wake before getting data.");
+			// This is needed (and might not be enough) for accurate temperature readings when waking
 			sleepWithAPIcheck(10, manualWakeWait);
 		}
-
-		// Now that the car is online, we can get more data
-		tfiQueryCar();
-
-		location = checkCarLocation();
-
-		// This is just home-work, cannot directly copy Tfi location in here:
-		carData_s["location_home_or_work"] = location;
 	}
+
+	// Avoid waking car unless necessary, use lastGood data
+	tfiQueryCar(lastGood);
+
+	location = checkCarLocation();
+
+	// This is just home-work, cannot directly copy Tfi location in here:
+	carData_s["location_home_or_work"] = location;
+
 
 
 	// Print map contents if LogLevelDebug
@@ -95,7 +82,7 @@ json car::tfiInternetOperation(string url) {
 }
 
 
-void car::tfiQueryCar() {
+void car::tfiQueryCar(bool lastGood) {
 	try
 	{
 		// Get the mutex before writing to any car variable, for API
@@ -104,11 +91,18 @@ void car::tfiQueryCar() {
 		}
 		lg.d("!!!MAIN: settingsMutex LOCKED (before tfiGetData)!!!");
 
-		json jsonTfiData = tfiInternetOperation();
+		// Only pull live data if lastGood is false
+		json jsonTfiData = lastGood ? tfiInternetOperation("&command=lastGood") : tfiInternetOperation();
+
 
 		tfiConnection_state = jsonTfiData["state"];
 		tfiDate = jsonTfiData["Date"];
 		lg.d("tfiDate: " + tfiDate);
+
+		if (lastGood){
+			lg.d("lastGood data requested, using potentially OLD data from car.");
+			lg.d("lastGood data requested, car will always log as awake.");
+		}
 
 		if (jsonTfiData["display_name"].type() == json::value_t::string) {
 			// Car is not sleeping, no need to wake
@@ -349,7 +343,7 @@ std::vector<string> car::coldCheckSet()
 
 	if (tfiInside_temp <= -10 || (settings::u_encourageDefrost && (tfiInside_temp <= settings::u_noDefrostAbove)))
 	{
-		json jdefrost_result = tfiInternetOperation("command=set_preconditioning_max&statement=true");
+		json jdefrost_result = tfiInternetOperation("&command=set_preconditioning_max&statement=true");
 		max_defrost_on = jdefrost_result["result"];
 	}
 	lg.d("tfiInside_temp: ", tfiInside_temp, ", encourageDefrost: ", settings::u_encourageDefrost);

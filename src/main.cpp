@@ -415,7 +415,9 @@ int main()
 
 	int mainLoopCounter = 1;
 
-	Tesla.tfiGetData(true); // Wake car and pull all data from it initially for API
+	// INITIAL DATA PULL
+	Tesla.tfiGetData(); 
+	// To avoid wasting a "Wake" car and pull all data from it initially for API
 
 	// Start of program, Always loop everything
 	while (true) {
