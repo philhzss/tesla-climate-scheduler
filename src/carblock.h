@@ -33,8 +33,8 @@ public:
 private:
 	void wake();
 
-	// Pull data & update map
-	void tfiQueryCar();
+	// Pull data & update map, except if lastGood is true, then only pull last good data
+	void tfiQueryCar(bool lastGood = false);
 
 	// Verify if at home or work based on lat/lon and tolerance
 	string checkCarLocation();
